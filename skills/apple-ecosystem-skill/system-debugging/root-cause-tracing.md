@@ -85,6 +85,10 @@ async function gitInit(directory: string) {
 **Critical:** Use `console.error()` in tests (not logger - may not show)
 
 **Run and capture:**
+```powershell
+npm test 2>&1 | Select-String 'DEBUG git init'
+```
+
 ```bash
 npm test 2>&1 | grep 'DEBUG git init'
 ```
@@ -98,13 +102,19 @@ npm test 2>&1 | grep 'DEBUG git init'
 
 If something appears during tests but you don't know which test:
 
-Use the bisection script `find-polluter.sh` in this directory:
+Use the PowerShell bisection script `find-polluter.ps1` in this directory:
+
+```powershell
+.\find-polluter.ps1 '.git' 'src/**/*.test.ts'
+```
+
+If you are using bash instead:
 
 ```bash
 ./find-polluter.sh '.git' 'src/**/*.test.ts'
 ```
 
-Runs tests one-by-one, stops at first polluter. See script for usage.
+Both scripts run tests one-by-one and stop at the first polluter.
 
 ## Real Example: Empty projectDir
 

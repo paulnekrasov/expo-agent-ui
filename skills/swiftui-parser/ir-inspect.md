@@ -32,7 +32,7 @@ function prettyNode(node: ViewNode, indent: number): string {
     case "HStack":
     case "ZStack":
       return [
-        `${pad}${node.kind}(alignment:${node.kind !== "ZStack" ? " spacing:" + node.spacing : ""})${mods}`,
+        `${pad}${node.kind}(alignment:${node.alignment}${node.kind !== "ZStack" ? `, spacing:${node.spacing}` : ""})${mods}`,
         ...node.children.map(c => prettyNode(c, indent + 1)),
       ].join("\n");
 

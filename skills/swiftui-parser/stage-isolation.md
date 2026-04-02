@@ -38,13 +38,24 @@ Stage 7 output correct? → No → Fix Stage 7 (navigation/transition)
 
 **How to test:**
 
+```powershell
+# From the repo root, run tree-sitter parse on the exact source string causing the bug
+Set-Location .\tree-sitter-swift
+$tempFile = Join-Path $env:TEMP "debug.swift"
+@'
+<paste the exact failing Swift snippet here>
+'@ | Set-Content -Path $tempFile
+tree-sitter parse $tempFile
+```
+
 ```bash
-# Run tree-sitter parse on the exact source string causing the bug
-cd C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/tree-sitter-swift
-cat > C:/Temp/debug.swift << 'EOF'
+# From the repo root, run tree-sitter parse on the exact source string causing the bug
+cd ./tree-sitter-swift
+tmpfile="${TMPDIR:-/tmp}/debug.swift"
+cat > "$tmpfile" <<'EOF'
 <paste the exact failing Swift snippet here>
 EOF
-tree-sitter parse C:/Temp/debug.swift
+tree-sitter parse "$tmpfile"
 ```
 
 **Correct output:** A tree with no ERROR nodes.

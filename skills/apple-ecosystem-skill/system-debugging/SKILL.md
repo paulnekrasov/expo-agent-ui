@@ -87,6 +87,25 @@ You MUST complete each phase before proceeding to the next.
    ```
 
    **Example (multi-layer system):**
+   ```powershell
+   # Layer 1: Workflow
+   Write-Host "=== Secrets available in workflow: ==="
+   Write-Host ("IDENTITY: " + ($(if ($env:IDENTITY) { "SET" } else { "UNSET" })))
+
+   # Layer 2: Build script
+   Write-Host "=== Env vars in build script: ==="
+   if (Test-Path Env:IDENTITY) {
+     Get-ChildItem Env:IDENTITY
+   } else {
+     Write-Host "IDENTITY not in environment"
+   }
+
+   # Layer 3: Signing script
+   Write-Host "=== Keychain state: ==="
+   security list-keychains
+   security find-identity -v
+   ```
+
    ```bash
    # Layer 1: Workflow
    echo "=== Secrets available in workflow: ==="

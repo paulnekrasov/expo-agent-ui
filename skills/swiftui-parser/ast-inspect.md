@@ -16,11 +16,20 @@ is the complete guide to that inspection process.
 The `tree-sitter` CLI is installed globally (confirmed: 0.26.7).
 The grammar lives at `tree-sitter-swift/` in the project root.
 
+```powershell
+# From the repo root, verify the CLI can parse Swift
+Set-Location .\tree-sitter-swift
+$tempFile = Join-Path $env:TEMP "test.swift"
+'Text("Hello")' | Set-Content -Path $tempFile
+tree-sitter parse $tempFile
+```
+
 ```bash
-# Verify the CLI can parse Swift
-cd C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/tree-sitter-swift
-echo 'Text("Hello")' > /tmp/test.swift
-tree-sitter parse /tmp/test.swift
+# From the repo root, verify the CLI can parse Swift
+cd ./tree-sitter-swift
+tmpfile="${TMPDIR:-/tmp}/test.swift"
+printf 'Text("Hello")\n' > "$tmpfile"
+tree-sitter parse "$tmpfile"
 ```
 
 You should see a tree. If it fails, check that you are in the grammar directory.
@@ -31,9 +40,27 @@ You should see a tree. If it fails, check that you are in the grammar directory.
 
 ### Step 1 — Write the snippet to a temp file
 
+```powershell
+# Write snippet to a temp file (always use .swift extension)
+$tempFile = Join-Path $env:TEMP "inspect.swift"
+@'
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        Text("Hello, World!")
+            .font(.title)
+            .foregroundColor(.blue)
+            .padding()
+    }
+}
+'@ | Set-Content -Path $tempFile
+```
+
 ```bash
 # Write snippet to a temp file (always use .swift extension)
-cat > /tmp/inspect.swift << 'EOF'
+tmpfile="${TMPDIR:-/tmp}/inspect.swift"
+cat > "$tmpfile" <<'EOF'
 import SwiftUI
 
 struct ContentView: View {
@@ -49,15 +76,26 @@ EOF
 
 ### Step 2 — Parse it
 
+```powershell
+# From the repo root
+Set-Location .\tree-sitter-swift
+tree-sitter parse $tempFile
+```
+
 ```bash
-cd C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/tree-sitter-swift
-tree-sitter parse /tmp/inspect.swift
+# From the repo root
+cd ./tree-sitter-swift
+tree-sitter parse "$tmpfile"
 ```
 
 ### Step 3 — Parse with source positions (useful for debugging ranges)
 
+```powershell
+tree-sitter parse --output-dot $tempFile
+```
+
 ```bash
-tree-sitter parse --output-dot /tmp/inspect.swift  # for dot graph
+tree-sitter parse --output-dot "$tmpfile"
 ```
 
 ---
@@ -323,7 +361,7 @@ function extractStringLiteral(node: SyntaxNode): { content: string; isDynamic: b
 1. Write the minimal Swift snippet that triggers the UnknownNode
    (one view, one modifier, nothing extra)
 
-2. Run: tree-sitter parse /tmp/snippet.swift
+2. Run `tree-sitter parse` against the temp file created in the shell block above.
    Save the full output
 
 3. Find the node the extractor should be matching.
@@ -350,23 +388,44 @@ function extractStringLiteral(node: SyntaxNode): { content: string; isDynamic: b
 
 ## Quick Command Reference
 
-```bash
-# Parse a file from the tree-sitter-swift directory
-cd C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/tree-sitter-swift
-tree-sitter parse /path/to/file.swift
+```powershell
+# From the repo root, parse a file from the tree-sitter-swift directory
+Set-Location .\tree-sitter-swift
+tree-sitter parse ..\path\to\file.swift
 
-# Parse inline Swift (write to temp file first on Windows)
-echo 'Text("Hello")' > C:/Temp/t.swift
-tree-sitter parse C:/Temp/t.swift
+# Parse inline Swift by writing to a Windows temp file
+$tempFile = Join-Path $env:TEMP "t.swift"
+'Text("Hello")' | Set-Content -Path $tempFile
+tree-sitter parse $tempFile
 
 # Parse with verbose output (shows all nodes including anonymous)
-tree-sitter parse --cst /path/to/file.swift
+tree-sitter parse --cst ..\path\to\file.swift
 
 # Check grammar tests (useful to see what parse trees look like)
 tree-sitter test
 
-# Parse and pipe to head for large files
-tree-sitter parse /path/to/file.swift | head -80
+# Parse a large file and show the first 80 lines
+tree-sitter parse ..\path\to\file.swift | Select-Object -First 80
+```
+
+```bash
+# From the repo root, parse a file from the tree-sitter-swift directory
+cd ./tree-sitter-swift
+tree-sitter parse ../path/to/file.swift
+
+# Parse inline Swift by writing to a temp file
+tmpfile="${TMPDIR:-/tmp}/t.swift"
+printf 'Text("Hello")\n' > "$tmpfile"
+tree-sitter parse "$tmpfile"
+
+# Parse with verbose output (shows all nodes including anonymous)
+tree-sitter parse --cst ../path/to/file.swift
+
+# Check grammar tests (useful to see what parse trees look like)
+tree-sitter test
+
+# Parse a large file and show the first 80 lines
+tree-sitter parse ../path/to/file.swift | head -80
 ```
 
 ---

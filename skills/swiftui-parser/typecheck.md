@@ -16,14 +16,23 @@ each one in this codebase specifically.
 
 Run this to check types without doing a full build:
 
+```powershell
+# From the repo root
+npx tsc --noEmit
+```
+
 ```bash
-cd C:/Users/Asus/OneDrive/Desktop/swift-ui-parser
+# From the repo root
 npx tsc --noEmit
 ```
 
 This is faster than `npm run build`. Run it after every file change.
 
 For a single file:
+```powershell
+npx tsc --noEmit --incremental false src/parser/treeSitterSetup.ts
+```
+
 ```bash
 npx tsc --noEmit --incremental false src/parser/treeSitterSetup.ts
 ```

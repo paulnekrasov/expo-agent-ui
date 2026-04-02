@@ -2,6 +2,7 @@
 # Bisection script to find which test creates unwanted files/state
 # Usage: ./find-polluter.sh <file_or_dir_to_check> <test_pattern>
 # Example: ./find-polluter.sh '.git' 'src/**/*.test.ts'
+# Windows-first alternative: .\find-polluter.ps1 '.git' 'src/**/*.test.ts'
 
 set -e
 
@@ -13,13 +14,19 @@ fi
 
 POLLUTION_CHECK="$1"
 TEST_PATTERN="$2"
+NORMALIZED_PATTERN="$TEST_PATTERN"
+
+case "$NORMALIZED_PATTERN" in
+  ./*) ;;
+  *) NORMALIZED_PATTERN="./$NORMALIZED_PATTERN" ;;
+esac
 
 echo "🔍 Searching for test that creates: $POLLUTION_CHECK"
 echo "Test pattern: $TEST_PATTERN"
 echo ""
 
 # Get list of test files
-TEST_FILES=$(find . -path "$TEST_PATTERN" | sort)
+TEST_FILES=$(find . -path "$NORMALIZED_PATTERN" | sort)
 TOTAL=$(echo "$TEST_FILES" | wc -l | tr -d ' ')
 
 echo "Found $TOTAL test files"

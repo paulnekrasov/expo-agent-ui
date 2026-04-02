@@ -19,7 +19,7 @@ description: >
 | Don't know which pipeline stage is broken | `stage-isolation.md` |
 | ViewNode IR tree looks wrong, need to inspect it | `ir-inspect.md` |
 | TypeScript strict-mode error, don't know how to fix it | `typecheck.md` |
-| General bug — root cause unknown | `system-debugging/pipeline-stage-debugging.md` first |
+| General bug — root cause unknown | `../apple-ecosystem-skill/system-debugging/pipeline-stage-debugging.md` first |
 
 ## Rule
 

@@ -1,5 +1,5 @@
 ---
-name: ultimate-ios-ecosystem-senior-engineer
+name: apple-ecosystem-skill
 description: >
   End-to-end expertise for designing, building, testing, optimizing, and shipping modern Apple
   platform apps with Swift 6.x and iOS 18–26+. Use this skill whenever the user is working on
