@@ -34,6 +34,24 @@ Shared startup guide for Codex, Claude, Gemini, and any other agent working in t
 - Do not introduce a Swift runtime, remote Mac dependency, React, or a WebView framework.
 - Use the shared constants and stub rules from `docs/reference/INDEX.md`.
 
+## Git workflow
+
+Repository: `https://github.com/paulnekrasov/swiftui-parser`
+Default branch: `master` — stable only. Never commit directly to master.
+Submodule: `tree-sitter-swift` — run `git submodule update --init` after cloning.
+
+| Branch | Scope |
+|---|---|
+| `master` | Stable integration — PRs only |
+| `dev/parser` | Stages 1–2: tree-sitter, AST walking, IR extraction |
+| `dev/renderer` | Stages 5–6: Canvas painter, iOS colors, device chrome |
+| `dev/extension` | VS Code host, WebView bridge, OutputChannel |
+| `dev/mcp-server` | MCP server packaging and protocol |
+
+- Work on the branch matching your stage. See Section 3 of `docs/CLAUDE.md` for stage definitions.
+- Commit messages must identify the stage: e.g. `Stage 2 (Extractor): add HStack child collection`
+- Open a PR into `master` when the branch is ready — do not merge directly.
+
 ## Session rule
 
 If `docs/reference/INDEX.md` and `docs/CLAUDE.md` appear to disagree, verify the source material before changing behavior. The index is the router; `docs/CLAUDE.md` is the fuller project brief.

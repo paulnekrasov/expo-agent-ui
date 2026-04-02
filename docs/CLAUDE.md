@@ -720,6 +720,28 @@ Check Section 14 to understand where work left off
 Ask: "We're in Phase [X] — what are you working on today?" — never assume
 Confirm which specific file is being worked on before writing any code
 Treat every session as stateless — carry no assumptions from previous sessions
+---
+16. GIT WORKFLOW
+Repository: https://github.com/paulnekrasov/swiftui-parser
+Default branch: `master` — stable, reviewed code only. Never commit directly to master.
+Submodule: `tree-sitter-swift` is a git submodule (alex-pinkus/tree-sitter-swift).
+After cloning, run: `git submodule update --init`
+
+Branch structure
+```
+master              ← stable integration branch (default)
+  dev/parser        ← Stages 1–2: tree-sitter parsing, AST walking, IR extraction
+  dev/renderer      ← Stages 5–6: Canvas 2D painter, iOS colors, device chrome
+  dev/extension     ← VS Code extension host, WebView bridge, OutputChannel
+  dev/mcp-server    ← Stage 7+: MCP server packaging and protocol
+```
+
+Rules for agents
+- Always work on the branch that matches the stage you are in (see Section 3).
+- Never push directly to `master`.
+- Keep commits focused on one stage — do not mix parser and renderer changes in one commit.
+- Commit messages must state the stage: e.g. "Stage 2 (Extractor): add VStack child collection"
+- When a dev branch is ready to merge, a pull request into `master` is required.
 When the developer describes a feature, map it to a stage before writing any code
 ---
 Last updated: 2026-03-23
