@@ -1,0 +1,56 @@
+{
+  "name": "swiftui-preview",
+  "displayName": "SwiftUI Preview",
+  "description": "Live SwiftUI preview for Windows — no macOS or Xcode required",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onLanguage:swift"],
+  "main": "./out/extension/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "swiftui-preview.openPreview",
+        "title": "SwiftUI: Open Preview",
+        "category": "SwiftUI Preview"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "swiftui-preview.openPreview",
+          "when": "resourceExtname == .swift",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "test": "jest --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "jest": "^29.0.0",
+    "@jest/globals": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "web-tree-sitter": "^0.26.8"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.ts"],
+    "moduleNameMapper": {
+      "^vscode$": "<rootDir>/tests/__mocks__/vscode.ts"
+    }
+  }
+}
