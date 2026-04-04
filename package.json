@@ -31,7 +31,7 @@
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "package": "node esbuild.js --production",
-    "test": "jest --passWithNoTests"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --passWithNoTests"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
