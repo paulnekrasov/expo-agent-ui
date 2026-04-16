@@ -1,11 +1,12 @@
 import type { Node as SyntaxNode } from "web-tree-sitter";
 
 import {
+  makeConditionalContent,
   makeCustomView,
   makeGroup,
   makeUnknown,
 } from "../../../ir/builders";
-import type { ViewNode } from "../../../ir/types";
+import type { ConditionExpr, ViewNode } from "../../../ir/types";
 import { parseCoreModifier } from "../modifiers/coreModifiers";
 import {
   getLastPathComponent,
@@ -23,6 +24,10 @@ import {
 } from "../shared";
 import { parseButtonCall } from "./button";
 import { parseImageCall } from "./image";
+import {
+  parseNavigationLinkCall,
+  parseNavigationStackCall,
+} from "./navigation";
 import { parseSpacerCall } from "./spacer";
 import {
   parseHStackCall,
@@ -30,6 +35,57 @@ import {
   parseZStackCall,
 } from "./stacks";
 import { parseTextCall } from "./text";
+
+const SWIFTUI_BUILTIN_VIEW_NAMES = new Set([
+  "AsyncImage",
+  "Button",
+  "Capsule",
+  "Circle",
+  "Color",
+  "ConfirmationDialog",
+  "ContextMenu",
+  "DatePicker",
+  "Divider",
+  "Ellipse",
+  "Form",
+  "ForEach",
+  "GeometryReader",
+  "Group",
+  "HStack",
+  "Image",
+  "Label",
+  "LazyHGrid",
+  "LazyHStack",
+  "LazyVGrid",
+  "LazyVStack",
+  "Link",
+  "List",
+  "Menu",
+  "NavigationLink",
+  "NavigationStack",
+  "NavigationView",
+  "Path",
+  "Picker",
+  "ProgressView",
+  "Rectangle",
+  "RoundedRectangle",
+  "ScrollView",
+  "Section",
+  "SecureField",
+  "Sheet",
+  "Slider",
+  "Spacer",
+  "Stepper",
+  "TabItem",
+  "TabView",
+  "Text",
+  "TextField",
+  "Toggle",
+  "Toolbar",
+  "ToolbarItem",
+  "VStack",
+  "ZStack",
+]);
 
 function isModifierCall(
   call: CallDetails
@@ -162,6 +218,86 @@ function wrapBuilderChildren(
   return withSourceRange(makeGroup(children), syntaxNode);
 }
 
+function parseConditionComparisonValue(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (trimmed === "true") {
+    return true;
+  }
+
+  if (trimmed === "false") {
+    return false;
+  }
+
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+
+  const numeric = Number(trimmed);
+  if (Number.isFinite(numeric)) {
+    return numeric;
+  }
+
+  return trimmed;
+}
+
+function parseConditionExpression(
+  node: SyntaxNode,
+  context: ParseSourceContext
+): ConditionExpr {
+  const raw = getNodeText(node, context).trim();
+
+  if (node.type === "prefix_expression" && raw.startsWith("!")) {
+    const target = node.childForFieldName("target");
+    if (target) {
+      return {
+        kind: "not",
+        operand: parseConditionExpression(target, context),
+      };
+    }
+  }
+
+  const navigationPath = getNavigationPath(node, context);
+  if (
+    node.type === "navigation_expression" &&
+    navigationPath.endsWith(".isEmpty")
+  ) {
+    return {
+      kind: "isEmpty",
+      binding: navigationPath.slice(0, -".isEmpty".length),
+    };
+  }
+
+  const comparisonMatch = raw.match(
+    /^(.+?)\s*(==|!=|>|<)\s*(.+)$/
+  );
+  if (comparisonMatch) {
+    const left = comparisonMatch[1];
+    const op = comparisonMatch[2];
+    const right = comparisonMatch[3];
+    if (!left || !op || !right) {
+      return {
+        kind: "binding",
+        name: raw,
+      };
+    }
+
+    return {
+      kind: "comparison",
+      left: left.trim(),
+      op: op as "==" | "!=" | ">" | "<",
+      right: parseConditionComparisonValue(right),
+    };
+  }
+
+  return {
+    kind: "binding",
+    name: raw,
+  };
+}
+
 function parseIfStatement(
   node: SyntaxNode,
   context: ParseSourceContext
@@ -175,31 +311,25 @@ function parseIfStatement(
     ? parseBooleanLiteral(conditionNode, context)
     : null;
 
-  if (literalCondition === true) {
-    return wrapBuilderChildren(
-      parseViewNodesFromStatements(
-        statementsNodes[0] ?? null,
-        context
-      ),
-      node
-    );
-  }
+  const thenChildren = parseViewNodesFromStatements(
+    statementsNodes[0] ?? null,
+    context
+  );
+  const elseChildren = parseViewNodesFromStatements(
+    statementsNodes[1] ?? null,
+    context
+  );
+  const activeChildren =
+    literalCondition === false ? elseChildren : thenChildren;
+  const condition: ConditionExpr = conditionNode
+    ? parseConditionExpression(conditionNode, context)
+    : {
+        kind: "binding",
+        name: getNodeText(node, context),
+      };
 
-  if (literalCondition === false) {
-    return wrapBuilderChildren(
-      parseViewNodesFromStatements(
-        statementsNodes[1] ?? null,
-        context
-      ),
-      node
-    );
-  }
-
-  return wrapBuilderChildren(
-    parseViewNodesFromStatements(
-      statementsNodes[1] ?? null,
-      context
-    ),
+  return withSourceRange(
+    makeConditionalContent(condition, activeChildren),
     node
   );
 }
@@ -221,6 +351,18 @@ function parseKnownViewCall(
       return parseButtonCall(call, context, parseViewNode);
     case "Image":
       return parseImageCall(call, context);
+    case "NavigationLink":
+      return parseNavigationLinkCall(
+        call,
+        context,
+        parseViewNode
+      );
+    case "NavigationStack":
+      return parseNavigationStackCall(
+        call,
+        context,
+        parseViewNode
+      );
     case "Spacer":
       return parseSpacerCall(call, context);
     default:
@@ -246,9 +388,18 @@ function parseBaseCall(
     case "Text":
     case "Button":
     case "Image":
+    case "NavigationLink":
+    case "NavigationStack":
     case "Spacer":
       return parseKnownViewCall(call, context);
     default:
+      if (SWIFTUI_BUILTIN_VIEW_NAMES.has(call.calleeName)) {
+        return withSourceRange(
+          makeUnknown(call.calleeName, getNodeText(call.node, context)),
+          call.node
+        );
+      }
+
       if (looksLikeCustomView(call.calleeName)) {
         return parseCustomViewCall(call, context);
       }

@@ -28,6 +28,7 @@ export interface CallDetails {
   arguments: CallArgument[];
   suffixes: SyntaxNode[];
   trailingClosures: SyntaxNode[];
+  trailingClosureArguments: CallArgument[];
 }
 
 export interface PendingModifier {
@@ -152,8 +153,11 @@ export function parseCallDetails(
   const suffixes = getNamedChildrenByType(node, "call_suffix");
   const argumentsList: CallArgument[] = [];
   const trailingClosures: SyntaxNode[] = [];
+  const trailingClosureArguments: CallArgument[] = [];
 
   for (const suffix of suffixes) {
+    let pendingTrailingClosureLabel: string | null = null;
+
     for (const child of suffix.namedChildren) {
       if (child.type === "value_arguments") {
         for (const argumentNode of child.namedChildren) {
@@ -177,8 +181,15 @@ export function parseCallDetails(
             value: valueNode,
           });
         }
+      } else if (child.type === "simple_identifier") {
+        pendingTrailingClosureLabel = getNodeText(child, context);
       } else if (child.type === "lambda_literal") {
         trailingClosures.push(child);
+        trailingClosureArguments.push({
+          label: pendingTrailingClosureLabel,
+          value: child,
+        });
+        pendingTrailingClosureLabel = null;
       }
     }
   }
@@ -192,6 +203,7 @@ export function parseCallDetails(
     arguments: argumentsList,
     suffixes,
     trailingClosures,
+    trailingClosureArguments,
   };
 }
 

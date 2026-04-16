@@ -19,6 +19,7 @@ import type {
   TabViewNode, TabItemNode,
   SheetNode, AlertNode, ConfirmationDialogNode,
   ToolbarNode, ToolbarItemNode,
+  ConditionalContentNode,
   CustomViewNode, UnknownNode,
 } from "./types";
 
@@ -75,6 +76,8 @@ export const isAlert = (n: ViewNode): n is AlertNode => n.kind === "Alert";
 export const isConfirmationDialog = (n: ViewNode): n is ConfirmationDialogNode => n.kind === "ConfirmationDialog";
 export const isToolbar = (n: ViewNode): n is ToolbarNode => n.kind === "Toolbar";
 export const isToolbarItem = (n: ViewNode): n is ToolbarItemNode => n.kind === "ToolbarItem";
+export const isConditionalContent = (n: ViewNode): n is ConditionalContentNode =>
+  n.kind === "ConditionalContent";
 
 export const isCustomView = (n: ViewNode): n is CustomViewNode => n.kind === "CustomViewNode";
 export const isUnknown = (n: ViewNode): n is UnknownNode => n.kind === "UnknownNode";
@@ -88,7 +91,8 @@ export function isContainer(n: ViewNode): n is Extract<ViewNode, { children: Vie
     isLazyVStack(n) || isLazyHStack(n) ||
     isLazyVGrid(n) || isLazyHGrid(n) ||
     isList(n) || isSection(n) || isForm(n) || isGroup(n) ||
-    isTabView(n) || isPicker(n) || isMenu(n) || isContextMenu(n)
+    isTabView(n) || isPicker(n) || isMenu(n) || isContextMenu(n) ||
+    isConditionalContent(n)
   );
 }
 

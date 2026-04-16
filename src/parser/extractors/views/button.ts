@@ -40,16 +40,11 @@ function parseButtonRole(
 }
 
 function parseButtonLabelFromClosure(
-  call: CallDetails,
+  lambdaNode: SyntaxNode,
   context: ParseSourceContext,
   parseNestedView: NestedViewParser
 ): ViewNode | null {
-  const labelClosure = call.trailingClosures[0];
-  if (!labelClosure) {
-    return null;
-  }
-
-  const statementsNode = getStatementsNodeFromLambda(labelClosure);
+  const statementsNode = getStatementsNodeFromLambda(lambdaNode);
   const firstViewNode = statementsNode?.namedChildren.find(
     (child) =>
       child.type === "call_expression" || child.type === "if_statement"
@@ -58,6 +53,51 @@ function parseButtonLabelFromClosure(
   return firstViewNode
     ? parseNestedView(firstViewNode, context)
     : null;
+}
+
+function parseButtonLabelFromExplicitClosure(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode | null {
+  const labelClosureArgument =
+    call.trailingClosureArguments.find(
+      (argument) => argument.label === "label"
+    ) ??
+    call.arguments.find(
+      (argument) =>
+        argument.label === "label" &&
+        argument.value.type === "lambda_literal"
+    );
+  const labelClosure = labelClosureArgument?.value;
+  if (!labelClosure) {
+    return null;
+  }
+
+  return parseButtonLabelFromClosure(
+    labelClosure,
+    context,
+    parseNestedView
+  );
+}
+
+function parseButtonLabelFromUnlabeledTrailingClosure(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode | null {
+  const labelClosure = call.trailingClosureArguments.find(
+    (argument) => argument.label === null
+  )?.value;
+  if (!labelClosure) {
+    return null;
+  }
+
+  return parseButtonLabelFromClosure(
+    labelClosure,
+    context,
+    parseNestedView
+  );
 }
 
 function parseButtonLabelFromString(
@@ -85,8 +125,17 @@ export function parseButtonCall(
   parseNestedView: NestedViewParser
 ): ViewNode {
   const label =
-    parseButtonLabelFromClosure(call, context, parseNestedView) ??
+    parseButtonLabelFromExplicitClosure(
+      call,
+      context,
+      parseNestedView
+    ) ??
     parseButtonLabelFromString(call, context) ??
+    parseButtonLabelFromUnlabeledTrailingClosure(
+      call,
+      context,
+      parseNestedView
+    ) ??
     makeUnknown("ButtonLabel", getNodeText(call.node, context));
 
   const button = makeButton(label);

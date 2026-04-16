@@ -11,8 +11,8 @@ import type {
   TextFieldNode, SecureFieldNode, ToggleNode, PickerNode,
   SliderNode, StepperNode, DatePickerNode,
   RectangleNode, CircleNode, CapsuleNode, RoundedRectangleNode, EllipseNode,
-  TabViewNode, CustomViewNode, UnknownNode,
-  Alignment,
+  TabViewNode, ConditionalContentNode, CustomViewNode, UnknownNode,
+  Alignment, ConditionExpr,
 } from "./types";
 
 let _nextId = 0;
@@ -244,6 +244,19 @@ export function makeTabView(
   modifiers: Modifier[] = []
 ): TabViewNode {
   return { kind: "TabView", children, ...base(modifiers) };
+}
+
+export function makeConditionalContent(
+  condition: ConditionExpr,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): ConditionalContentNode {
+  return {
+    kind: "ConditionalContent",
+    condition,
+    children,
+    ...base(modifiers),
+  };
 }
 
 export function makeCustomView(

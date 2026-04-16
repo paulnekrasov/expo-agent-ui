@@ -643,6 +643,10 @@ At session start for layout work:  `docs/reference/layer-4-layout/core-container
 At session start for renderer work: `docs/reference/layer-5-hig/touch-typography-colors.md`
 
 State the stage at the start of every code response: "Working in Stage 2 (Extractor)..."
+Read `docs/agents/ORCHESTRATION.md`, `docs/agents/PHASE_STATE.md`,
+`docs/agents/HANDOFF.md`, and `docs/agents/ROADMAP_CHECKLIST.md` before choosing work.
+Use `docs/agents/REVIEW_CHECKLIST.md` for review passes so only the active-stage checks are applied.
+Read `docs/agents/TASK.md` and `docs/agents/REVIEW.md` when an active task or review cycle exists.
 Use real tree-sitter node type names from the `tree-sitter-swift` grammar — never abstract descriptions
 Write complete, runnable TypeScript — no pseudocode, no "you'd do something like..."
 Cite SwiftUI layout authority when making layout decisions:
@@ -672,16 +676,20 @@ Never implement state reactivity until the static layout engine has passing test
 Never talk the developer out of the deep layout engine — it is an explicit goal
 ---
 14. CURRENT BUILD PHASE
-> The developer updates this section manually as work progresses.
+> This section is a coarse snapshot. The authoritative live state now lives in
+> `docs/agents/PHASE_STATE.md` and `docs/agents/ROADMAP_CHECKLIST.md`.
 Current phase: PHASE 1 — Parser Foundation
 Active tasks
-[ ] `treeSitterSetup.ts` — init web-tree-sitter WASM, load Swift grammar, Windows-safe path
-[ ] `astWalker.ts` — depth-first traversal with visitor dispatch table
-[ ] Core view extractors: `VStack`, `HStack`, `ZStack`, `Text`, `Button`, `Image`, `Spacer`
-[ ] Core modifier extractors: `.font`, `.foregroundColor`, `.padding`, `.frame`,
+[x] `treeSitterSetup.ts` — init web-tree-sitter WASM, load Swift grammar, Windows-safe path
+[x] `astWalker.ts` — depth-first traversal with visitor dispatch table
+[x] Core view extractors: `VStack`, `HStack`, `ZStack`, `Text`, `Button`, `Image`, `Spacer`
+[x] Core modifier extractors: `.font`, `.foregroundColor`, `.padding`, `.frame`,
 `.background`, `.cornerRadius`, `.opacity`, `.navigationTitle`
-[ ] Output IR as pretty-printed JSON to VS Code OutputChannel (no rendering yet)
-[ ] Unit tests: Swift snippet string → assert correct ViewNode JSON shape
+[x] Output IR as pretty-printed JSON to VS Code OutputChannel (no rendering yet)
+[x] Unit tests: Swift snippet string → assert correct ViewNode JSON shape
+Current emphasis
+[ ] Expand built-in Stage 2 extractor coverage for navigation, list, and form families
+[ ] Split broad parser coverage into more granular stage-appropriate tests
 Not started yet
 Layout engine (Phase 2)
 Renderer / Canvas (Phase 3)
@@ -716,13 +724,18 @@ render the `else` branch as the stub default (condition evaluates to false).
 15. SESSION STARTUP PROTOCOL
 At the start of every Claude Code session:
 Re-read this entire CLAUDE.md
-Check Section 14 to understand where work left off
-Ask: "We're in Phase [X] — what are you working on today?" — never assume
-Confirm which specific file is being worked on before writing any code
-Treat every session as stateless — carry no assumptions from previous sessions
+Read `docs/agents/ORCHESTRATION.md`
+Read `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/ROADMAP_CHECKLIST.md`
+Read `docs/agents/TASK.md` if it is populated
+Use `docs/agents/REVIEW.md` when continuing an existing review/fix loop
+Use `docs/agents/REVIEW_CHECKLIST.md` when performing review work
+Check Section 14 only as a coarse snapshot, not as the live task tracker
+If the agent-state files are missing, seed them before starting deeper work
+Confirm the roadmap phase, pipeline stage, and exit condition before writing code
+Treat chat state as ephemeral — the files are the durable memory
 When the developer describes a feature, map it to a stage before writing any code
 ---
-Last updated: 2026-03-23
+Last updated: 2026-04-16
 Developer OS: Windows
 Project type: Personal tool — not a product
 Primary target device: iPhone 16 Pro (393 × 852 pt)

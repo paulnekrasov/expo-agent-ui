@@ -45,6 +45,17 @@ export interface EdgeInsets {
   trailing: number;
 }
 
+export type ConditionExpr =
+  | { kind: "binding"; name: string }
+  | { kind: "not"; operand: ConditionExpr }
+  | { kind: "isEmpty"; binding: string }
+  | {
+      kind: "comparison";
+      left: string;
+      op: "==" | "!=" | ">" | "<";
+      right: unknown;
+    };
+
 export type FontStyle =
   | "largeTitle" | "title" | "title2" | "title3"
   | "headline" | "body" | "callout" | "subheadline"
@@ -196,6 +207,7 @@ export type ViewNode =
   | TabViewNode | TabItemNode
   | SheetNode | AlertNode | ConfirmationDialogNode
   | ToolbarNode | ToolbarItemNode
+  | ConditionalContentNode
   | CustomViewNode
   | UnknownNode; // ALWAYS the final fallback — never omit this
 
@@ -485,6 +497,12 @@ export interface ToolbarItemNode extends BaseNode {
   kind: "ToolbarItem";
   placement: string;
   child: ViewNode;
+}
+
+export interface ConditionalContentNode extends BaseNode {
+  kind: "ConditionalContent";
+  condition: ConditionExpr;
+  children: ViewNode[];
 }
 
 export interface CustomViewNode extends BaseNode {

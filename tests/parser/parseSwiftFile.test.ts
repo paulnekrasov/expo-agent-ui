@@ -20,11 +20,7 @@ struct ContentView: View {
         .cornerRadius(12)
         .opacity(0.8)
 
-      if showDetails {
-        Image(systemName: "star")
-      } else {
-        Spacer(minLength: 12)
-      }
+      Spacer(minLength: 12)
 
       Button("Tap") { }
     }
@@ -90,6 +86,90 @@ struct ContentView: View {
     });
   });
 
+  it("extracts the visual label from Button multiple trailing closures", async () => {
+    const roots = await parseSwiftFile(`
+Button {
+  login()
+} label: {
+  Text("Log in")
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed button");
+    }
+
+    expect(root).toMatchObject({
+      kind: "Button",
+      label: {
+        kind: "Text",
+        content: "Log in",
+        isDynamic: false,
+      },
+    });
+  });
+
+  it("extracts the visual label from Button(action:label:) closures", async () => {
+    const roots = await parseSwiftFile(`
+Button(action: {
+  login()
+}, label: {
+  Text("Log in")
+})
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed button");
+    }
+
+    expect(root).toMatchObject({
+      kind: "Button",
+      label: {
+        kind: "Text",
+        content: "Log in",
+        isDynamic: false,
+      },
+    });
+  });
+
+  it("preserves non-literal if statements as conditional content", async () => {
+    const roots = await parseSwiftFile(`
+import SwiftUI
+
+struct ContentView: View {
+  var body: some View {
+    VStack {
+      if showDetails {
+        Text("Visible")
+      } else {
+        Text("Hidden")
+      }
+    }
+  }
+}
+`);
+    const root = roots[0];
+    if (!root || root.kind !== "VStack") {
+      throw new Error("Expected VStack root");
+    }
+
+    expect(root.children).toHaveLength(1);
+    expect(root.children[0]).toMatchObject({
+      kind: "ConditionalContent",
+      condition: {
+        kind: "binding",
+        name: "showDetails",
+      },
+      children: [
+        {
+          kind: "Text",
+          content: "Visible",
+          isDynamic: false,
+        },
+      ],
+    });
+  });
+
   it("extracts top-level custom view calls", async () => {
     const roots = await parseSwiftFile(
       'MyCustomRow(title: "Hello", value: 42)'
@@ -110,6 +190,21 @@ struct ContentView: View {
         title: "Hello",
         value: 42,
       },
+    });
+  });
+
+  it("falls back to UnknownNode for unsupported built-in SwiftUI views", async () => {
+    const roots = await parseSwiftFile(
+      'Toggle("On", isOn: $isOn)'
+    );
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed root view");
+    }
+
+    expect(root).toMatchObject({
+      kind: "UnknownNode",
+      rawType: "Toggle",
     });
   });
 
