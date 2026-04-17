@@ -194,9 +194,11 @@ struct ContentView: View {
   });
 
   it("falls back to UnknownNode for unsupported built-in SwiftUI views", async () => {
-    const roots = await parseSwiftFile(
-      'Toggle("On", isOn: $isOn)'
-    );
+    const roots = await parseSwiftFile(`
+Picker("Sort", selection: selection) {
+  Text("Recent")
+}
+`);
     const root = roots[0];
     if (!root) {
       throw new Error("Expected a parsed root view");
@@ -204,7 +206,7 @@ struct ContentView: View {
 
     expect(root).toMatchObject({
       kind: "UnknownNode",
-      rawType: "Toggle",
+      rawType: "Picker",
     });
   });
 

@@ -5,7 +5,7 @@ import type {
   ViewNode, Modifier,
   VStackNode, HStackNode, ZStackNode,
   TextNode, ButtonNode, ImageNode, SpacerNode, DividerNode,
-  ScrollViewNode, NavigationStackNode, NavigationLinkNode,
+  ScrollViewNode, GeometryReaderNode, NavigationStackNode, NavigationLinkNode,
   ListNode, ForEachNode, SectionNode,
   FormNode, GroupNode,
   TextFieldNode, SecureFieldNode, ToggleNode, PickerNode,
@@ -90,9 +90,23 @@ export function makeDivider(modifiers: Modifier[] = []): DividerNode {
 export function makeScrollView(
   child: ViewNode,
   axes: ScrollViewNode["axes"] = "vertical",
+  showsIndicators = true,
   modifiers: Modifier[] = []
 ): ScrollViewNode {
-  return { kind: "ScrollView", axes, showsIndicators: true, child, ...base(modifiers) };
+  return {
+    kind: "ScrollView",
+    axes,
+    showsIndicators,
+    child,
+    ...base(modifiers),
+  };
+}
+
+export function makeGeometryReader(
+  child: ViewNode,
+  modifiers: Modifier[] = []
+): GeometryReaderNode {
+  return { kind: "GeometryReader", child, ...base(modifiers) };
 }
 
 export function makeNavigationStack(

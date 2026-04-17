@@ -32,17 +32,17 @@ Status: In progress
 - [x] `Spacer`
 - [x] `if_statement` to `ConditionalContent`
 - [x] `CustomViewNode` fallback for custom view call sites
-- [ ] `NavigationStack`
-- [ ] `NavigationLink`
-- [ ] `List`
-- [ ] `Section`
-- [ ] `ForEach`
-- [ ] `ScrollView`
-- [ ] `GeometryReader`
-- [ ] `Form`
-- [ ] `Toggle`
-- [ ] `TextField`
-- [ ] `SecureField`
+- [x] `NavigationStack`
+- [x] `NavigationLink`
+- [x] `List`
+- [x] `Section`
+- [x] `ForEach`
+- [x] `ScrollView`
+- [x] `GeometryReader`
+- [x] `Form`
+- [x] `Toggle`
+- [x] `TextField`
+- [x] `SecureField`
 
 ### Core modifier extraction
 
@@ -69,14 +69,13 @@ Status: In progress
 
 - [x] repo-level parser integration test
 - [x] build passes
-- [ ] per-extractor test files under `tests/parser/extractors`
+- [x] per-extractor test files under `tests/parser/extractors`
 - [ ] broaden Swift snippet fixtures to cover navigation, lists, forms, and grids
 - [ ] add expected IR fixtures for major view families
 
 ### Recommended next bounded tasks
 
-- [ ] Implement Stage 2 extraction for `NavigationStack` and `NavigationLink`
-- [ ] Implement Stage 2 extraction for `List`, `Section`, and `ForEach`
+- [ ] Re-run full repo verification for the completed `Form` / `Toggle` / `TextField` / `SecureField` Stage 2 slice in a spawn-enabled environment
 - [ ] Add per-extractor tests for stack and content extractors
 
 ## Phase 2 - Resolver

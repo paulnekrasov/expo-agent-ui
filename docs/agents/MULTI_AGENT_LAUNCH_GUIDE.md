@@ -67,6 +67,14 @@ Do not run in parallel:
 - implementer + fixer together,
 - implementer + another implementer in the same stage unless file ownership is explicitly disjoint.
 
+### Pattern D - Scheduled automation loop
+
+Best when you want the repo to be checked on a timer and the workflow to refresh itself.
+
+Use [SCHEDULED_AUTOMATION_LOOP_PROMPT.md](C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md).
+
+Use [PROMPT_ROTATION_PROTOCOL.md](C:/Users/Asus/OneDrive/Desktop/swift-ui-parser/docs/agents/PROMPT_ROTATION_PROTOCOL.md) with it so the automation deletes and replaces only disposable runtime prompts, not the stable prompt library.
+
 ## Example single-prompt launch
 
 ```text
@@ -101,6 +109,18 @@ Keep the work inside Phase 1 / Stage 2 only.
 If you can spawn specialist agents, use parser-implementer, phase-reviewer, and issue-fixer in sequence.
 Keep one writer at a time.
 Update TASK.md, REVIEW.md, PHASE_STATE.md, and HANDOFF.md before finishing.
+```
+
+## Example scheduled automation launch
+
+```text
+Use stage-orchestrator as the coordinator and run the scheduled agent loop for this repo.
+Read the docs/agents state files first.
+Determine the active phase and stage from repo state rather than assuming them.
+Run exactly one bounded task loop.
+If the active task completed or changed, rotate the runtime prompt set under docs/agents/runtime-prompts/.
+Update TASK.md, REVIEW.md, PHASE_STATE.md, HANDOFF.md, and RUNTIME_STATUS.md before finishing.
+Keep one writer at a time.
 ```
 
 ## How the loop actually works

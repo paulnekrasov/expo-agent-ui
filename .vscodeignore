@@ -3,6 +3,7 @@
 src/**
 tests/**
 tree-sitter-swift/**
+tree-sitter-swift.wasm
 docs/**
 skills/**
 node_modules/**

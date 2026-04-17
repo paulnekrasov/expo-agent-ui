@@ -90,7 +90,7 @@ NavigationLink(destination: DetailView()) {
     });
   });
 
-  it("extracts NavigationLink multiple trailing closures and preserves unsupported children", async () => {
+  it("extracts NavigationLink multiple trailing closures with supported Toggle children", async () => {
     const roots = await parseSwiftFile(`
 NavigationLink {
   Text("Detail")
@@ -118,8 +118,13 @@ NavigationLink {
             isDynamic: false,
           },
           {
-            kind: "UnknownNode",
-            rawType: "Toggle",
+            kind: "Toggle",
+            isOn: false,
+            label: {
+              kind: "Text",
+              content: "Enabled",
+              isDynamic: false,
+            },
           },
         ],
       },
@@ -143,7 +148,7 @@ NavigationLink {
     });
   });
 
-  it("wraps multiple NavigationStack root children in Group and keeps unsupported calls as UnknownNode", async () => {
+  it("wraps multiple NavigationStack root children in Group and preserves supported Toggle calls", async () => {
     const roots = await parseSwiftFile(`
 NavigationStack {
   Text("Root")
@@ -166,8 +171,13 @@ NavigationStack {
             isDynamic: false,
           },
           {
-            kind: "UnknownNode",
-            rawType: "Toggle",
+            kind: "Toggle",
+            isOn: false,
+            label: {
+              kind: "Text",
+              content: "Enabled",
+              isDynamic: false,
+            },
           },
         ],
       },

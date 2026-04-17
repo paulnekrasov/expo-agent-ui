@@ -5,33 +5,35 @@ Session date: 2026-04-17
 
 ## What I did
 
-- Completed the bounded Phase 1 / Stage 2 navigation task already defined in `docs/agents/TASK.md`
-- Added `src/parser/extractors/views/navigation.ts` and wired `NavigationStack` / `NavigationLink` into the Stage 2 view dispatcher
-- Added snippet-based navigation tests in `tests/parser/extractors/navigation.test.ts`
-- Ran `npm test -- --runInBand` and `npm run build`
-- Closed the review loop with `docs/agents/REVIEW.md` clear and the issue-fixer pass returning `NO_ACTION_NEEDED`
+- Implemented the bounded Phase 1 / Stage 2 `Form` / `Toggle` / `TextField` / `SecureField` extractor slice in `src/parser/extractors/views/forms.ts`
+- Wired the new forms/control extractor paths through `src/parser/extractors/views/index.ts`
+- Added `tests/parser/extractors/forms.test.ts` and updated the adjacent list, navigation, scroll, and parser smoke tests so supported `Toggle` extraction is asserted consistently
+- Verified the targeted Stage 2 suites pass (`5` suites, `27` tests)
+- Verified `node .\node_modules\typescript\lib\tsc.js --noEmit` passes
 
 ## What I found
 
-- `NavigationStack(path: ...) { ... }` can ignore the path argument in Stage 2 and still extract the visual root closure correctly
-- `NavigationLink` needs three Stage 2 routing cases to stay reliable: `destination:label:` closure arguments, `destination:` plus unlabeled trailing label closure, and the iOS 16 multiple-trailing-closure form
-- Unsupported nested built-in content still degrades correctly to `UnknownNode` when parsed inside navigation containers
+- The Stage 2 forms/control diff itself reviewed cleanly: no `BUG` or `ACTIVE_STAGE_GAP` findings were found in the touched extractor files
+- Full verification is blocked by the current automation environment, not by the new extractor logic: `cmd /c npm.cmd test -- --runInBand` now fails only in `tests/build/esbuild.test.ts`, and `cmd /c npm.cmd run build` fails with the same `spawnSync C:\Program Files\nodejs\node.exe EPERM` preflight error before esbuild starts
+- A direct probe reproduced the blocker outside Jest as well: `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` returned `EPERM`
+- `Form`, `Toggle`, `TextField`, and `SecureField` should now be treated as implemented Stage 2 extraction coverage; do not re-seed them as missing feature work unless a regression appears
 
 ## What the next agent must do first
 
-- Read `docs/agents/TASK.md` and refresh it to the next bounded Stage 2 task because the navigation task is complete
-- Prefer `List`, `Section`, and `ForEach` extraction plus tests as the next Phase 1 slice
-- Keep the next loop inside Stage 2 only
+- Re-run `cmd /c npm.cmd test -- --runInBand`, `node .\node_modules\typescript\lib\tsc.js --noEmit`, and `cmd /c npm.cmd run build` in an environment that permits child-process spawning
+- If those commands all pass, close the current Stage 2 forms/control task in the live state files and only then seed the next bounded Phase 1 task
+- If the full gate still fails after the spawn blocker is gone, reopen it as a build/tooling regression rather than modifying `src/parser/extractors/views/forms.ts`
 
 ## What the next agent must not do
 
-- Do not reopen navigation work unless a new review finding or regression appears
-- Do not mix resolver, layout, renderer, or interaction logic into the next parser task
-- Do not treat later-phase missing features as Stage 2 bugs
+- Do not reimplement the `Form` / `Toggle` / `TextField` / `SecureField` slice while the only open blocker is the spawn-denied verification environment
+- Do not widen into resolver, layout, renderer, device, navigation-state, or new build-tooling work unless a spawn-enabled rerun produces a real repo regression
+- Do not reopen completed navigation, list-family, or scroll extraction work unless the rerun exposes a fresh Stage 2 bug
+- Do not treat the current `spawnSync ... EPERM` failure as proof of a repo-side esbuild regression without first reproducing it in a spawn-enabled environment
 
 ## Confidence level on current build
 
-- Phase 1 / Parser Foundation: 74%
+- Phase 1 / Parser Foundation: 94%
 - Phase 2 / Resolver: 0%
 - Phase 3 / Layout Foundation: 0%
 - Phase 4 / Renderer Foundation: 0%

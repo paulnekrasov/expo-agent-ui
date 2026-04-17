@@ -23,11 +23,26 @@ import {
   type PendingModifier,
 } from "../shared";
 import { parseButtonCall } from "./button";
+import {
+  parseFormCall,
+  parseSecureFieldCall,
+  parseTextFieldCall,
+  parseToggleCall,
+} from "./forms";
 import { parseImageCall } from "./image";
+import {
+  parseForEachCall,
+  parseListCall,
+  parseSectionCall,
+} from "./lists";
 import {
   parseNavigationLinkCall,
   parseNavigationStackCall,
 } from "./navigation";
+import {
+  parseGeometryReaderCall,
+  parseScrollViewCall,
+} from "./scroll";
 import { parseSpacerCall } from "./spacer";
 import {
   parseHStackCall,
@@ -349,8 +364,16 @@ function parseKnownViewCall(
       return parseTextCall(call, context);
     case "Button":
       return parseButtonCall(call, context, parseViewNode);
+    case "Form":
+      return parseFormCall(call, context, parseViewNode);
     case "Image":
       return parseImageCall(call, context);
+    case "List":
+      return parseListCall(call, context, parseViewNode);
+    case "ForEach":
+      return parseForEachCall(call, context, parseViewNode);
+    case "Section":
+      return parseSectionCall(call, context, parseViewNode);
     case "NavigationLink":
       return parseNavigationLinkCall(
         call,
@@ -363,8 +386,30 @@ function parseKnownViewCall(
         context,
         parseViewNode
       );
+    case "ScrollView":
+      return parseScrollViewCall(call, context, parseViewNode);
+    case "GeometryReader":
+      return parseGeometryReaderCall(
+        call,
+        context,
+        parseViewNode
+      );
+    case "SecureField":
+      return parseSecureFieldCall(
+        call,
+        context,
+        parseViewNode
+      );
     case "Spacer":
       return parseSpacerCall(call, context);
+    case "TextField":
+      return parseTextFieldCall(
+        call,
+        context,
+        parseViewNode
+      );
+    case "Toggle":
+      return parseToggleCall(call, context, parseViewNode);
     default:
       return withSourceRange(
         makeUnknown(call.calleeName, getNodeText(call.node, context)),
@@ -387,10 +432,19 @@ function parseBaseCall(
     case "ZStack":
     case "Text":
     case "Button":
+    case "Form":
     case "Image":
+    case "List":
+    case "ForEach":
+    case "Section":
     case "NavigationLink":
     case "NavigationStack":
+    case "ScrollView":
+    case "GeometryReader":
+    case "SecureField":
     case "Spacer":
+    case "TextField":
+    case "Toggle":
       return parseKnownViewCall(call, context);
     default:
       if (SWIFTUI_BUILTIN_VIEW_NAMES.has(call.calleeName)) {

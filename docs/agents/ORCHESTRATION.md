@@ -109,6 +109,15 @@ Canonical templates for the mutable workflow files.
 
 Use it to keep terminology and section order consistent across sessions.
 
+### `PROMPT_ROTATION_PROTOCOL.md`
+
+Rules for managing prompt files during scheduled or autonomous runs.
+
+Use it to distinguish:
+
+- stable prompt library files that must remain,
+- disposable runtime prompt files that may be deleted and replaced.
+
 ## Default loop
 
 Use this bounded loop unless the developer explicitly asks for something else:
@@ -129,6 +138,8 @@ Use this bounded loop unless the developer explicitly asks for something else:
 - Never combine parser, layout, and renderer implementation in one task.
 - Never use `swiftui_planning_full.md` as a session log.
 - Never update `CLAUDE.md` with transient task state that belongs in `docs/agents/*`.
+- Never delete stable prompt library files during routine automation runs.
+- Only rotate disposable prompt files under `docs/agents/runtime-prompts/`.
 
 ## Startup contract
 
@@ -139,8 +150,9 @@ At the start of any coding or review session:
 3. Read `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/ROADMAP_CHECKLIST.md`.
 4. Read `docs/agents/TASK.md` if it is populated.
 5. Read `docs/agents/REVIEW_CHECKLIST.md` if the session is a review or fix pass.
-6. Map the request to `Roadmap Phase`, `Pipeline Stage`, and `Research Layer`.
-7. Open only the stage-specific reference docs required for the active task.
+6. Read `docs/agents/PROMPT_ROTATION_PROTOCOL.md` if the session is scheduled or will manage runtime prompts.
+7. Map the request to `Roadmap Phase`, `Pipeline Stage`, and `Research Layer`.
+8. Open only the stage-specific reference docs required for the active task.
 
 ## Planning-file relationship
 
