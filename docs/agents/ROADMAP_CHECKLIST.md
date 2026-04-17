@@ -71,12 +71,11 @@ Status: In progress
 - [x] build passes
 - [x] per-extractor test files under `tests/parser/extractors`
 - [ ] broaden Swift snippet fixtures to cover navigation, lists, forms, and grids
-- [ ] add expected IR fixtures for major view families
+- [x] add expected IR fixtures for major view families
 
 ### Recommended next bounded tasks
 
-- [ ] Re-run full repo verification for the completed `Form` / `Toggle` / `TextField` / `SecureField` Stage 2 slice in a spawn-enabled environment
-- [ ] Add per-extractor tests for stack and content extractors
+- [ ] Re-run full repo verification for the completed expected-IR fixture coverage slice in a child-process-enabled environment
 
 ## Phase 2 - Resolver
 Pipeline Stage: Stage 3 Resolver

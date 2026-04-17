@@ -1,0 +1,57 @@
+[
+  {
+    "kind": "NavigationStack",
+    "child": {
+      "kind": "NavigationLink",
+      "label": {
+        "kind": "HStack",
+        "alignment": "center",
+        "spacing": null,
+        "children": [
+          {
+            "kind": "Image",
+            "source": {
+              "kind": "systemName",
+              "name": "star"
+            },
+            "isResizable": false,
+            "contentMode": null,
+            "modifiers": []
+          },
+          {
+            "kind": "Text",
+            "content": "Open",
+            "isDynamic": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      },
+      "destination": {
+        "kind": "Group",
+        "children": [
+          {
+            "kind": "Text",
+            "content": "Detail",
+            "isDynamic": false,
+            "modifiers": []
+          },
+          {
+            "kind": "Toggle",
+            "label": {
+              "kind": "Text",
+              "content": "Enabled",
+              "isDynamic": false,
+              "modifiers": []
+            },
+            "isOn": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      },
+      "modifiers": []
+    },
+    "modifiers": []
+  }
+]

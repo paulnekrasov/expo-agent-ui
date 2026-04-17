@@ -1,27 +1,34 @@
 # REVIEW REPORT
 Reviewer session date: 2026-04-17
 Roadmap Phase: Phase 1 - Parser Foundation
-Pipeline Stage: Stage 2 - Extractor
-Task status: blocked
+Pipeline Stage: Stage 2 - Expected IR fixture coverage
+Task status: done
 
 ## Findings
 
-- `BLOCKED` - verification gate (`tests/build/esbuild.test.ts`, `esbuild.js`)
-  - Why it matters: the bounded Stage 2 forms/control diff passed targeted extractor review, but the required full-repo verification gate still cannot close because Node child-process spawning is denied in the current automation environment before esbuild starts. The failing build tests and `npm run build` are therefore not evidence of a new extractor regression.
-  - Governing rule or reference: `docs/agents/TASK.md` acceptance criteria require `cmd /c npm.cmd test -- --runInBand`, `node .\node_modules\typescript\lib\tsc.js --noEmit`, and `cmd /c npm.cmd run build`; `docs/agents/REVIEW_CHECKLIST.md` requires the limitation to be stated explicitly when build verification cannot complete.
-  - Concrete fix direction: rerun the full verification gate in an environment that permits `child_process.spawnSync()`. Only reopen `esbuild.js` or the build tests if `npm test` / `npm run build` still fail after the spawn blocker is gone.
+No BUG or ACTIVE_STAGE_GAP findings remain in the bounded build/WASM task diff.
 
-No `BUG` or `ACTIVE_STAGE_GAP` findings were found in the touched Stage 2 extractor files during review or re-review.
+## Fix approach
+
+- Added a file-backed Stage 2 regression harness at `tests/parser/fixtureRegression.test.ts`
+- Added expected IR fixture pairs under `tests/fixtures/parser/` for stacks/content, navigation, lists, forms, and scroll/geometry
+- Normalized parser output only by removing generated `id` and `sourceRange` fields so fixture comparisons stay deterministic without weakening IR shape checks
+- Added `esbuild.config.js` as the import-safe build module so Jest can exercise the build contract without subprocess dependence
+- Kept `esbuild.js` as the thin CLI wrapper for `npm run build`
+- Preserved exact-name WASM copying and packaging assertions in the build and packaging tests
 
 ## Verification baseline
 
-- Targeted Stage 2 verification passed: `cmd /c npm.cmd test -- --runInBand --runTestsByPath tests\parser\extractors\forms.test.ts tests\parser\extractors\lists.test.ts tests\parser\extractors\navigation.test.ts tests\parser\extractors\scroll.test.ts tests\parser\parseSwiftFile.test.ts` (`5` suites, `27` tests)
-- `cmd /c npm.cmd test -- --runInBand` failed in `tests/build/esbuild.test.ts` because the current automation environment denies `spawnSync C:\Program Files\nodejs\node.exe` with `EPERM`
 - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-- `cmd /c npm.cmd run build` failed with the same `spawnSync C:\Program Files\nodejs\node.exe EPERM` preflight blocker
-- Direct probe evidence: `node -e "...spawnSync(process.execPath, ['-e', 'process.exit(0)'])..."` returned `{\"status\":null,\"error\":{\"code\":\"EPERM\",\"errno\":-4048,\"syscall\":\"spawnSync C:\\Program Files\\nodejs\\node.exe\",\"message\":\"spawnSync C:\\Program Files\\nodejs\\node.exe EPERM\"}}`
+- `cmd /c npm.cmd test -- --runInBand tests/build/esbuild.test.ts tests/build/packaging.test.ts` passed (`2` suites, `8` tests)
+- `cmd /c npm.cmd test -- --runInBand` passed (`10` suites, `51` tests)
+- `cmd /c npm.cmd run build` passed with:
+  - `Copied web-tree-sitter.wasm`
+  - `Copied tree-sitter-swift.wasm`
+  - `Build complete`
+- Direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` exited with status `0`
 
 ## Notes
 
-- `Form`, `Toggle`, `TextField`, and `SecureField` extraction now route through the Stage 2 dispatcher instead of the built-in fallback path.
-- The bounded task remains open only because the automation environment blocked the required build/test gate; it does not currently need another Stage 2 fix cycle.
+- The new regression harness stays inside Stage 2 validation and uses real Swift snippet fixtures from disk, matching the review checklist guidance.
+- The earlier `spawn EPERM` report is stale relative to the current worktree and should not be treated as the active repo state.

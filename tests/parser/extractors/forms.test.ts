@@ -103,4 +103,66 @@ SecureField(text: password, prompt: Text("Required")) {
       placeholder: "Required",
     });
   });
+
+  it("extracts Toggle labels built from Label(systemImage:)", async () => {
+    const roots = await parseSwiftFile(`
+Toggle(isOn: binding) {
+  Label("Notifications", systemImage: "bell")
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed Toggle");
+    }
+
+    expect(root).toMatchObject({
+      kind: "Toggle",
+      isOn: false,
+      label: {
+        kind: "Label",
+        title: "Notifications",
+        systemImage: "bell",
+      },
+    });
+  });
+
+  it("extracts TextField builder labels from canonical non-Text label views", async () => {
+    const roots = await parseSwiftFile(`
+TextField(text: username, prompt: Text("Required")) {
+  HStack {
+    Image(systemName: "envelope")
+    Text("Email")
+  }
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed TextField");
+    }
+
+    expect(root).toMatchObject({
+      kind: "TextField",
+      label: "Email",
+      placeholder: "Required",
+      style: "roundedBorder",
+    });
+  });
+
+  it("extracts SecureField builder labels from Label(systemImage:)", async () => {
+    const roots = await parseSwiftFile(`
+SecureField(text: password, prompt: Text("Required")) {
+  Label("Password", systemImage: "lock")
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed SecureField");
+    }
+
+    expect(root).toMatchObject({
+      kind: "SecureField",
+      label: "Password",
+      placeholder: "Required",
+    });
+  });
 });

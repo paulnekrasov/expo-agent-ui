@@ -1,0 +1,68 @@
+[
+  {
+    "kind": "List",
+    "children": [
+      {
+        "kind": "Text",
+        "content": "Inbox",
+        "isDynamic": false,
+        "modifiers": []
+      },
+      {
+        "kind": "Section",
+        "header": {
+          "kind": "Text",
+          "content": "Pinned",
+          "isDynamic": false,
+          "modifiers": []
+        },
+        "footer": {
+          "kind": "Text",
+          "content": "2 items",
+          "isDynamic": false,
+          "modifiers": []
+        },
+        "children": [
+          {
+            "kind": "Text",
+            "content": "Starred",
+            "isDynamic": false,
+            "modifiers": []
+          },
+          {
+            "kind": "Toggle",
+            "label": {
+              "kind": "Text",
+              "content": "Enabled",
+              "isDynamic": false,
+              "modifiers": []
+            },
+            "isOn": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      },
+      {
+        "kind": "ForEach",
+        "isStatic": true,
+        "staticItems": [
+          {
+            "kind": "Text",
+            "content": "A",
+            "isDynamic": false,
+            "modifiers": []
+          },
+          {
+            "kind": "Text",
+            "content": "B",
+            "isDynamic": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      }
+    ],
+    "modifiers": []
+  }
+]

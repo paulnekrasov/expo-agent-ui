@@ -102,17 +102,24 @@ function findArgument(
 }
 
 function extractTextContent(view: ViewNode): string | null {
+  const childText = (children: ViewNode[]): string | null => {
+    const segments = children
+      .map((child) => extractTextContent(child))
+      .filter((segment): segment is string => Boolean(segment));
+
+    return segments.length > 0 ? segments.join(" ").trim() : null;
+  };
+
   switch (view.kind) {
     case "Text":
       return view.content;
+    case "Label":
+      return view.title;
     case "Group":
-      if (view.children.length !== 1) {
-        return null;
-      }
-
-      return view.children[0]
-        ? extractTextContent(view.children[0])
-        : null;
+    case "HStack":
+    case "VStack":
+    case "ZStack":
+      return childText(view.children);
     default:
       return null;
   }

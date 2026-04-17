@@ -30,6 +30,7 @@ import {
   parseToggleCall,
 } from "./forms";
 import { parseImageCall } from "./image";
+import { parseLabelCall } from "./label";
 import {
   parseForEachCall,
   parseListCall,
@@ -368,6 +369,8 @@ function parseKnownViewCall(
       return parseFormCall(call, context, parseViewNode);
     case "Image":
       return parseImageCall(call, context);
+    case "Label":
+      return parseLabelCall(call, context);
     case "List":
       return parseListCall(call, context, parseViewNode);
     case "ForEach":
@@ -434,6 +437,7 @@ function parseBaseCall(
     case "Button":
     case "Form":
     case "Image":
+    case "Label":
     case "List":
     case "ForEach":
     case "Section":

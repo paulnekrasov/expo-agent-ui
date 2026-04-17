@@ -4,7 +4,7 @@
 import type {
   ViewNode, Modifier,
   VStackNode, HStackNode, ZStackNode,
-  TextNode, ButtonNode, ImageNode, SpacerNode, DividerNode,
+  TextNode, ButtonNode, ImageNode, LabelNode, SpacerNode, DividerNode,
   ScrollViewNode, GeometryReaderNode, NavigationStackNode, NavigationLinkNode,
   ListNode, ForEachNode, SectionNode,
   FormNode, GroupNode,
@@ -74,6 +74,14 @@ export function makeImage(
   modifiers: Modifier[] = []
 ): ImageNode {
   return { kind: "Image", source, isResizable: false, contentMode: null, ...base(modifiers) };
+}
+
+export function makeLabel(
+  title: string,
+  systemImage: string,
+  modifiers: Modifier[] = []
+): LabelNode {
+  return { kind: "Label", title, systemImage, ...base(modifiers) };
 }
 
 export function makeSpacer(

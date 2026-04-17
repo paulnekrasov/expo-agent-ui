@@ -1,0 +1,97 @@
+[
+  {
+    "kind": "VStack",
+    "alignment": "leading",
+    "spacing": 12,
+    "children": [
+      {
+        "kind": "Text",
+        "content": "Title",
+        "isDynamic": false,
+        "modifiers": []
+      },
+      {
+        "kind": "HStack",
+        "alignment": "bottom",
+        "spacing": 6,
+        "children": [
+          {
+            "kind": "Image",
+            "source": {
+              "kind": "systemName",
+              "name": "star"
+            },
+            "isResizable": false,
+            "contentMode": null,
+            "modifiers": []
+          },
+          {
+            "kind": "Spacer",
+            "minLength": 10,
+            "modifiers": []
+          },
+          {
+            "kind": "Text",
+            "content": "Badge",
+            "isDynamic": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      },
+      {
+        "kind": "ZStack",
+        "alignment": "topLeading",
+        "children": [
+          {
+            "kind": "Image",
+            "source": {
+              "kind": "named",
+              "name": "hero"
+            },
+            "isResizable": false,
+            "contentMode": null,
+            "modifiers": []
+          },
+          {
+            "kind": "Text",
+            "content": "Overlay",
+            "isDynamic": false,
+            "modifiers": []
+          }
+        ],
+        "modifiers": []
+      },
+      {
+        "kind": "Button",
+        "label": {
+          "kind": "HStack",
+          "alignment": "center",
+          "spacing": null,
+          "children": [
+            {
+              "kind": "Image",
+              "source": {
+                "kind": "systemName",
+                "name": "tray"
+              },
+              "isResizable": false,
+              "contentMode": null,
+              "modifiers": []
+            },
+            {
+              "kind": "Text",
+              "content": "Archive",
+              "isDynamic": false,
+              "modifiers": []
+            }
+          ],
+          "modifiers": []
+        },
+        "role": "destructive",
+        "modifiers": []
+      }
+    ],
+    "modifiers": []
+  }
+]

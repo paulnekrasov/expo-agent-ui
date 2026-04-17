@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "Form",
+    "children": [
+      {
+        "kind": "Toggle",
+        "label": {
+          "kind": "Label",
+          "title": "Notifications",
+          "systemImage": "bell",
+          "modifiers": []
+        },
+        "isOn": false,
+        "modifiers": []
+      },
+      {
+        "kind": "TextField",
+        "label": "Email",
+        "placeholder": "Required",
+        "style": "roundedBorder",
+        "modifiers": []
+      },
+      {
+        "kind": "SecureField",
+        "label": "Password",
+        "placeholder": "Required",
+        "modifiers": []
+      }
+    ],
+    "modifiers": []
+  }
+]
