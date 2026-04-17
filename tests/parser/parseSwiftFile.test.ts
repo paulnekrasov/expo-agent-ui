@@ -132,6 +132,100 @@ Button(action: {
     });
   });
 
+  it("extracts overlay, fixedSize, offset, and position modifiers", async () => {
+    const roots = await parseSwiftFile(`
+import SwiftUI
+
+struct ContentView: View {
+  var body: some View {
+    VStack {
+      Text("Primary")
+        .overlay(alignment: .topTrailing) {
+          Image(systemName: "star.fill")
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .offset(x: 12, y: -4)
+
+      Text("Secondary")
+        .overlay(Image(systemName: "heart.fill"), alignment: .bottom)
+        .position(x: 120, y: 200)
+    }
+  }
+}
+`);
+
+    const root = roots[0];
+    if (!root || root.kind !== "VStack") {
+      throw new Error("Expected VStack root");
+    }
+
+    expect(root.children).toHaveLength(2);
+
+    const primary = root.children[0];
+    const secondary = root.children[1];
+
+    expect(primary).toMatchObject({
+      kind: "Text",
+      content: "Primary",
+      isDynamic: false,
+    });
+    if (!primary || primary.kind !== "Text") {
+      throw new Error("Expected Text primary child");
+    }
+
+    expect(primary.modifiers).toEqual([
+      {
+        kind: "overlay",
+        alignment: "topTrailing",
+        content: expect.objectContaining({
+          kind: "Image",
+          source: {
+            kind: "systemName",
+            name: "star.fill",
+          },
+        }),
+      },
+      {
+        kind: "fixedSize",
+        horizontal: false,
+        vertical: true,
+      },
+      {
+        kind: "offset",
+        x: 12,
+        y: -4,
+      },
+    ]);
+
+    expect(secondary).toMatchObject({
+      kind: "Text",
+      content: "Secondary",
+      isDynamic: false,
+    });
+    if (!secondary || secondary.kind !== "Text") {
+      throw new Error("Expected Text secondary child");
+    }
+
+    expect(secondary.modifiers).toEqual([
+      {
+        kind: "overlay",
+        alignment: "bottom",
+        content: expect.objectContaining({
+          kind: "Image",
+          source: {
+            kind: "systemName",
+            name: "heart.fill",
+          },
+        }),
+      },
+      {
+        kind: "position",
+        x: 120,
+        y: 200,
+      },
+    ]);
+  });
+
   it("preserves non-literal if statements as conditional content", async () => {
     const roots = await parseSwiftFile(`
 import SwiftUI

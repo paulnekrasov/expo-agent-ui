@@ -243,4 +243,67 @@ List(["A", "B"], id: \\.self) { item in
       ],
     });
   });
+
+  it("extracts list presentation modifiers on lists and list rows", async () => {
+    const roots = await parseSwiftFile(`
+List {
+  Text("Inbox")
+    .font(.body)
+    .listRowSeparator(.hidden, edges: .bottom)
+    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 6, trailing: 14))
+}
+.listStyle(.automatic)
+.padding(.horizontal, 16)
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed List");
+    }
+
+    expect(root).toMatchObject({
+      kind: "List",
+      modifiers: [
+        {
+          kind: "listStyle",
+          style: "automatic",
+        },
+        {
+          kind: "padding",
+          edges: {
+            kind: "horizontal",
+          },
+          amount: {
+            kind: "fixed",
+            value: 16,
+          },
+        },
+      ],
+      children: [
+        {
+          kind: "Text",
+          content: "Inbox",
+          isDynamic: false,
+          modifiers: [
+            {
+              kind: "font",
+              style: "body",
+            },
+            {
+              kind: "listRowSeparator",
+              visibility: "hidden",
+            },
+            {
+              kind: "listRowInsets",
+              insets: {
+                top: 4,
+                leading: 12,
+                bottom: 6,
+                trailing: 14,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
 });

@@ -2,8 +2,10 @@ import type { Node as SyntaxNode } from "web-tree-sitter";
 
 import { makeGroup } from "../../../ir/builders";
 import type {
+  EdgeInsets,
   ColorValue,
   FontStyle,
+  ListStyle,
   Modifier,
   ViewNode,
 } from "../../../ir/types";
@@ -14,6 +16,7 @@ import {
   getStatementsNodeFromLambda,
   parseAlignmentValue,
   parseBooleanLiteral,
+  parseCallDetails,
   parseEdgeSet,
   parseNumberLiteral,
   parseSizeValue,
@@ -39,6 +42,21 @@ const FONT_STYLE_NAMES = new Set<FontStyle>([
   "footnote",
   "caption",
   "caption2",
+]);
+
+const LIST_STYLE_NAMES = new Set<ListStyle>([
+  "automatic",
+  "plain",
+  "grouped",
+  "inset",
+  "insetGrouped",
+  "sidebar",
+]);
+
+const LIST_ROW_SEPARATOR_VISIBILITIES = new Set([
+  "automatic",
+  "visible",
+  "hidden",
 ]);
 
 function getFirstArgument(call: CallDetails): SyntaxNode | null {
@@ -271,6 +289,18 @@ function parseBackgroundViewContent(
   return makeGroup(children);
 }
 
+function parseModifierViewArgument(
+  node: SyntaxNode,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode | null {
+  if (node.type !== "call_expression" && node.type !== "if_statement") {
+    return null;
+  }
+
+  return parseNestedView(node, context);
+}
+
 function parseBackgroundModifier(
   call: CallDetails,
   context: ParseSourceContext,
@@ -317,6 +347,89 @@ function parseBackgroundModifier(
   return {
     kind: "background",
     content,
+  };
+}
+
+function parseOverlayModifier(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): Modifier {
+  let alignment: "center" | "leading" | "trailing" |
+    "top" | "bottom" |
+    "topLeading" | "topTrailing" |
+    "bottomLeading" | "bottomTrailing" = "center";
+  let content: ViewNode | null = null;
+
+  for (const argument of call.arguments) {
+    if (argument.label === "alignment") {
+      const parsedAlignment = parseAlignmentValue(
+        argument.value,
+        context
+      );
+      if (!parsedAlignment) {
+        return {
+          kind: "unknown",
+          name: "overlay",
+          rawArgs: getCallRawArgs(call, context),
+        };
+      }
+
+      alignment = parsedAlignment;
+      continue;
+    }
+
+    if (argument.label !== null) {
+      return {
+        kind: "unknown",
+        name: "overlay",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    content = parseModifierViewArgument(
+      argument.value,
+      context,
+      parseNestedView
+    );
+    if (!content) {
+      return {
+        kind: "unknown",
+        name: "overlay",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+  }
+
+  if (!content) {
+    const closure = call.trailingClosures[0];
+    if (!closure) {
+      return {
+        kind: "unknown",
+        name: "overlay",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    content = parseBackgroundViewContent(
+      closure,
+      context,
+      parseNestedView
+    );
+  }
+
+  if (!content) {
+    return {
+      kind: "unknown",
+      name: "overlay",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "overlay",
+    content,
+    alignment,
   };
 }
 
@@ -393,6 +506,324 @@ function parseNavigationTitleModifier(
   };
 }
 
+function parseFixedSizeModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  if (call.arguments.length === 0) {
+    return {
+      kind: "fixedSize",
+      horizontal: true,
+      vertical: true,
+    };
+  }
+
+  let horizontal: boolean | null = null;
+  let vertical: boolean | null = null;
+
+  for (const argument of call.arguments) {
+    if (argument.label !== "horizontal" && argument.label !== "vertical") {
+      return {
+        kind: "unknown",
+        name: "fixedSize",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    const value = parseBooleanLiteral(argument.value, context);
+    if (value === null) {
+      return {
+        kind: "unknown",
+        name: "fixedSize",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    if (argument.label === "horizontal") {
+      horizontal = value;
+    } else {
+      vertical = value;
+    }
+  }
+
+  if (horizontal === null || vertical === null) {
+    return {
+      kind: "unknown",
+      name: "fixedSize",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "fixedSize",
+    horizontal,
+    vertical,
+  };
+}
+
+function parseOffsetModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  let x = 0;
+  let y = 0;
+
+  for (const argument of call.arguments) {
+    if (argument.label !== "x" && argument.label !== "y") {
+      return {
+        kind: "unknown",
+        name: "offset",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    const value = parseNumberLiteral(argument.value, context);
+    if (value === null) {
+      return {
+        kind: "unknown",
+        name: "offset",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    if (argument.label === "x") {
+      x = value;
+    } else {
+      y = value;
+    }
+  }
+
+  return {
+    kind: "offset",
+    x,
+    y,
+  };
+}
+
+function parsePositionModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  let x = 0;
+  let y = 0;
+
+  for (const argument of call.arguments) {
+    if (argument.label !== "x" && argument.label !== "y") {
+      return {
+        kind: "unknown",
+        name: "position",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    const value = parseNumberLiteral(argument.value, context);
+    if (value === null) {
+      return {
+        kind: "unknown",
+        name: "position",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    if (argument.label === "x") {
+      x = value;
+    } else {
+      y = value;
+    }
+  }
+
+  return {
+    kind: "position",
+    x,
+    y,
+  };
+}
+
+function parseListStyleModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  const argumentNode = getFirstArgument(call);
+  if (!argumentNode) {
+    return {
+      kind: "unknown",
+      name: "listStyle",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  const style = getLastPathComponent(
+    getNavigationPath(argumentNode, context)
+  );
+  if (!LIST_STYLE_NAMES.has(style as ListStyle)) {
+    return {
+      kind: "unknown",
+      name: "listStyle",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "listStyle",
+    style: style as ListStyle,
+  };
+}
+
+function parseListRowSeparatorModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  let visibility: string | null = null;
+
+  for (const argument of call.arguments) {
+    if (argument.label === null) {
+      if (visibility !== null) {
+        return {
+          kind: "unknown",
+          name: "listRowSeparator",
+          rawArgs: getCallRawArgs(call, context),
+        };
+      }
+
+      const parsedVisibility = getLastPathComponent(
+        getNavigationPath(argument.value, context)
+      );
+      if (!LIST_ROW_SEPARATOR_VISIBILITIES.has(parsedVisibility)) {
+        return {
+          kind: "unknown",
+          name: "listRowSeparator",
+          rawArgs: getCallRawArgs(call, context),
+        };
+      }
+
+      visibility = parsedVisibility;
+      continue;
+    }
+
+    if (argument.label !== "edges") {
+      return {
+        kind: "unknown",
+        name: "listRowSeparator",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+
+    const parsedEdges = parseEdgeSet(argument.value, context);
+    if (
+      !parsedEdges ||
+      (parsedEdges.kind !== "all" &&
+        parsedEdges.kind !== "top" &&
+        parsedEdges.kind !== "bottom")
+    ) {
+      return {
+        kind: "unknown",
+        name: "listRowSeparator",
+        rawArgs: getCallRawArgs(call, context),
+      };
+    }
+  }
+
+  if (!visibility) {
+    return {
+      kind: "unknown",
+      name: "listRowSeparator",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "listRowSeparator",
+    visibility,
+  };
+}
+
+function parseEdgeInsetsValue(
+  node: SyntaxNode,
+  context: ParseSourceContext
+): EdgeInsets | null {
+  if (node.type !== "call_expression") {
+    return null;
+  }
+
+  const call = parseCallDetails(node, context);
+  if (call.calleeName !== "EdgeInsets") {
+    return null;
+  }
+
+  let top: number | null = null;
+  let leading: number | null = null;
+  let bottom: number | null = null;
+  let trailing: number | null = null;
+
+  for (const argument of call.arguments) {
+    const value = parseNumberLiteral(argument.value, context);
+    if (value === null) {
+      return null;
+    }
+
+    switch (argument.label) {
+      case "top":
+        top = value;
+        break;
+      case "leading":
+        leading = value;
+        break;
+      case "bottom":
+        bottom = value;
+        break;
+      case "trailing":
+        trailing = value;
+        break;
+      default:
+        return null;
+    }
+  }
+
+  if (
+    top === null ||
+    leading === null ||
+    bottom === null ||
+    trailing === null
+  ) {
+    return null;
+  }
+
+  return {
+    top,
+    leading,
+    bottom,
+    trailing,
+  };
+}
+
+function parseListRowInsetsModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  const argumentNode = getFirstArgument(call);
+  if (!argumentNode) {
+    return {
+      kind: "unknown",
+      name: "listRowInsets",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  const insets = parseEdgeInsetsValue(argumentNode, context);
+  if (!insets) {
+    return {
+      kind: "unknown",
+      name: "listRowInsets",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "listRowInsets",
+    insets,
+  };
+}
+
 export function parseCoreModifier(
   name: string,
   call: CallDetails,
@@ -410,12 +841,26 @@ export function parseCoreModifier(
       return parseFrameModifier(call, context);
     case "background":
       return parseBackgroundModifier(call, context, parseNestedView);
+    case "overlay":
+      return parseOverlayModifier(call, context, parseNestedView);
     case "cornerRadius":
       return parseCornerRadiusModifier(call, context);
     case "opacity":
       return parseOpacityModifier(call, context);
     case "navigationTitle":
       return parseNavigationTitleModifier(call, context);
+    case "fixedSize":
+      return parseFixedSizeModifier(call, context);
+    case "offset":
+      return parseOffsetModifier(call, context);
+    case "position":
+      return parsePositionModifier(call, context);
+    case "listStyle":
+      return parseListStyleModifier(call, context);
+    case "listRowSeparator":
+      return parseListRowSeparatorModifier(call, context);
+    case "listRowInsets":
+      return parseListRowInsetsModifier(call, context);
     case "disabled": {
       const argumentNode = getFirstArgument(call);
       const value = argumentNode

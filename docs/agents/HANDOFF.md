@@ -5,39 +5,45 @@ Session date: 2026-04-17
 
 ## What I did
 
-- Validated the reopened build/WASM prompt against the live worktree instead of the stale `spawn EPERM` report
-- Confirmed `esbuild.config.js` now owns the import-safe build contract and `esbuild.js` is the thin CLI wrapper
-- Confirmed the one-shot build path uses `esbuild.build()` for both bundles while watch mode still uses `esbuild.context()`
+- Replaced the closed prior modifier slice with a bounded Phase 1 / Stage 2 list presentation modifier task
+- Verified the AST shape for `.listStyle`, `.listRowSeparator`, and `.listRowInsets(EdgeInsets(...))` with the repo runtime before changing extractor code
+- Added Stage 2 extraction for:
+  - `.listStyle(...)`
+  - `.listRowSeparator(...)`
+  - `.listRowInsets(EdgeInsets(top:leading:bottom:trailing:))`
+- Widened the Stage 2 `ListStyle` IR union to include `automatic`
+- Added focused list extractor coverage plus fixture-backed regression coverage for the list slice
 - Re-ran:
-  - direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])`
-  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-  - `cmd /c npm.cmd test -- --runInBand tests/build/esbuild.test.ts tests/build/packaging.test.ts`
+  - `cmd /c npm.cmd test -- --runInBand tests/parser/extractors/lists.test.ts tests/parser/fixtureRegression.test.ts`
   - `cmd /c npm.cmd test -- --runInBand`
+  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+  - direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])`
   - `cmd /c npm.cmd run build`
+- Rotated the runtime prompt set to the current task, then cleared the active prompt files when the build blocker meant no safe next task could be seeded
 
 ## What I found
 
-- The reopened blocker is closed in-repo: `cmd /c npm.cmd run build` and the direct spawn probe both pass in the current environment
-- Exact WASM filename preservation remains intact: build output still copies `web-tree-sitter.wasm` and `tree-sitter-swift.wasm` unchanged
-- `tests/build/esbuild.test.ts` now covers the import-safe one-shot build path without shelling out, so the build contract is verified in-process
-- The earlier `spawn EPERM` narrative is stale relative to the current worktree and should not be reused as the active repo state
+- The Stage 2 parser diff is good: focused list tests pass, fixture regression passes, full Jest passes, and `tsc --noEmit` passes
+- The build gate is blocked again in the current automation environment:
+  - direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` fails with `EPERM`
+  - `cmd /c npm.cmd run build` fails with the same `spawn EPERM` path after copying the WASM assets
+- That reproduces the failure outside the bounded parser diff, so I did not reopen repo-local build tooling during this Stage 2 task
 
 ## What the next agent must do first
 
-- Stop using `docs/agents/runtime-prompts/ACTIVE_FIX_PROMPT.md` unless a fresh build/WASM regression appears
-- Seed the next bounded Phase 1 / Stage 2 task from `docs/agents/ROADMAP_CHECKLIST.md`
-- Preserve the current no-watch build strategy and exact-name WASM copying unless a new failure proves it insufficient
+- Treat the current list modifier task as `DONE_WITH_CONCERNS`
+- Re-run the direct child-process probe and `cmd /c npm.cmd run build`
+- Only seed the next unchecked Phase 1 / Stage 2 roadmap slice after the build gate closes again
 
 ## What the next agent must not do
 
-- Do not reopen the old `EPERM` blocker without a fresh reproduction on the current worktree
-- Do not replace exact-name WASM copying with hashed loader output
-- Do not reintroduce subprocess-based build assertions into `tests/build/esbuild.test.ts`
-- Do not widen this closed build/tooling fix into resolver, layout, renderer, device, or navigation runtime work
+- Do not reopen `src/parser/extractors/modifiers/coreModifiers.ts` unless parser tests or `tsc` regress
+- Do not turn this back into repo-local build-tooling work unless the next run isolates a build root cause inside the repo rather than the environment
+- Do not seed a new Stage 2 task while the build gate is still blocked
 
-## Confidence level on current build
+## Confidence level on current state
 
-- Phase 1 / Parser Foundation: 96% (Stage 2 parser/test work is green and the repo build gate now passes)
+- Phase 1 / Parser Foundation: 90% (Stage 2 source/tests are green, but the required build gate is blocked by environment-level `EPERM`)
 - Phase 2 / Resolver: 0%
 - Phase 3 / Layout Foundation: 0%
 - Phase 4 / Renderer Foundation: 0%

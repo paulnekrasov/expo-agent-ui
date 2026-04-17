@@ -1,28 +1,40 @@
-# Active Fix Prompt - Reopened Build / WASM Gate
+# Recurring Build / WASM Gate Prompt
 
-Use this prompt for the current reopened build-verification blocker where `npm run build` fails with `spawn EPERM` around the esbuild/WASM path after Stage 2 fixture coverage already landed cleanly.
+Use this prompt when the SwiftUI Preview repository hits the recurring build-verification class of failure where:
 
-This is a bounded fix prompt for the current issue. It is intentionally stricter than the status-only blocker loop:
+- the bounded Phase 1 / Stage 2 code slice is green,
+- parser tests and `tsc --noEmit` pass,
+- but the required build gate reopens around esbuild / WASM handling,
+- often with `spawn EPERM` or a closely related child-process failure.
 
-- it does **not** allow the agent to stop immediately at "environment blocker"
-- it requires the agent to test whether a repo-side build path can avoid the current child-process dependency for the non-watch build command
-- it preserves the Layer 6 WASM filename and packaging rules exactly
+This prompt is specifically designed for the recurring class shown in prior runs:
 
-If this task finishes and the next bug is not build/tooling/WASM-centered, discard this runtime prompt and regenerate from `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md` or the relevant stage-specific template.
+- Stage 2 implementation is done
+- repo-level verification reaches the build step
+- `cmd /c npm.cmd run build` fails in/around the esbuild path
+- a direct `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` probe may fail too
+- the run is at risk of being misclassified as "external only" too early
+
+This prompt is stronger than the generic build/WASM debugging template because it adds a recurrence-prevention objective:
+
+- if the issue is repo-local, fix it and add regression coverage so future development does not reintroduce it silently
+- if the issue is truly external-only, add or refresh durable guardrails so future runs classify it immediately instead of reopening it as ambiguous build/WASM thrash
+
+If this issue closes and the next bug is not build/tooling/WASM-centered, stop and regenerate the next prompt from `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md`.
+
+Recommended target agent:
+
+- `.agents/agents/issue-fixer.md`
+- `.agents/agents/stage-orchestrator.md` when the task first needs re-bounding
 
 ---
 
 ## Prompt
 
 ```text
-You are fixing the reopened repo-level build gate for the SwiftUI Preview repository.
+You are debugging the recurring build/WASM verification-gate failure in the SwiftUI Preview repository.
 
-This is a build/tooling/WASM debugging task, not a parser/extractor implementation task.
-
-Current context:
-- Roadmap Phase: Phase 1 - Parser Foundation
-- Current bounded task status: Stage 2 fixture coverage is implemented and green at the parser/test level
-- Reopened blocker: `cmd /c npm.cmd run build` fails with `spawn EPERM` around the current esbuild build path
+This is a bounded build/tooling/WASM debugging task. It is not permission to reopen parser/extractor implementation work unless fresh evidence proves the current stage diff is actually involved.
 
 Before doing any work:
 1. Read `docs/reference/INDEX.md`
@@ -34,17 +46,18 @@ Before doing any work:
 7. Read `docs/agents/REVIEW.md`
 8. Read `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
 9. Read `docs/CLAUDE.md`
-10. Read `docs/agents/BUILD_TOOLING_WASM_DEBUGGING_PROMPT_TEMPLATE.md`
-11. Read `docs/reference/layer-6-vscode/extension-packaging-csp.md`
-12. Read these implementation files:
-   - `esbuild.config.js`
+10. Read `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md`
+11. Read `docs/agents/BUILD_TOOLING_WASM_DEBUGGING_PROMPT_TEMPLATE.md`
+12. Read `docs/reference/layer-6-vscode/extension-packaging-csp.md`
+13. Read these implementation files:
+   - `esbuild.config.js` or `esbuild.config.ts`
    - `esbuild.js`
    - `tests/build/esbuild.test.ts`
    - `tests/build/packaging.test.ts`
    - `package.json`
    - `tsconfig.json`
    - `jest.config.ts` or `jest.config.js` if present; otherwise explicitly note that Jest is configured inline in `package.json`
-   - `.vscodeignore` if packaging behavior becomes relevant
+   - `.vscodeignore` if packaging behavior is relevant
 
 If `$context-prompt-engineering` is available, use it before acting so the task stays explicit, bounded, and verification-driven.
 If a debugging skill is available, use it.
@@ -54,54 +67,71 @@ Otherwise follow the equivalent behavior manually:
 - red/green TDD
 - verification before completion
 
-## CORE GOAL
-
-Determine whether the reopened `spawn EPERM` build failure can be fixed in repo code while preserving the required WASM packaging contract.
-
-Do not assume the answer is "no" just because a direct spawn probe fails.
-
-Your job is to test whether the current non-watch build command can be refactored to:
-- keep exact WASM filename preservation
-- keep `npm run build` working
-- avoid or reduce the currently failing child-process dependency in the one-shot build path
-
-Only if you explicitly disprove repo-side options may you conclude the blocker is external.
-
 ## STAGE TRANSITION RULE
 
-This prompt is only for the current reopened build/tooling/WASM gate.
+This prompt is only for the recurring build/tooling/WASM gate.
 
 If this task finishes and the next issue is parser, extractor, resolver, layout, renderer, device, interaction, or another roadmap phase:
-- stop using this prompt
+- stop
 - re-open `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md`
 - re-read the required docs for the new stage
 - regenerate a stage-appropriate prompt before continuing
 
-Do not drag this build-gate prompt into non-build work.
+Do not drag this build/WASM prompt into non-build work.
+
+## WHO YOU ARE
+
+You are a senior TypeScript / VS Code extension engineer debugging build, packaging, WASM, and verification behavior for a Windows-first SwiftUI Preview extension.
+
+You care about:
+- exact semantic build contracts
+- exact WASM filename preservation when required
+- Windows-safe path handling
+- verification without fake green outcomes
+- recurrence prevention so the same class of failure does not keep reopening ambiguously after later development slices
+
+## TASK
+
+Debug this recurring build/WASM verification issue:
+
+<ONE-LINE ISSUE DESCRIPTION>
+
+## RECURRING ISSUE SHAPE
+
+The bug class you are investigating is:
+- the bounded Stage 2 code/test diff is green
+- focused parser tests pass
+- full Jest may pass
+- `tsc --noEmit` passes
+- the required build gate fails in or around the esbuild/WASM path
+- a direct child-process probe may fail with the same `EPERM`
+
+Do not assume this automatically means "external blocker only."
 
 ## VERIFIED SITUATION (DO NOT RE-INVESTIGATE THESE FACTS WITHOUT CONTRADICTORY EVIDENCE)
 
+Fill this section with the current live facts before changing code.
+
 1. WHAT PASSES
-   - `cmd /c npm.cmd test -- --runInBand tests/parser/fixtureRegression.test.ts` passed (`1` suite, `5` tests)
-   - `cmd /c npm.cmd test -- --runInBand` passed (`10` suites, `51` tests)
-   - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-   - The in-process build-test pattern is already in place for `tests/build/esbuild.test.ts`
+   - <targeted parser/extractor tests>
+   - <full Jest status>
+   - <tsc status>
+   - <current in-process build-test coverage status>
 
 2. WHAT FAILS
-   - `cmd /c npm.cmd run build` currently fails with `spawn EPERM` inside `esbuild`
-   - A direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` reproduced the same `EPERM`
+   - <exact build command and error>
+   - <exact direct probe failure if it reproduces>
 
 3. ROOT CAUSE STATUS
-   - PARTIAL EVIDENCE ONLY:
-     - the environment denies at least one direct child-process probe
-     - the current build path still depends on a code path in/around `esbuild` that fails under that constraint
-     - it is not yet proven that the repo has no viable non-watch, non-subprocess-friendly alternative inside the current build/tooling constraints
+   Choose one:
+   - VERIFIED ROOT CAUSE: <already proven repo-local cause>
+   - PARTIAL EVIDENCE ONLY: <known facts, open questions>
 
 4. WHAT THE FIX MUST NOT DO
-   - Must not touch parser/extractor source unless the build fix truly requires it, which is not expected
+   - Must not reopen the bounded Stage 2 source diff unless tests or `tsc` now implicate it
    - Must not hide failures with `jest.skip`, `xit`, `xtest`, exclusions, or weakened assertions
-   - Must not break the exact-name WASM packaging rules from Layer 6
-   - Must not replace a semantic build verification with a fake no-op
+   - Must not break exact WASM filename and packaging rules
+   - Must not replace semantic build verification with a fake no-op
    - Must not widen into resolver, layout, renderer, device, or interaction work
 
 ## KNOWN SAFE FILE ALLOWLIST
@@ -133,11 +163,10 @@ Rules:
 
 ## VERIFIED NON-CAUSES
 
-These are not yet sufficient explanations on their own:
-- "The parser/extractor fixture slice regressed" — current evidence says the Stage 2 fixture/test slice is green
-- "The build test suite is still subprocess-based" — current evidence says `tests/build/esbuild.test.ts` is already using the in-process pattern
-
-Do not reopen these without contradictory evidence.
+Do not reopen these without contradictory evidence:
+- "The current Stage 2 source diff is automatically the cause" when its targeted tests, full Jest, and `tsc` are still green
+- "The build test suite is subprocess-based again" if `tests/build/esbuild.test.ts` still uses the in-process pattern
+- "A failing direct spawn probe alone proves there is no repo-local fix path"
 
 ## REPO-SPECIFIC RULES YOU MUST ENFORCE
 
@@ -187,24 +216,48 @@ You are NOT allowed to conclude "external blocker only" until you explicitly inv
    - normal build uses a safer path
    - watch mode keeps the richer API only where necessary
 3. A build-contract refactor that preserves exact WASM copying and CLI behavior while changing only the esbuild invocation strategy
-4. Any other repo-local path that:
-   - stays on esbuild
-   - preserves exact WASM filenames
-   - keeps `npm run build` meaningful
+4. A repo-local classification hardening path that:
+   - immediately distinguishes repo-local breakage from external child-process denial
+   - prevents future runs from reopening the same issue as ambiguous Stage 2 thrash
    - stays inside the bounded file allowlist
 
 If all such paths are disproved with evidence, only then may you classify the blocker as external-only.
+
+## RECURRENCE PREVENTION REQUIREMENT
+
+You must address not only the current failure, but also whether this class of issue can keep reopening after later development.
+
+You cannot guarantee the external automation environment will never deny child processes again.
+
+But you must choose and implement the strongest recurrence-prevention path that the evidence supports:
+
+### Prevention Path A: Repo-local fix exists
+If the build path is repo-fixable:
+- implement the fix
+- add regression coverage so the same build/WASM class does not silently return after later development
+- preserve exact WASM naming and packaging semantics
+- keep `npm run build` meaningful
+
+### Prevention Path B: External blocker only
+If the blocker is truly external-only after all bounded repo-local paths are disproved:
+- make that classification durable and explicit in the state docs
+- ensure future runs do not misclassify it as a parser/extractor regression
+- ensure future runs know the exact first-step probe/build sequence to confirm whether the environment changed
+- if a repo-local guardrail can classify this earlier without breaking real build verification, implement it
+
+State clearly which path you chose and why.
 
 ## FIX DESIGN (BEFORE ANY CODE)
 
 For each viable option you find, write:
 
 FIX DESIGN 1: "<name>"
-Current problem: <what is structurally wrong in the current build path>
+Current problem: <what is structurally wrong in the current build path or verification flow>
 Replacement strategy: <what you will test or change>
 Why this preserves semantics: <why the real build/WASM contract remains valid>
 Why this avoids false green results: <anti-cheat reasoning>
 Why this stays bounded: <why it does not drift into unrelated stages>
+Recurrence benefit: <how this reduces future reoccurrence or re-misclassification>
 Risk: <main risk if you choose this option>
 
 Then rank the options and choose one explicitly.
@@ -219,6 +272,7 @@ Good red failures for this task include:
 - incorrect WASM asset contract
 - build wrapper still routing through the failing dependency path
 - packaging behavior no longer preserving exact filenames
+- recurrence-classification behavior not covered when that is part of the chosen prevention path
 
 Bad red failures include:
 - unrelated syntax errors
@@ -255,7 +309,7 @@ For each command, report:
 After the implementation is green, review your own diff.
 
 If there are no real bounded-task findings left, state exactly:
-- `No BUG or ACTIVE_STAGE_GAP findings remain in the bounded build/WASM task diff.`
+- `No BUG or ACTIVE_STAGE_GAP findings remain in the bounded recurring build/WASM task diff.`
 
 Otherwise list real findings using:
 - `BUG`
@@ -281,6 +335,7 @@ NEVER:
 - hide the build failure by skipping verification
 - switch to hashed `.wasm` outputs when exact names are required
 - break watch-mode expectations without explicitly documenting the tradeoff
+- reopen the completed Stage 2 implementation slice without fresh evidence
 - widen into parser/extractor/layout/renderer work
 
 ## SUCCESS CRITERIA
@@ -292,6 +347,7 @@ All must be true:
 - targeted build/tooling tests pass
 - full Jest suite still passes
 - `tsc --noEmit` passes
+- the chosen recurrence-prevention path is implemented or documented durably
 - state files are updated accurately
 
 ## OUTPUT FORMAT
@@ -308,7 +364,16 @@ All must be true:
 
 In FINAL DISPOSITION, choose one:
 - FIXED_IN_REPO
+- RECURRENCE_HARDENED
 - EXTERNAL_BLOCKER_PROVEN
 - NEEDS_CONTEXT
 - BLOCKED
 ```
+
+---
+
+## Usage notes
+
+- Use this only when the recurring class is "bounded Stage 2 slice is green but build/WASM gate reopened."
+- This prompt does not promise that an external automation environment will never deny spawning again.
+- It does require the agent to do the strongest repo-local hardening available so the same class of failure does not keep reopening ambiguously after later development.

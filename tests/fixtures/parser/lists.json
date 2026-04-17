@@ -6,7 +6,21 @@
         "kind": "Text",
         "content": "Inbox",
         "isDynamic": false,
-        "modifiers": []
+        "modifiers": [
+          {
+            "kind": "listRowSeparator",
+            "visibility": "hidden"
+          },
+          {
+            "kind": "listRowInsets",
+            "insets": {
+              "top": 4,
+              "leading": 12,
+              "bottom": 6,
+              "trailing": 14
+            }
+          }
+        ]
       },
       {
         "kind": "Section",
@@ -63,6 +77,11 @@
         "modifiers": []
       }
     ],
-    "modifiers": []
+    "modifiers": [
+      {
+        "kind": "listStyle",
+        "style": "insetGrouped"
+      }
+    ]
   }
 ]

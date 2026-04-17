@@ -55,15 +55,15 @@ Status: In progress
 - [x] `.opacity`
 - [x] `.navigationTitle`
 - [x] `.disabled`
-- [ ] `.overlay`
+- [x] `.overlay`
 - [ ] `.toolbar`
 - [ ] `.navigationDestination`
-- [ ] `.listStyle`
-- [ ] `.listRowInsets`
-- [ ] `.listRowSeparator`
-- [ ] `.fixedSize`
-- [ ] `.offset`
-- [ ] `.position`
+- [x] `.listStyle`
+- [x] `.listRowInsets`
+- [x] `.listRowSeparator`
+- [x] `.fixedSize`
+- [x] `.offset`
+- [x] `.position`
 
 ### Validation and fixtures
 
@@ -75,7 +75,7 @@ Status: In progress
 
 ### Recommended next bounded tasks
 
-- [ ] Re-run full repo verification for the completed expected-IR fixture coverage slice in a child-process-enabled environment
+- [ ] Re-check child-process spawning and close the `npm run build` gate in a child-process-enabled environment, then seed the next unchecked Stage 2 slice
 
 ## Phase 2 - Resolver
 Pipeline Stage: Stage 3 Resolver

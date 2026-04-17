@@ -17,6 +17,7 @@ const FIXTURE_NAMES = [
   "lists",
   "forms",
   "scroll",
+  "modifiers",
 ] as const;
 
 function readFixture(fileName: string): string {

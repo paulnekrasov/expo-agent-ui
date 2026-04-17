@@ -68,7 +68,12 @@ export type FontWeight =
 export type FontDesign = "default" | "serif" | "rounded" | "monospaced";
 
 export type ListStyle =
-  | "plain" | "grouped" | "insetGrouped" | "inset" | "sidebar";
+  | "automatic"
+  | "plain"
+  | "grouped"
+  | "insetGrouped"
+  | "inset"
+  | "sidebar";
 
 export type AnimationType =
   | { kind: "easeIn"; duration?: number }

@@ -1,34 +1,35 @@
 # REVIEW REPORT
 Reviewer session date: 2026-04-17
 Roadmap Phase: Phase 1 - Parser Foundation
-Pipeline Stage: Stage 2 - Expected IR fixture coverage
-Task status: done
+Pipeline Stage: Stage 2 - Modifier extraction
+Task status: done_with_concerns
 
 ## Findings
 
-No BUG or ACTIVE_STAGE_GAP findings remain in the bounded build/WASM task diff.
+1. `BLOCKED` - Verification gate `cmd /c npm.cmd run build`
+   - Affected area: repo build verification in the current automation environment
+   - Why it matters: the bounded Stage 2 parser diff is implemented and test-covered, but the required build gate cannot be closed because child process creation fails before `esbuild` can run
+   - Governing rule: source changes must run `npm test -- --runInBand`, `npm run build`, and `tsc --noEmit`; out-of-scope build-tooling work should not be reopened without a repo-local root cause
+   - Fix direction: on the next run, re-check child-process spawning first (`spawnSync(process.execPath, ['-e', 'process.exit(0)'])`) and only reopen build-tooling investigation if the blocker becomes repo-local rather than environment-level
 
 ## Fix approach
 
-- Added a file-backed Stage 2 regression harness at `tests/parser/fixtureRegression.test.ts`
-- Added expected IR fixture pairs under `tests/fixtures/parser/` for stacks/content, navigation, lists, forms, and scroll/geometry
-- Normalized parser output only by removing generated `id` and `sourceRange` fields so fixture comparisons stay deterministic without weakening IR shape checks
-- Added `esbuild.config.js` as the import-safe build module so Jest can exercise the build contract without subprocess dependence
-- Kept `esbuild.js` as the thin CLI wrapper for `npm run build`
-- Preserved exact-name WASM copying and packaging assertions in the build and packaging tests
+- Added Stage 2 extraction in `src/parser/extractors/modifiers/coreModifiers.ts` for `listStyle`, `listRowSeparator`, and `listRowInsets`
+- Widened `src/ir/types.ts` only as needed to represent `listStyle(.automatic)`
+- Added focused list extractor assertions in `tests/parser/extractors/lists.test.ts`
+- Updated fixture-backed regression coverage in `tests/fixtures/parser/lists.swift` and `tests/fixtures/parser/lists.json`
+- Kept the diff inside Stage 2 extraction and Stage 2 fixture coverage only
+- Did not reopen repo build-tooling code because the current blocker reproduces as a direct child-process `EPERM` failure outside the bounded parser diff
 
 ## Verification baseline
 
+- `cmd /c npm.cmd test -- --runInBand tests/parser/extractors/lists.test.ts tests/parser/fixtureRegression.test.ts` passed (`2` suites, `13` tests)
+- `cmd /c npm.cmd test -- --runInBand` passed (`10` suites, `54` tests)
 - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-- `cmd /c npm.cmd test -- --runInBand tests/build/esbuild.test.ts tests/build/packaging.test.ts` passed (`2` suites, `8` tests)
-- `cmd /c npm.cmd test -- --runInBand` passed (`10` suites, `51` tests)
-- `cmd /c npm.cmd run build` passed with:
-  - `Copied web-tree-sitter.wasm`
-  - `Copied tree-sitter-swift.wasm`
-  - `Build complete`
-- Direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` exited with status `0`
+- Direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` failed with `EPERM`
+- `cmd /c npm.cmd run build` failed with `spawn EPERM` after copying the WASM assets and before `esbuild` completed
 
 ## Notes
 
-- The new regression harness stays inside Stage 2 validation and uses real Swift snippet fixtures from disk, matching the review checklist guidance.
-- The earlier `spawn EPERM` report is stale relative to the current worktree and should not be treated as the active repo state.
+- No `BUG` or `ACTIVE_STAGE_GAP` findings remain in the bounded Stage 2 parser diff itself.
+- The only remaining concern is the environment-level build verification blocker, so the task is closed as `DONE_WITH_CONCERNS` rather than reopened for build-tooling edits.
