@@ -9,8 +9,8 @@ Active File: docs/agents/TASK.md
 - [x] Reseeded the bounded task from resolver traversal implementation to current-run build diagnostics only
 - [x] Re-ran `node .\node_modules\typescript\lib\tsc.js --noEmit` and passed
 - [x] Re-ran `cmd /c npm.cmd run diagnose:build-env` and captured the full current-run JSON output
-- [x] Confirmed the diagnostics JSON reports `summary.status: "environment_blocks_child_processes"`
-- [x] Re-ran `cmd /c npm.cmd run build` and reproduced the current-run failure before esbuild started
+- [x] Confirmed the diagnostics JSON reports `summary.status: "build_ready"`
+- [x] Re-ran `cmd /c npm.cmd run build` and completed successfully in the current run
 - [x] Cleared obsolete runtime prompts for the previously active resolver traversal task and left `RUNTIME_STATUS.md` as the current status source
 
 ## Baseline repo status
@@ -23,7 +23,7 @@ Active File: docs/agents/TASK.md
 - [x] Stage 3 resolver module structure is implemented under `src/resolver/`
 - [x] Focused Stage 3 resolver smoke tests exist from the prior run
 - [x] TypeScript `--noEmit` passes in the current automation environment as of 2026-04-18
-- [ ] Full repo build verification does not pass in the current automation environment as of 2026-04-18 because child-process launch fails before esbuild starts
+- [x] Full repo build verification passes in the current environment as of 2026-04-18
 - [ ] Stage 3 recursive traversal across current `ViewNode` shapes is not yet implemented
 - [ ] Stage 3 state and binding stub injection is not yet implemented
 - [ ] Stage 3 modifier flattening semantics are not yet implemented
@@ -31,27 +31,25 @@ Active File: docs/agents/TASK.md
 
 ## In progress
 
-- [ ] No active source-writing task is seeded while the current automation environment blocks the required build verification path
+- [ ] Reseed the bounded Stage 3 resolver traversal source-writing task now that the current build verification gate is passing
 
 ## Blocked
 
-- Current-run build verification is blocked by the automation environment, not by a repo-local post-spawn build failure:
-  - `cmd /c npm.cmd run diagnose:build-env` reported `summary.status: "environment_blocks_child_processes"`
-  - `directProbe.ok: false`
-  - `build.ok: false`
-  - both failures report `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- The diagnostics JSON confirms both WASM assets exist in this run, so missing assets are not the blocker
+- No current-run build-verification blocker is present:
+  - `cmd /c npm.cmd run diagnose:build-env` reported `summary.status: "build_ready"`
+  - `directProbe.ok: true`
+  - `build.ok: true`
+  - `cmd /c npm.cmd run build` completed successfully
 
 ## Next agent must start with
 
 1. Read `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
-2. Re-run the same current-run evidence trio before any source change if the automation environment may have changed:
+2. Re-run the same current-run evidence trio if the environment may have changed:
    - `node .\node_modules\typescript\lib\tsc.js --noEmit`
    - `cmd /c npm.cmd run diagnose:build-env`
    - `cmd /c npm.cmd run build`
-3. Do not resume Stage 3 resolver edits until the direct child-process probe succeeds and the build reaches esbuild or completes
-4. If the direct probe starts passing again, reseed the bounded Stage 3 resolver traversal task and regenerate the runtime prompt set from the live state rather than from the retired resolver prompts
+3. Reseed the bounded Stage 3 resolver traversal task and regenerate the runtime prompt set from the live state
 
 ## Suggested next target
 
-- Unblock child-process creation for `C:\Program Files\nodejs\node.exe` in the automation environment, then re-check the Stage 3 verification gate before resuming resolver traversal work
+- Resume the bounded Stage 3 resolver traversal task and keep build verification tied to current-run evidence
