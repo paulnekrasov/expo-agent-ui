@@ -1,8 +1,8 @@
-# SwiftUI Parser: The Post-Mortem
+# SwiftUI Parser:
 
 > Parse SwiftUI source -> extract the view tree -> approximate the layout -> render an Apple-native-feeling preview inside VS Code without a Mac.
 >
-> **Status: Archived. Dead. Mission accomplished.**
+> **Status: Archived.**
 
 ## The Delusion
 
@@ -10,9 +10,12 @@ I am a Product Designer moving into Design Engineering.
 
 I wanted to build native SwiftUI apps, but I work on Windows.
 
-The tight edit -> preview loop that makes UI work fast is broken by default outside the Apple ecosystem. Xcode previews require macOS. Cloud Macs cost money and add latency. So I thought: I will just build a custom AST parser, map tree-sitter nodes to an intermediate representation, and hack together a Canvas 2D rendering engine to emulate Apple's UI.
+The tight edit -> preview loop that makes UI work fast is broken by default outside the Apple ecosystem. Xcode previews require macOS. Cloud Macs cost money and add latency.
 
-I spent weeks deep in the weeds of compiler mechanics, AST parsing, SwiftUI layout rules, and the Model Context Protocol (MCP).
+So I thought:
+I will just build a custom AST parser, map tree-sitter nodes to an intermediate representation, and hack together a Canvas 2D rendering engine to emulate Apple's UI.
+
+I spent days researching,  deep in the weeds of compiler mechanics, AST parsing, SwiftUI layout rules, and the Model Context Protocol (MCP).
 
 Here is the brutal truth:
 
@@ -20,7 +23,11 @@ Here is the brutal truth:
 
 You cannot perfectly replicate Apple's closed-source layout engine in TypeScript. The undocumented quirks of SwiftUI's "propose, accept, place" negotiation will constantly break any approximation. A static AST-to-Canvas pipeline can give you a fast, useful, maybe 80% accurate structural preview. But the moment you introduce complex state, deep `GeometryReader` dependencies, or framework behavior that only exists at runtime, the Canvas starts lying to you.
 
-If your standard is "works exactly like native," this approach is a dead end.
+My thoughts were like this : 
+
+"works in the most approximate way possible like Expo emulators or other ones,"
+
+Well.. this approach is a dead end.
 
 ## What This Project Actually Proved
 
@@ -40,9 +47,9 @@ But the real artifact of this repository is the machine that built the machine.
 
 ## The Real Flex: Context Engineering
 
-I did not sit here hand-writing all of this TypeScript myself.
+I did not sit there hand-writing all of this TypeScript myself.
 
-I orchestrated agents. Mostly Claude and Codex.
+I orchestrated agents. Mostly  Codex.
 
 I force-fed them a project brief, a research index, pipeline stages, review rules, handoff files, bounded task specs, and a documentation corpus covering:
 
@@ -57,9 +64,11 @@ That changed the behavior of the models completely.
 
 They stopped acting like autocomplete and started operating much closer to Principal Software Engineers with strong systems context and tighter execution discipline.
 
+At least I felt like this when watching them doing this work. 
+
 That is the real point of this repo:
 
-> Stop treating LLMs like chatbots. Start treating context like infrastructure.
+> Start treating context like infrastructure. I have learned more about how to use AI than any tutorial will ever did for me
 
 ## The Architecture of Context
 
@@ -100,7 +109,7 @@ What does not exist yet:
 
 So no, this repository is not a working SwiftUI preview product.
 
-It is:
+It is essentially ended up like: 
 
 - a serious static parsing experiment
 - a partially built architecture for a SwiftUI preview pipeline
@@ -150,12 +159,11 @@ Read the docs first, then inspect:
 - [`src/resolver`](src/resolver) for the scaffold of the next stage
 - [`tests/parser`](tests/parser) for the behavioral surface the agents were coding against
 
-## Why This Approach Breaks Down
+Although technical thesis was not stupid, it merely was  bounded.
 
-The original technical thesis was not stupid. It was just bounded.
+SwiftUI is unusually analyzable because it is declarative and that made static parsing viable)
 
-SwiftUI is unusually analyzable because it is declarative. That made static parsing viable.
-But there is a hard ceiling:
+But of coursethere is a hard ceiling:
 
 - runtime behavior stays runtime behavior
 - undocumented framework quirks stay undocumented
@@ -163,18 +171,10 @@ But there is a hard ceiling:
 - visual fidelity without execution eventually collapses into approximation debt
 
 You can absolutely build a structurally useful previewer this way.
-You cannot turn static analysis into Apple's runtime just by wanting it harder.
+But you cannot turn static analysis into Apple's runtime just by wanting it harder.
 
-## The Pivot
-
-I am archiving this repository so I can lock in on React Native and Expo.
-
-They execute code on real hardware and real runtimes instead of guessing intent and drawing approximations on a web canvas. I have a financial target to hit by the summer of 2026, and I am not going to hit it by spending more time debugging the edge cases of a fake SwiftUI runtime.
-
-I extracted the knowledge.
-I learned the architecture.
-I proved the context-engineering workflow.
-Now I am moving on.
+## Pivot
+I am archiving this repository so I can lock in on much more important things for me.
 
 ## If You Want To Continue It
 
@@ -204,7 +204,9 @@ Clone this repo if you want to study:
 - staged system design
 - how to discipline AI agents into building complex systems
 
-Otherwise, go build something that actually ships.
+Otherwise, go build something that actually solves real problems
+
+It was the project that was supposed my problem but it didnt
 
 ## License Status
 
