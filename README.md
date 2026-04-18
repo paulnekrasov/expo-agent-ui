@@ -1,7 +1,6 @@
 # SwiftUI Preview
 
-> Parse SwiftUI source -> extract the view tree -> approximate the layout -> render an Apple-native-feeling preview inside VS Code, on Windows, Linux, or macOS, without Xcode, without a Mac, and without a Swift runtime.
-
+> Parse SwiftUI source -> extract the view tree -> approximate the layout -> render an Apple-native-feeling preview inside VS Code or macOS, without Xcode, without a Mac,
 This repository is being published in public and archived in the middle of the build.
 It is both:
 
@@ -10,10 +9,19 @@ It is both:
 
 It is not a polished product release. It is the work itself.
 
-## Why this exists
+## Story of this project
 
-I build real iOS apps.
-I do it on Windows.
+Look, I am the Product Designer not Software Engineer
+
+And in the future want to become Design Engineer 
+
+I have seen Design Engineers develop also the SwiftUI apps so i wanted to do that in the future as well especially with AI
+
+But I am on Windows and this is main bottleneck. 
+
+I can force  AI to write Swift  Syntaxis all day but I can not see the app itself 
+
+So I thought ok, now with Ai you can build anything why not build something that will allow me to see my app?
 
 That means the tight edit -> preview loop that makes UI work fast is broken by default.
 Xcode previews require macOS. Cloud Macs cost money and add latency. The official Swift tooling in VS Code still does not give you SwiftUI previews. If you write SwiftUI on Windows, you usually write blind, commit blind, and find out later on a device whether the layout was right.
