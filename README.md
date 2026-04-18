@@ -8,7 +8,8 @@
 
 I am a Product Designer moving into Design Engineering.
 
-I wanted to build native SwiftUI apps, but I work on Windows.
+
+I wanted to build native SwiftUI apps(with AI of course), but I work on Windows.
 
 The tight edit -> preview loop that makes UI work fast is broken by default outside the Apple ecosystem. Xcode previews require macOS. Cloud Macs cost money and add latency.
 
