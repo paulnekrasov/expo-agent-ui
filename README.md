@@ -1,217 +1,117 @@
-# SwiftUI Preview
+# SwiftUI Parser: The Post-Mortem
 
-> Parse SwiftUI source -> extract the view tree -> approximate the layout -> render an Apple-native-feeling preview inside VS Code or macOS, without Xcode, without a Mac,
-This repository is being published in public and archived in the middle of the build.
-It is both:
+> Parse SwiftUI source -> extract the view tree -> approximate the layout -> render an Apple-native-feeling preview inside VS Code without a Mac.
+>
+> **Status: Archived. Dead. Mission accomplished.**
 
-- a real codebase for a cross-platform SwiftUI preview pipeline
-- a record of an agentic software workflow built from research, constraints, and staged execution
+## The Delusion
 
-It is not a polished product release. It is the work itself.
+I am a Product Designer moving into Design Engineering.
 
-## Story of this project
+I wanted to build native SwiftUI apps, but I work on Windows.
 
-Look, I am the Product Designer not Software Engineer
+The tight edit -> preview loop that makes UI work fast is broken by default outside the Apple ecosystem. Xcode previews require macOS. Cloud Macs cost money and add latency. So I thought: I will just build a custom AST parser, map tree-sitter nodes to an intermediate representation, and hack together a Canvas 2D rendering engine to emulate Apple's UI.
 
-And in the future want to become Design Engineer 
+I spent weeks deep in the weeds of compiler mechanics, AST parsing, SwiftUI layout rules, and the Model Context Protocol (MCP).
 
-I have seen Design Engineers develop also the SwiftUI apps so i wanted to do that in the future as well especially with AI
+Here is the brutal truth:
 
-But I am on Windows and this is main bottleneck. 
+**I was building a fake car to learn how to drive.**
 
-I can force  AI to write Swift  Syntaxis all day but I can not see the app itself 
+You cannot perfectly replicate Apple's closed-source layout engine in TypeScript. The undocumented quirks of SwiftUI's "propose, accept, place" negotiation will constantly break any approximation. A static AST-to-Canvas pipeline can give you a fast, useful, maybe 80% accurate structural preview. But the moment you introduce complex state, deep `GeometryReader` dependencies, or framework behavior that only exists at runtime, the Canvas starts lying to you.
 
-So I thought ok, now with Ai you can build anything why not build something that will allow me to see my app?
+If your standard is "works exactly like native," this approach is a dead end.
 
-That means the tight edit -> preview loop that makes UI work fast is broken by default.
-Xcode previews require macOS. Cloud Macs cost money and add latency. The official Swift tooling in VS Code still does not give you SwiftUI previews. If you write SwiftUI on Windows, you usually write blind, commit blind, and find out later on a device whether the layout was right.
+## What This Project Actually Proved
 
-This project started from a very simple need:
+This project was not a waste of time.
 
-> I wanted a trustworthy SwiftUI preview loop without buying Apple hardware first.
+It proved three things:
 
-The deeper realization came after that:
+1. SwiftUI is structured enough to parse statically with `tree-sitter-swift`.
+2. An LLM can help build a serious, staged codebase when the context is rigorous enough.
+3. The real leverage was not the preview engine. It was the context system that made the agents behave like disciplined engineers.
 
-> AI coding agents can generate SwiftUI, but they are blind too.
+The parser mattered.
+The research mattered.
+The partial implementation mattered.
 
-An agent can write a `VStack`, a `Form`, a `NavigationStack`, or a complicated modifier chain, but without a visual feedback tool it cannot see whether the result is sensible. The human stays stuck as the rendering layer.
+But the real artifact of this repository is the machine that built the machine.
 
-This repository is an attempt to close that gap.
+## The Real Flex: Context Engineering
 
-## How it started
+I did not sit here hand-writing all of this TypeScript myself.
 
-This project was not built in the usual way.
+I orchestrated agents. Mostly Claude and Codex.
 
-I was not sitting here hand-writing every subsystem from scratch in a normal editor workflow. The core work was building context: collecting the right source material, turning it into a usable reference library, defining stage boundaries, encoding non-negotiable rules, and then training agents against that context until they could operate with the discipline of senior engineers instead of autocomplete.
+I force-fed them a project brief, a research index, pipeline stages, review rules, handoff files, bounded task specs, and a documentation corpus covering:
 
-The important artifact was not just code. It was the operating system around the code:
+- tree-sitter node specs
+- SwiftUI result-builder transforms
+- layout contracts and stub rules
+- iOS rendering constraints
+- VS Code WebView packaging rules
+- MCP protocol details
 
-- a project brief in [`docs/CLAUDE.md`](docs/CLAUDE.md)
-- a routing index in [`docs/reference/INDEX.md`](docs/reference/INDEX.md)
-- stage-aware execution rules in [`docs/agents/ORCHESTRATION.md`](docs/agents/ORCHESTRATION.md)
-- live task state in [`docs/agents/PHASE_STATE.md`](docs/agents/PHASE_STATE.md)
-- bounded task specs in [`docs/agents/TASK.md`](docs/agents/TASK.md)
-- review and handoff memory in [`docs/agents/REVIEW.md`](docs/agents/REVIEW.md) and [`docs/agents/HANDOFF.md`](docs/agents/HANDOFF.md)
+That changed the behavior of the models completely.
 
-The workflow was deliberate:
+They stopped acting like autocomplete and started operating much closer to Principal Software Engineers with strong systems context and tighter execution discipline.
 
-1. Research the real source material instead of guessing.
-2. Distill that research into reference docs the agents could navigate quickly.
-3. Split the system into hard pipeline stages so parser work never leaked into layout work, layout never leaked into rendering, and every task stayed bounded.
-4. Force the agents to work against explicit contracts, fallback behavior, and review checklists.
-5. Keep durable memory in files instead of trusting chat history.
+That is the real point of this repo:
 
-That is why this repository looks the way it does. It is code, but it is also a demonstration that with enough context engineering, review discipline, and execution structure, Codex and Claude Code can be pushed into a much more serious engineering mode.
+> Stop treating LLMs like chatbots. Start treating context like infrastructure.
 
-## What the project is trying to build
+## The Architecture of Context
 
-The long-term architecture is a static SwiftUI preview pipeline:
+If you want to understand how to frontload AI models with research, constraints, architecture, and task memory, read the `docs/` folder before you read the code.
 
-```text
-Swift source (.swift)
-        |
-        v
-tree-sitter-swift (WASM)
-        |
-        v
-AST walker + extractors
-        |
-        v
-typed ViewNode IR
-        |
-        v
-resolver
-  - stub @State / @Binding
-  - preserve modifier order
-        |
-        v
-layout engine
-  - propose -> accept -> place
-        |
-        v
-Canvas renderer
-  - iOS colors
-  - typography tables
-  - control chrome
-        |
-        v
-device frame + VS Code WebView
-        |
-        v
-eventually: MCP surface for AI agents
-```
+Start here:
 
-The key technical bet is simple:
-
-- SwiftUI is declarative enough to parse statically.
-- The view tree can be extracted without a Swift runtime.
-- A useful approximation of SwiftUI layout can be reimplemented in TypeScript.
-- Once that exists, the same engine can serve both humans in VS Code and AI agents through MCP.
-
-## What is already in this repo
-
-This repository is not empty theory. It already contains real implementation work.
-
-Current state, based on the checked-in code and agent state files:
-
-- Stage 1 parser setup exists using `web-tree-sitter` and `tree-sitter-swift`
-- Stage 2 extraction exists for major SwiftUI families including stacks, navigation, lists, forms, scroll containers, grids, and several modifier groups
-- the IR contract exists in [`src/ir/types.ts`](src/ir/types.ts)
-- parser fixtures and regression tests exist under [`tests/parser`](tests/parser) and [`tests/fixtures/parser`](tests/fixtures/parser)
-- resolver scaffolding exists under [`src/resolver`](src/resolver)
-- the VS Code command exists and currently outputs extracted IR to the OutputChannel
-
-What the checked-in code does today:
-
-- opens a Swift file in VS Code
-- parses it through tree-sitter
-- extracts previewable SwiftUI roots into typed IR
-- prints that IR for inspection
-
-That means the repository is already useful as:
-
-- a SwiftUI static parsing experiment
-- a typed IR extraction codebase
-- a documented agentic build process
-- a foundation for a future renderer
-
-## What is not implemented yet
-
-The repository is still mid-flight. Important parts are not finished yet.
-
-Not implemented yet in the current worktree:
-
-- recursive Stage 3 resolver traversal across all current `ViewNode` shapes
-- real state and binding stub injection
-- modifier flattening semantics beyond the scaffold
-- the Stage 4 layout engine
-- the Stage 5 canvas renderer
-- device chrome and preview interactions
-- the MCP server surface
-
-So if you clone this today, you are not getting a finished visual SwiftUI previewer.
-You are getting the parser/extractor foundation, the architecture, the research corpus, and the agent workflow that built it.
-
-## What this project does not do
-
-These are design boundaries, not missing polish items.
-
-### Permanent boundaries
-
-- It does not execute Swift code.
-- It does not require a Swift runtime.
-- It does not call a remote Mac.
-- It does not depend on Xcode.
-- It does not use React, Electron UI frameworks, or a browser UI stack inside the preview.
-- It does not try to become a full IDE.
-- It does not aim for pixel-perfect Xcode parity.
-
-### Honest current limitations
-
-- It does not render a real visual preview yet in the current repository state.
-- It does not resolve arbitrary custom view semantics.
-- It does not evaluate business logic or runtime data flow.
-- It does not replace actual device testing.
-- It does not make UIKit or third-party Swift packages magically previewable through static analysis alone.
-
-## Why tree-sitter instead of the Swift compiler
-
-Because the whole point is to break the Mac dependency.
-
-If the solution requires the Apple toolchain, the problem is still unsolved for the people this repository is for. `tree-sitter-swift` gives a real syntax tree in a portable form that works through WebAssembly. It is not semantic analysis, and it does not know everything the compiler knows, but it is enough to extract a large amount of structure from SwiftUI source without needing a simulator or a runtime.
-
-That tradeoff is intentional.
-
-## Why the workflow matters as much as the code
-
-There are a lot of repositories where the code is the only artifact that survives.
-This one is different.
-
-The most reusable thing here may not be the parser. It may be the method:
-
-- use a reference index so agents never guess sources
-- keep architecture in a durable brief
-- keep live execution state outside chat history
-- constrain work by pipeline stage
-- force review against active-stage checklists
-- preserve bounded tasks and handoffs between agent sessions
-
-If you are trying to build serious software with coding agents, this repository is meant to show what happens when you stop treating the model like a chatbot and start treating context like infrastructure.
-
-## Repository map
-
-Top-level areas worth reading first:
-
+- [`docs/CLAUDE.md`](docs/CLAUDE.md) - the detailed architectural brief and non-negotiable rules
 - [`docs/reference/INDEX.md`](docs/reference/INDEX.md) - the router into the research corpus
-- [`docs/CLAUDE.md`](docs/CLAUDE.md) - the detailed architectural brief
-- [`docs/agents/ORCHESTRATION.md`](docs/agents/ORCHESTRATION.md) - workflow protocol
+- [`docs/agents/ORCHESTRATION.md`](docs/agents/ORCHESTRATION.md) - the workflow protocol
+- [`docs/agents/PHASE_STATE.md`](docs/agents/PHASE_STATE.md) - live execution state outside chat history
+- [`docs/agents/TASK.md`](docs/agents/TASK.md) - bounded task specs
+- [`docs/agents/HANDOFF.md`](docs/agents/HANDOFF.md) - agent-to-agent continuity
 - [`docs/agents/ROADMAP_CHECKLIST.md`](docs/agents/ROADMAP_CHECKLIST.md) - condensed execution roadmap
-- [`src/parser`](src/parser) - tree-sitter setup, AST walking, view/modifier extraction
-- [`src/ir`](src/ir) - shared type system and builders
-- [`src/resolver`](src/resolver) - Stage 3 scaffold
-- [`tests/parser`](tests/parser) - parser and extractor coverage
 
-## Development
+Those files are the system. The codebase makes a lot more sense once you read them in that order.
+
+## What Is In The Repository Today
+
+This repo is archived, but it is not empty.
+
+What exists in the checked-in codebase:
+
+- Stage 1 parser setup using `web-tree-sitter` and `tree-sitter-swift`
+- Stage 2 extraction for major SwiftUI families including stacks, navigation, lists, forms, scroll containers, grids, and several modifier groups
+- a typed IR contract in [`src/ir/types.ts`](src/ir/types.ts)
+- parser fixtures and regression coverage under [`tests/parser`](tests/parser) and [`tests/fixtures/parser`](tests/fixtures/parser)
+- resolver scaffolding under [`src/resolver`](src/resolver)
+- a VS Code command that currently parses a Swift file and prints Stage 1/2 IR to the OutputChannel
+
+What does not exist yet:
+
+- a finished Stage 3 resolver
+- a real layout engine
+- a real canvas renderer
+- device chrome and interactions
+- the MCP surface that was planned for agents
+
+So no, this repository is not a working SwiftUI preview product.
+
+It is:
+
+- a serious static parsing experiment
+- a partially built architecture for a SwiftUI preview pipeline
+- a research corpus
+- an example of a disciplined agentic workflow
+
+## How To Use This Repo Today
+
+There are two real ways to use this repository.
+
+### 1. Use it as a codebase to inspect
 
 ```bash
 git clone https://github.com/paulnekrasov/swift-ui-parser
@@ -231,46 +131,83 @@ npm test
 npm run diagnose:build-env
 ```
 
-In VS Code, the extension command currently registered is:
+In VS Code, the registered command is:
 
 ```text
 SwiftUI: Open Preview
 ```
 
-At the moment, that command produces Stage 1/2 IR output rather than a rendered device preview.
+Today that command does not render a device preview. It parses the active Swift file, extracts previewable SwiftUI roots into typed IR, and prints that IR into the VS Code OutputChannel.
 
-## If you want to continue this project
+### 2. Use it as a context-engineering case study
 
-Do not start by hacking randomly in `src/`.
+If you care more about agent orchestration than SwiftUI, this is the better path.
 
-Start here, in order:
+Read the docs first, then inspect:
+
+- [`src/parser`](src/parser) for tree-sitter setup, AST walking, and extraction
+- [`src/ir`](src/ir) for the contract between stages
+- [`src/resolver`](src/resolver) for the scaffold of the next stage
+- [`tests/parser`](tests/parser) for the behavioral surface the agents were coding against
+
+## Why This Approach Breaks Down
+
+The original technical thesis was not stupid. It was just bounded.
+
+SwiftUI is unusually analyzable because it is declarative. That made static parsing viable.
+But there is a hard ceiling:
+
+- runtime behavior stays runtime behavior
+- undocumented framework quirks stay undocumented
+- closed-source layout rules stay closed-source
+- visual fidelity without execution eventually collapses into approximation debt
+
+You can absolutely build a structurally useful previewer this way.
+You cannot turn static analysis into Apple's runtime just by wanting it harder.
+
+## The Pivot
+
+I am archiving this repository so I can lock in on React Native and Expo.
+
+They execute code on real hardware and real runtimes instead of guessing intent and drawing approximations on a web canvas. I have a financial target to hit by the summer of 2026, and I am not going to hit it by spending more time debugging the edge cases of a fake SwiftUI runtime.
+
+I extracted the knowledge.
+I learned the architecture.
+I proved the context-engineering workflow.
+Now I am moving on.
+
+## If You Want To Continue It
+
+If you want to keep building this project, start with the docs, not the source tree.
+
+Use this order:
 
 1. [`docs/reference/INDEX.md`](docs/reference/INDEX.md)
 2. [`docs/agents/ORCHESTRATION.md`](docs/agents/ORCHESTRATION.md)
 3. [`docs/agents/PHASE_STATE.md`](docs/agents/PHASE_STATE.md)
 4. [`docs/agents/HANDOFF.md`](docs/agents/HANDOFF.md)
 5. [`docs/agents/ROADMAP_CHECKLIST.md`](docs/agents/ROADMAP_CHECKLIST.md)
-6. [`docs/agents/TASK.md`](docs/agents/TASK.md) if it is populated
+6. [`docs/agents/TASK.md`](docs/agents/TASK.md), if it is populated
 
-Then map your work to a single pipeline stage and stay inside it.
+Then keep your work inside one pipeline stage at a time.
 
-## Archive status
+Do not mix parser, resolver, layout, and renderer work in one change.
+That was one of the main guardrails that kept the agent workflow usable.
 
-This repository is being archived publicly as an unfinished but serious build.
+## Who This Repo Is For
 
-That is intentional.
+Clone this repo if you want to study:
 
-I would rather publish the actual research, constraints, architecture, tests, partial implementation, and agent workflow than wait for a fake moment of completeness that may never come.
+- compiler-adjacent architecture
+- tree-sitter integration in TypeScript
+- AST-to-IR extraction patterns
+- staged system design
+- how to discipline AI agents into building complex systems
 
-If this repository is useful, it will be useful for one of three reasons:
+Otherwise, go build something that actually ships.
 
-- you want to continue building the preview pipeline
-- you want to study the parser and IR extraction approach
-- you want to study how an agentic engineering workflow was designed and disciplined
-
-## License status
+## License Status
 
 There is currently no `LICENSE` file in this repository.
 
-So while the repository is public, do not assume an open-source license has been granted yet.
-If this project is meant to become formally open source, adding a license file is still a required step.
+So while the repository is public, do not assume an open-source license has been granted yet. Public source code is not the same thing as licensed source code.
