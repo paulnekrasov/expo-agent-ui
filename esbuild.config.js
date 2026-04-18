@@ -1,4 +1,5 @@
 // @ts-check
+const childProcess = require("child_process");
 const esbuild = require("esbuild");
 const fs = require("fs");
 const path = require("path");
@@ -25,6 +26,20 @@ const path = require("path");
  *     watch(): Promise<unknown>;
  *   }>;
  * }} EsbuildApi
+ */
+
+/**
+ * @typedef {{
+ *   error?: NodeJS.ErrnoException;
+ *   signal: NodeJS.Signals | null;
+ *   status: number | null;
+ *   stderr?: string;
+ *   stdout?: string;
+ * }} SpawnProbeResult
+ */
+
+/**
+ * @typedef {(command: string, args: string[], options: { encoding: "utf8" }) => SpawnProbeResult} SpawnSyncImpl
  */
 
 /** @type {readonly WasmAsset[]} */
@@ -131,10 +146,49 @@ function copyWasmAssets(options = {}) {
 
 /**
  * @param {{
+ *   spawnSyncImpl?: SpawnSyncImpl;
+ * }} [options]
+ * @returns {void}
+ */
+function assertChildProcessSpawnAvailable(options = {}) {
+  const spawnSyncImpl = options.spawnSyncImpl ?? childProcess.spawnSync;
+  const probeResult = spawnSyncImpl(
+    process.execPath,
+    ["-e", "process.exit(0)"],
+    { encoding: "utf8" }
+  );
+
+  if (!probeResult.error) {
+    return;
+  }
+
+  const error = probeResult.error;
+  const errorCode = typeof error.code === "string" ? error.code : "UNKNOWN";
+  const errorSyscall =
+    typeof error.syscall === "string" ? error.syscall : "spawnSync";
+  const summary =
+    errorCode === "EPERM"
+      ? "Build verification blocked before esbuild started: child-process execution is denied in the current environment."
+      : "Build verification blocked before esbuild started: the direct child-process probe failed in the current environment.";
+
+  throw new Error(
+    [
+      summary,
+      `Direct probe: ${errorSyscall} -> ${errorCode}`,
+      "The current build path uses esbuild's Node API, which requires spawning a service process.",
+      "Re-run the direct child-process probe and npm run build in a child-process-enabled environment before treating this as a repo-local regression.",
+    ].join("\n"),
+    { cause: error }
+  );
+}
+
+/**
+ * @param {{
  *   esbuildApi?: EsbuildApi;
  *   logger?: Pick<Console, "log">;
  *   production?: boolean;
  *   projectRoot?: string;
+ *   spawnSyncImpl?: SpawnSyncImpl;
  *   watch?: boolean;
  * }} [options]
  * @returns {Promise<void>}
@@ -144,9 +198,11 @@ async function runBuild(options = {}) {
   const logger = options.logger ?? console;
   const production = options.production ?? false;
   const projectRoot = options.projectRoot ?? process.cwd();
+  const spawnSyncImpl = options.spawnSyncImpl;
   const watch = options.watch ?? false;
   const buildOptions = getBuildOptions({ production, projectRoot });
 
+  assertChildProcessSpawnAvailable({ spawnSyncImpl });
   copyWasmAssets({ logger, projectRoot });
 
   if (watch) {
@@ -188,6 +244,7 @@ async function runCli(argv = process.argv.slice(2)) {
 
 module.exports = {
   REQUIRED_WASM_ASSETS,
+  assertChildProcessSpawnAvailable,
   copyWasmAssets,
   getBuildOptions,
   resolveWasmAssets,

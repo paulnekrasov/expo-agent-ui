@@ -9,3 +9,16 @@ NavigationStack {
     }
   }
 }
+.toolbar {
+  ToolbarItem(placement: .navigationBarTrailing) {
+    Button("Add") {}
+  }
+  ToolbarItemGroup(placement: .bottomBar) {
+    Button("Primary") {}
+    Button("Secondary") {}
+  }
+  Button("Plain") {}
+}
+.navigationDestination(for: Int.self) { value in
+  Text("Value")
+}

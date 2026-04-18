@@ -11,7 +11,7 @@ Do not replace `docs/swiftui_planning_full.md` with it.
 
 ## Phase 1 - Parser Foundation
 Pipeline Stages: Stage 1 Parser, Stage 2 Extractor
-Status: In progress
+Status: Complete in the current worktree (required build verification remains externally blocked)
 
 ### Foundations
 
@@ -43,6 +43,8 @@ Status: In progress
 - [x] `Toggle`
 - [x] `TextField`
 - [x] `SecureField`
+- [x] `LazyVGrid`
+- [x] `LazyHGrid`
 
 ### Core modifier extraction
 
@@ -56,8 +58,8 @@ Status: In progress
 - [x] `.navigationTitle`
 - [x] `.disabled`
 - [x] `.overlay`
-- [ ] `.toolbar`
-- [ ] `.navigationDestination`
+- [x] `.toolbar`
+- [x] `.navigationDestination`
 - [x] `.listStyle`
 - [x] `.listRowInsets`
 - [x] `.listRowSeparator`
@@ -70,21 +72,21 @@ Status: In progress
 - [x] repo-level parser integration test
 - [x] build passes
 - [x] per-extractor test files under `tests/parser/extractors`
-- [ ] broaden Swift snippet fixtures to cover navigation, lists, forms, and grids
+- [x] broaden Swift snippet fixtures to cover navigation, lists, forms, and grids
 - [x] add expected IR fixtures for major view families
-
-### Recommended next bounded tasks
-
-- [ ] Re-check child-process spawning and close the `npm run build` gate in a child-process-enabled environment, then seed the next unchecked Stage 2 slice
 
 ## Phase 2 - Resolver
 Pipeline Stage: Stage 3 Resolver
-Status: Not started
+Status: In progress
 
 - [ ] Add resolver module structure under `src/resolver`
 - [ ] Implement state and binding stub injection per `docs/reference/ir/property-wrapper-stubs.md`
 - [ ] Harden modifier flattening contracts
 - [ ] Add resolver tests
+
+### Recommended next bounded tasks
+
+- [ ] Add the bounded Stage 3 resolver module scaffold plus focused smoke tests
 
 ## Phase 3 - Layout Foundation
 Pipeline Stage: Stage 4 Layout

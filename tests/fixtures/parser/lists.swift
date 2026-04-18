@@ -11,3 +11,19 @@ List {
   }
 }
 .listStyle(.insetGrouped)
+
+LazyVGrid(columns: [
+  GridItem(.fixed(80), spacing: 12),
+  GridItem(.flexible(minimum: 40, maximum: 120)),
+  GridItem(.adaptive(minimum: 60, maximum: 140), spacing: 8)
+], spacing: 16) {
+  Text("A")
+  Text("B")
+}
+
+LazyHGrid(rows: [
+  GridItem(.fixed(44)),
+  GridItem(.adaptive(minimum: 60), spacing: 10)
+], spacing: 20) {
+  Text("C")
+}

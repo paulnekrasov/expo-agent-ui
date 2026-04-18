@@ -183,4 +183,186 @@ NavigationStack {
       },
     });
   });
+
+  it("extracts toolbar modifiers with ToolbarItem, ToolbarItemGroup, and plain builder children", async () => {
+    const roots = await parseSwiftFile(`
+NavigationStack {
+  NavigationLink("Open", value: 1)
+}
+.navigationTitle("Inbox")
+.toolbar {
+  ToolbarItem(placement: .navigationBarTrailing) {
+    Button("Add") {}
+  }
+  ToolbarItemGroup(placement: .bottomBar) {
+    Button("Primary") {}
+    Button("Secondary") {}
+  }
+  Button("Plain") {}
+}
+.navigationDestination(for: Int.self) { value in
+  Text("Detail")
+}
+.disabled(true)
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed NavigationStack");
+    }
+
+    expect(root).toMatchObject({
+      kind: "NavigationStack",
+      modifiers: [
+        {
+          kind: "navigationTitle",
+          title: "Inbox",
+        },
+        {
+          kind: "toolbar",
+          items: [
+            {
+              kind: "ToolbarItem",
+              placement: "navigationBarTrailing",
+              child: {
+                kind: "Button",
+                label: {
+                  kind: "Text",
+                  content: "Add",
+                  isDynamic: false,
+                },
+              },
+            },
+            {
+              kind: "ToolbarItem",
+              placement: "bottomBar",
+              child: {
+                kind: "Button",
+                label: {
+                  kind: "Text",
+                  content: "Primary",
+                  isDynamic: false,
+                },
+              },
+            },
+            {
+              kind: "ToolbarItem",
+              placement: "bottomBar",
+              child: {
+                kind: "Button",
+                label: {
+                  kind: "Text",
+                  content: "Secondary",
+                  isDynamic: false,
+                },
+              },
+            },
+            {
+              kind: "Button",
+              label: {
+                kind: "Text",
+                content: "Plain",
+                isDynamic: false,
+              },
+            },
+          ],
+        },
+        {
+          kind: "navigationDestination",
+          stub: true,
+        },
+        {
+          kind: "disabled",
+          value: true,
+        },
+      ],
+    });
+  });
+
+  it("returns an unknown toolbar modifier for unsupported ToolbarItem syntax", async () => {
+    const roots = await parseSwiftFile(`
+NavigationStack {
+  Text("Root")
+}
+.toolbar {
+  ToolbarItem(id: "primary", placement: .navigationBarTrailing) {
+    Button("Add") {}
+  }
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed NavigationStack");
+    }
+
+    expect(root).toMatchObject({
+      kind: "NavigationStack",
+      modifiers: [
+        {
+          kind: "unknown",
+          name: "toolbar",
+          rawArgs: expect.stringContaining('id: "primary"'),
+        },
+      ],
+    });
+  });
+
+  it("extracts stub navigationDestination modifiers and preserves modifier order", async () => {
+    const roots = await parseSwiftFile(`
+NavigationStack {
+  NavigationLink("Open", value: 1)
+}
+.navigationTitle("Inbox")
+.navigationDestination(for: Int.self) { value in
+  Text("Detail")
+}
+.disabled(true)
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed NavigationStack");
+    }
+
+    expect(root).toMatchObject({
+      kind: "NavigationStack",
+      modifiers: [
+        {
+          kind: "navigationTitle",
+          title: "Inbox",
+        },
+        {
+          kind: "navigationDestination",
+          stub: true,
+        },
+        {
+          kind: "disabled",
+          value: true,
+        },
+      ],
+    });
+  });
+
+  it("extracts the isPresented navigationDestination overload as a stub modifier", async () => {
+    const roots = await parseSwiftFile(`
+NavigationStack {
+  Text("Root")
+}
+.navigationDestination(isPresented: $showDetail) {
+  Text("Detail")
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed NavigationStack");
+    }
+
+    expect(root).toMatchObject({
+      kind: "NavigationStack",
+      modifiers: [
+        {
+          kind: "navigationDestination",
+          stub: true,
+        },
+      ],
+    });
+  });
 });

@@ -52,6 +52,75 @@
       },
       "modifiers": []
     },
-    "modifiers": []
+    "modifiers": [
+      {
+        "kind": "toolbar",
+        "items": [
+          {
+            "kind": "ToolbarItem",
+            "placement": "navigationBarTrailing",
+            "child": {
+              "kind": "Button",
+              "label": {
+                "kind": "Text",
+                "content": "Add",
+                "isDynamic": false,
+                "modifiers": []
+              },
+              "role": null,
+              "modifiers": []
+            },
+            "modifiers": []
+          },
+          {
+            "kind": "ToolbarItem",
+            "placement": "bottomBar",
+            "child": {
+              "kind": "Button",
+              "label": {
+                "kind": "Text",
+                "content": "Primary",
+                "isDynamic": false,
+                "modifiers": []
+              },
+              "role": null,
+              "modifiers": []
+            },
+            "modifiers": []
+          },
+          {
+            "kind": "ToolbarItem",
+            "placement": "bottomBar",
+            "child": {
+              "kind": "Button",
+              "label": {
+                "kind": "Text",
+                "content": "Secondary",
+                "isDynamic": false,
+                "modifiers": []
+              },
+              "role": null,
+              "modifiers": []
+            },
+            "modifiers": []
+          },
+          {
+            "kind": "Button",
+            "label": {
+              "kind": "Text",
+              "content": "Plain",
+              "isDynamic": false,
+              "modifiers": []
+            },
+            "role": null,
+            "modifiers": []
+          }
+        ]
+      },
+      {
+        "kind": "navigationDestination",
+        "stub": true
+      }
+    ]
   }
 ]

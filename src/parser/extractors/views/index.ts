@@ -33,6 +33,8 @@ import { parseImageCall } from "./image";
 import { parseLabelCall } from "./label";
 import {
   parseForEachCall,
+  parseLazyHGridCall,
+  parseLazyVGridCall,
   parseListCall,
   parseSectionCall,
 } from "./lists";
@@ -375,6 +377,10 @@ function parseKnownViewCall(
       return parseListCall(call, context, parseViewNode);
     case "ForEach":
       return parseForEachCall(call, context, parseViewNode);
+    case "LazyVGrid":
+      return parseLazyVGridCall(call, context, parseViewNode);
+    case "LazyHGrid":
+      return parseLazyHGridCall(call, context, parseViewNode);
     case "Section":
       return parseSectionCall(call, context, parseViewNode);
     case "NavigationLink":
@@ -440,6 +446,8 @@ function parseBaseCall(
     case "Label":
     case "List":
     case "ForEach":
+    case "LazyVGrid":
+    case "LazyHGrid":
     case "Section":
     case "NavigationLink":
     case "NavigationStack":

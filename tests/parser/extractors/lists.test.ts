@@ -306,4 +306,114 @@ List {
       ],
     });
   });
+
+  it("extracts LazyVGrid and LazyHGrid with literal GridItem arrays", async () => {
+    const roots = await parseSwiftFile(`
+LazyVGrid(columns: [
+  GridItem(.fixed(80), spacing: 12),
+  GridItem(.flexible(minimum: 40, maximum: 120)),
+  GridItem(.adaptive(minimum: 60, maximum: 140), spacing: 8)
+], spacing: 16) {
+  Text("A")
+  Text("B")
+}
+
+LazyHGrid(rows: [
+  GridItem(.fixed(44)),
+  GridItem(.adaptive(minimum: 60), spacing: 10)
+], spacing: 20) {
+  Text("C")
+}
+`);
+    const lazyVGrid = roots[0];
+    const lazyHGrid = roots[1];
+    if (!lazyVGrid || !lazyHGrid) {
+      throw new Error("Expected parsed grid roots");
+    }
+
+    expect(lazyVGrid).toMatchObject({
+      kind: "LazyVGrid",
+      columns: [
+        {
+          kind: "fixed",
+          size: 80,
+          minimum: null,
+          maximum: null,
+          spacing: 12,
+        },
+        {
+          kind: "flexible",
+          size: null,
+          minimum: 40,
+          maximum: 120,
+          spacing: null,
+        },
+        {
+          kind: "adaptive",
+          size: null,
+          minimum: 60,
+          maximum: 140,
+          spacing: 8,
+        },
+      ],
+      spacing: 16,
+      children: [
+        {
+          kind: "Text",
+          content: "A",
+          isDynamic: false,
+        },
+        {
+          kind: "Text",
+          content: "B",
+          isDynamic: false,
+        },
+      ],
+    });
+
+    expect(lazyHGrid).toMatchObject({
+      kind: "LazyHGrid",
+      rows: [
+        {
+          kind: "fixed",
+          size: 44,
+          minimum: null,
+          maximum: null,
+          spacing: null,
+        },
+        {
+          kind: "adaptive",
+          size: null,
+          minimum: 60,
+          maximum: null,
+          spacing: 10,
+        },
+      ],
+      spacing: 20,
+      children: [
+        {
+          kind: "Text",
+          content: "C",
+          isDynamic: false,
+        },
+      ],
+    });
+  });
+
+  it("falls back to UnknownNode for unsupported dynamic grid arrays", async () => {
+    const roots = await parseSwiftFile(`
+LazyVGrid(columns: columnSpec, spacing: 16) {
+  Text("A")
+}
+`);
+    const root = roots[0];
+    if (!root) {
+      throw new Error("Expected a parsed grid root");
+    }
+
+    expect(root).toMatchObject({
+      kind: "UnknownNode",
+      rawType: "LazyVGrid",
+    });
+  });
 });

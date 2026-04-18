@@ -30,6 +30,20 @@ type WatchContext = {
   watch(): Promise<unknown>;
 };
 
+type SpawnProbeResult = {
+  error?: NodeJS.ErrnoException;
+  signal: NodeJS.Signals | null;
+  status: number | null;
+  stderr?: string;
+  stdout?: string;
+};
+
+type SpawnSyncImpl = (
+  command: string,
+  args: string[],
+  options: { encoding: "utf8" }
+) => SpawnProbeResult;
+
 type EsbuildApi = {
   build(options: BuildOptions): Promise<unknown>;
   context?(options: BuildOptions): Promise<WatchContext>;
@@ -45,11 +59,15 @@ type BuildModule = {
     projectRoot?: string;
     logger?: BuildLogger;
   }): void;
+  assertChildProcessSpawnAvailable(options?: {
+    spawnSyncImpl?: SpawnSyncImpl;
+  }): void;
   runBuild(options?: {
     esbuildApi?: EsbuildApi;
     logger?: BuildLogger;
     production?: boolean;
     projectRoot?: string;
+    spawnSyncImpl?: SpawnSyncImpl;
     watch?: boolean;
   }): Promise<void>;
 };
@@ -244,15 +262,23 @@ describe("esbuild build configuration", () => {
       build: buildMock,
       context: contextMock,
     };
+    const spawnSyncImpl = jest.fn<SpawnSyncImpl>(() => ({
+      signal: null,
+      status: 0,
+      stderr: "",
+      stdout: "",
+    }));
 
     await buildModule.runBuild({
       esbuildApi,
       logger: silentLogger,
       projectRoot,
+      spawnSyncImpl,
     });
 
     const options = buildModule.getBuildOptions({ projectRoot });
 
+    expect(spawnSyncImpl).toHaveBeenCalledTimes(1);
     expect(buildMock).toHaveBeenCalledTimes(2);
     expect(buildMock).toHaveBeenNthCalledWith(1, options.extension);
     expect(buildMock).toHaveBeenNthCalledWith(2, options.webview);
@@ -263,5 +289,50 @@ describe("esbuild build configuration", () => {
     expect(
       readFileSync(path.join(projectRoot, "out", "tree-sitter-swift.wasm"), "utf8")
     ).toBe("swift-wasm");
+  });
+
+  it("fails fast with a classified message when child-process spawning is denied", async () => {
+    const buildModule = loadBuildModule();
+
+    expect(buildModule?.runBuild).toBeDefined();
+    if (!buildModule) {
+      return;
+    }
+
+    const projectRoot = createSandbox();
+    const buildMock = jest.fn(async (_options: BuildOptions) => ({}));
+    const spawnError = Object.assign(
+      new Error("spawnSync C:\\Program Files\\nodejs\\node.exe EPERM"),
+      {
+        code: "EPERM",
+        errno: -4048,
+        path: "C:\\Program Files\\nodejs\\node.exe",
+        spawnargs: ["-e", "process.exit(0)"],
+        syscall: "spawnSync C:\\Program Files\\nodejs\\node.exe",
+      }
+    ) as NodeJS.ErrnoException;
+    const spawnSyncImpl = jest.fn<SpawnSyncImpl>(() => ({
+      error: spawnError,
+      signal: null,
+      status: null,
+      stderr: "",
+      stdout: "",
+    }));
+
+    await expect(
+      buildModule.runBuild({
+        esbuildApi: {
+          build: buildMock,
+        },
+        logger: silentLogger,
+        projectRoot,
+        spawnSyncImpl,
+      })
+    ).rejects.toThrow(
+      "Build verification blocked before esbuild started: child-process execution is denied in the current environment."
+    );
+
+    expect(spawnSyncImpl).toHaveBeenCalledTimes(1);
+    expect(buildMock).not.toHaveBeenCalled();
   });
 });

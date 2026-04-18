@@ -21,6 +21,7 @@ import {
   parseNumberLiteral,
   parseSizeValue,
   parseStringLiteral,
+  withSourceRange,
   type CallDetails,
   type ParseSourceContext,
 } from "../shared";
@@ -58,6 +59,16 @@ const LIST_ROW_SEPARATOR_VISIBILITIES = new Set([
   "visible",
   "hidden",
 ]);
+
+const NAVIGATION_DESTINATION_ARGUMENT_LABELS = new Set([
+  "for",
+  "isPresented",
+]);
+
+type ToolbarItemViewNode = Extract<
+  ViewNode,
+  { kind: "ToolbarItem" }
+>;
 
 function getFirstArgument(call: CallDetails): SyntaxNode | null {
   return call.arguments[0]?.value ?? null;
@@ -287,6 +298,39 @@ function parseBackgroundViewContent(
   }
 
   return makeGroup(children);
+}
+
+function parseViewBuilderChildren(
+  lambdaNode: SyntaxNode,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode[] {
+  const statementsNode = getStatementsNodeFromLambda(lambdaNode);
+  if (!statementsNode) {
+    return [];
+  }
+
+  return statementsNode.namedChildren
+    .filter(
+      (child) =>
+        child.type === "call_expression" || child.type === "if_statement"
+    )
+    .map((child) => parseNestedView(child, context));
+}
+
+function wrapViewBuilderChildren(
+  children: ViewNode[],
+  syntaxNode: SyntaxNode
+): ViewNode | null {
+  if (children.length === 0) {
+    return null;
+  }
+
+  if (children.length === 1) {
+    return children[0] ?? null;
+  }
+
+  return withSourceRange(makeGroup(children), syntaxNode);
 }
 
 function parseModifierViewArgument(
@@ -824,6 +868,248 @@ function parseListRowInsetsModifier(
   };
 }
 
+function parseNavigationDestinationModifier(
+  call: CallDetails,
+  context: ParseSourceContext
+): Modifier {
+  const supportedArgument = call.arguments.find(
+    (argument) =>
+      argument.label !== null &&
+      argument.label !== "destination"
+  );
+  const supportedLabel = supportedArgument?.label;
+
+  if (
+    !supportedArgument ||
+    supportedLabel === undefined ||
+    supportedLabel === null ||
+    !NAVIGATION_DESTINATION_ARGUMENT_LABELS.has(supportedLabel)
+  ) {
+    return {
+      kind: "unknown",
+      name: "navigationDestination",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  const hasDestinationClosure =
+    call.trailingClosures.length > 0 ||
+    call.arguments.some(
+      (argument) =>
+        argument.label === "destination" &&
+        argument.value.type === "lambda_literal"
+    );
+  if (!hasDestinationClosure) {
+    return {
+      kind: "unknown",
+      name: "navigationDestination",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "navigationDestination",
+    stub: true,
+  };
+}
+
+function parseToolbarPlacement(
+  call: CallDetails,
+  context: ParseSourceContext
+): string | null | undefined {
+  let placement: string | null = null;
+
+  for (const argument of call.arguments) {
+    if (argument.label !== "placement" || placement !== null) {
+      return undefined;
+    }
+
+    const parsedPlacement = getLastPathComponent(
+      getNavigationPath(argument.value, context)
+    );
+    if (!parsedPlacement) {
+      return undefined;
+    }
+
+    placement = parsedPlacement;
+  }
+
+  return placement;
+}
+
+function makeToolbarItemView(
+  placement: string,
+  child: ViewNode
+): ToolbarItemViewNode {
+  const toolbarItem: ToolbarItemViewNode = {
+    kind: "ToolbarItem",
+    placement,
+    child,
+    modifiers: [],
+    id: `toolbar_item_${child.id}`,
+  };
+
+  if (child.sourceRange) {
+    toolbarItem.sourceRange = child.sourceRange;
+  }
+
+  return toolbarItem;
+}
+
+function parseToolbarItemEntry(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode[] | null {
+  const closure = call.trailingClosures[0];
+  if (call.trailingClosures.length !== 1 || !closure) {
+    return null;
+  }
+
+  const placement = parseToolbarPlacement(call, context);
+  if (placement === undefined) {
+    return null;
+  }
+
+  const content = wrapViewBuilderChildren(
+    parseViewBuilderChildren(
+      closure,
+      context,
+      parseNestedView
+    ),
+    closure
+  );
+  if (!content) {
+    return null;
+  }
+
+  return placement
+    ? [makeToolbarItemView(placement, content)]
+    : [content];
+}
+
+function parseToolbarItemGroupEntry(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode[] | null {
+  const closure = call.trailingClosures[0];
+  if (call.trailingClosures.length !== 1 || !closure) {
+    return null;
+  }
+
+  const placement = parseToolbarPlacement(call, context);
+  if (placement === undefined) {
+    return null;
+  }
+
+  const children = parseViewBuilderChildren(
+    closure,
+    context,
+    parseNestedView
+  );
+  if (children.length === 0) {
+    return null;
+  }
+
+  return placement
+    ? children.map((child) => makeToolbarItemView(placement, child))
+    : children;
+}
+
+function parseToolbarModifier(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): Modifier {
+  const closure = call.trailingClosures[0];
+  if (
+    call.arguments.length > 0 ||
+    call.trailingClosures.length !== 1 ||
+    !closure
+  ) {
+    return {
+      kind: "unknown",
+      name: "toolbar",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  const statementsNode = getStatementsNodeFromLambda(closure);
+  if (!statementsNode) {
+    return {
+      kind: "unknown",
+      name: "toolbar",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  const items: ViewNode[] = [];
+
+  for (const child of statementsNode.namedChildren) {
+    if (
+      child.type !== "call_expression" &&
+      child.type !== "if_statement"
+    ) {
+      continue;
+    }
+
+    if (child.type === "call_expression") {
+      const childCall = parseCallDetails(child, context);
+      if (childCall.calleeName === "ToolbarItem") {
+        const parsedItems = parseToolbarItemEntry(
+          childCall,
+          context,
+          parseNestedView
+        );
+        if (!parsedItems) {
+          return {
+            kind: "unknown",
+            name: "toolbar",
+            rawArgs: getCallRawArgs(call, context),
+          };
+        }
+
+        items.push(...parsedItems);
+        continue;
+      }
+
+      if (childCall.calleeName === "ToolbarItemGroup") {
+        const parsedItems = parseToolbarItemGroupEntry(
+          childCall,
+          context,
+          parseNestedView
+        );
+        if (!parsedItems) {
+          return {
+            kind: "unknown",
+            name: "toolbar",
+            rawArgs: getCallRawArgs(call, context),
+          };
+        }
+
+        items.push(...parsedItems);
+        continue;
+      }
+    }
+
+    items.push(parseNestedView(child, context));
+  }
+
+  if (items.length === 0) {
+    return {
+      kind: "unknown",
+      name: "toolbar",
+      rawArgs: getCallRawArgs(call, context),
+    };
+  }
+
+  return {
+    kind: "toolbar",
+    items,
+  };
+}
+
 export function parseCoreModifier(
   name: string,
   call: CallDetails,
@@ -861,6 +1147,10 @@ export function parseCoreModifier(
       return parseListRowSeparatorModifier(call, context);
     case "listRowInsets":
       return parseListRowInsetsModifier(call, context);
+    case "navigationDestination":
+      return parseNavigationDestinationModifier(call, context);
+    case "toolbar":
+      return parseToolbarModifier(call, context, parseNestedView);
     case "disabled": {
       const argumentNode = getFirstArgument(call);
       const value = argumentNode

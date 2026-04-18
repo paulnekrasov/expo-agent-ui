@@ -1,67 +1,73 @@
 # TASK SPECIFICATION
 Created by: stage-orchestrator
-Date: 2026-04-17
-Roadmap Phase: Phase 1 - Parser Foundation
-Pipeline Stage: Stage 2 - Modifier extraction
-Research Layer: Layer 2 parser API + Swift syntax modifier signatures + IR list modifier contracts
+Date: 2026-04-18
+Roadmap Phase: Phase 2 - Resolver
+Pipeline Stage: Stage 3 - Resolver scaffolding
+Research Layer: Layer 3 result-builder transforms + IR property-wrapper stubs
 
 ## Objective
 
-Add Stage 2 extraction coverage for the list presentation modifier family so supported `List` and row snippets stop degrading `listStyle`, `listRowSeparator`, and `listRowInsets` into `unknown` modifier payloads.
+Add the initial Stage 3 resolver module structure so the repo has a typed, no-throw resolver entry point before real state stubbing and modifier flattening land.
 
 ## Final status
 
-DONE_WITH_CONCERNS
+IN_PROGRESS
 
-## Evidence
+## Verified situation
 
-- Reproduced the current gap with `parseSwiftFile(...)` against a minimal `List` snippet and confirmed all three target modifiers degraded to `unknown`
-- Verified the Stage 2 AST shape with the repo runtime before editing:
-  - `listStyle(.insetGrouped)` and `listRowSeparator(.hidden)` arrive as literal path-like identifiers
-  - `listRowInsets(...)` receives a nested `call_expression` for `EdgeInsets(top:leading:bottom:trailing:)`
-- Added Stage 2 modifier extraction in `src/parser/extractors/modifiers/coreModifiers.ts` for:
-  - `.listStyle(...)` across the current literal style family
-  - `.listRowSeparator(...)` with literal `Visibility` values and optional validated `edges:`
-  - `.listRowInsets(EdgeInsets(top:leading:bottom:trailing:))` with numeric literal insets
-- Widened the Stage 2 IR `ListStyle` union in `src/ir/types.ts` to include `automatic`
-- Added focused extractor coverage in `tests/parser/extractors/lists.test.ts`
-- Updated fixture-backed regression coverage in `tests/fixtures/parser/lists.swift` and `tests/fixtures/parser/lists.json`
-- Verified:
-  - `cmd /c npm.cmd test -- --runInBand tests/parser/extractors/lists.test.ts tests/parser/fixtureRegression.test.ts`
-  - `cmd /c npm.cmd test -- --runInBand`
-  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-- Build verification remains blocked in the current automation environment:
-  - direct probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` failed with `EPERM`
-  - `cmd /c npm.cmd run build` failed with `spawn EPERM` before `esbuild` completed
+- The bounded Phase 1 / Stage 2 `LazyVGrid` / `LazyHGrid` extraction slice is implemented and review-clean in the current worktree
+- Current verification baseline:
+  - `cmd /c npm.cmd test -- --runInBand tests/parser/extractors/lists.test.ts tests/parser/fixtureRegression.test.ts` passed (`2` suites, `15` tests)
+  - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
+  - `cmd /c npm.cmd test -- --runInBand` passed (`10` suites, `61` tests)
+- The recurring build/WASM gate remains externally blocked in this automation environment:
+  - `cmd /c npm.cmd run build` fails fast with `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
+  - direct probe remains `spawnSync(process.execPath, ['-e', 'process.exit(0)']) -> EPERM`
+- `src/resolver/` does not exist yet, so there is no Stage 3 entry point, no state stubber module, and no modifier flattener module
 
 ## Acceptance criteria
 
-- [x] Parse `.listStyle(...)` for the current literal style family used by the Stage 2 IR (`plain`, `grouped`, `inset`, `insetGrouped`, `sidebar`, and `automatic`)
-- [x] Parse `.listRowSeparator(...)` for literal `Visibility` values (`automatic`, `visible`, `hidden`) without widening into renderer behavior
-- [x] Parse `.listRowInsets(EdgeInsets(top:leading:bottom:trailing:))` when each inset is a numeric literal
-- [x] Preserve modifier order relative to existing Stage 2 modifiers on both `List` roots and list row children
-- [x] Add focused Stage 2 list extractor assertions plus fixture-backed regression coverage in the existing `lists` fixture path
-- [x] Keep the task inside Stage 2 extraction only; do not widen into toolbar/navigationDestination work, list row background, layout semantics, or renderer styling
-- [x] `cmd /c npm.cmd test -- --runInBand` passes
-- [ ] `cmd /c npm.cmd run build` passes
-- [x] `node .\node_modules\typescript\lib\tsc.js --noEmit` passes
+- [ ] Add `src/resolver/index.ts`
+- [ ] Add `src/resolver/stateStubber.ts`
+- [ ] Add `src/resolver/modifierFlattener.ts`
+- [ ] Export a bounded Stage 3 entry point that threads `ViewNode[]` through the resolver scaffolding without changing semantics yet
+- [ ] Keep Stage 3 catch-all behavior: resolver failures return the original node/tree unmodified and log a warning instead of throwing
+- [ ] Keep modifier order unchanged in the scaffolded flow
+- [ ] Add focused resolver smoke coverage under `tests/resolver/`
+- [ ] Re-run `cmd /c npm.cmd test -- --runInBand tests/resolver/resolver.test.ts`
+- [ ] Re-run `node .\node_modules\typescript\lib\tsc.js --noEmit`
+- [ ] Re-run `cmd /c npm.cmd test -- --runInBand`
+- [ ] Re-run `cmd /c npm.cmd run build` and treat the classified `Build verification blocked before esbuild started ... EPERM` result as the known external blocker unless its message shape changes
 
 ## Files touched
 
-- `src/parser/extractors/modifiers/coreModifiers.ts`
-- `src/ir/types.ts`
-- `tests/parser/extractors/lists.test.ts`
-- `tests/fixtures/parser/lists.swift`
-- `tests/fixtures/parser/lists.json`
+- `src/resolver/index.ts`
+- `src/resolver/stateStubber.ts`
+- `src/resolver/modifierFlattener.ts`
+- `tests/resolver/resolver.test.ts`
 - `docs/agents/TASK.md`
 - `docs/agents/REVIEW.md`
 - `docs/agents/PHASE_STATE.md`
 - `docs/agents/HANDOFF.md`
-- `docs/agents/ROADMAP_CHECKLIST.md`
 - `docs/agents/runtime-prompts/**`
+
+## Reference docs to read before starting
+
+- `docs/reference/layer-3-viewbuilder/result-builder-transforms.md`
+- `docs/reference/ir/property-wrapper-stubs.md`
+- `docs/reference/ir/viewnode-types.md`
+- `docs/CLAUDE.md`
+
+## Known traps
+
+- Do not start real `@State` / `@Binding` AST extraction in this scaffold task
+- Do not reorder modifiers while wiring the Stage 3 pass-through flow
+- Do not widen into Stage 2 extractor changes or Stage 4 layout work
+- Do not reopen build/tooling files unless the classified build message changes or resolver verification directly implicates them
 
 ## Out of scope
 
-- `toolbar`, `navigationDestination`, `listRowBackground`, or any later Stage 2 modifier family outside this list slice
-- Non-literal `listStyle` expressions, `listRowInsets(nil)`, or non-numeric `EdgeInsets(...)` arguments
-- Stage 3 resolver work, Stage 4 layout semantics, Stage 5 rendering, device chrome, or repo-local build-tooling changes
+- Real property-wrapper stub injection semantics
+- Real modifier flattening semantics beyond no-op scaffolding
+- Parser/extractor changes
+- Layout, renderer, device, interaction, or MCP work

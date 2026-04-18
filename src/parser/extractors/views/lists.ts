@@ -7,10 +7,11 @@ import {
   makeSection,
   makeUnknown,
 } from "../../../ir/builders";
-import type { ViewNode } from "../../../ir/types";
+import type { GridColumn, ViewNode } from "../../../ir/types";
 import {
   getNodeText,
   getStatementsNodeFromLambda,
+  parseCallDetails,
   parseBooleanLiteral,
   parseNumberLiteral,
   parseStringLiteral,
@@ -26,6 +27,10 @@ type NestedViewParser = (
 ) => ViewNode;
 
 type StaticItemValue = string | number | boolean;
+type GridNode = Extract<
+  ViewNode,
+  { kind: "LazyVGrid" | "LazyHGrid" }
+>;
 
 function isViewExpressionNode(node: SyntaxNode): boolean {
   return (
@@ -102,6 +107,34 @@ function findArgument(
   return argumentsList.find((argument) => argument.label === label);
 }
 
+function makeGridNode(
+  kind: GridNode["kind"],
+  axisValues: GridColumn[],
+  spacing: number | null,
+  children: ViewNode[]
+): GridNode {
+  const baseNode = makeGroup();
+  if (kind === "LazyVGrid") {
+    return {
+      kind,
+      columns: axisValues,
+      spacing,
+      children,
+      modifiers: baseNode.modifiers,
+      id: baseNode.id,
+    };
+  }
+
+  return {
+    kind,
+    rows: axisValues,
+    spacing,
+    children,
+    modifiers: baseNode.modifiers,
+    id: baseNode.id,
+  };
+}
+
 function getLambdaParameterName(
   lambdaNode: SyntaxNode,
   context: ParseSourceContext
@@ -139,6 +172,164 @@ function parseStaticItemValue(
   }
 
   return null;
+}
+
+function parseGridSpacing(
+  call: CallDetails,
+  context: ParseSourceContext
+): number | null | undefined {
+  const spacingArgument = findArgument(call.arguments, "spacing");
+  if (!spacingArgument) {
+    return null;
+  }
+
+  return parseNumberLiteral(spacingArgument.value, context) ?? undefined;
+}
+
+function parseGridSizeCall(
+  call: CallDetails,
+  spacing: number | null,
+  context: ParseSourceContext
+): GridColumn | null {
+  switch (call.calleeName) {
+    case "fixed": {
+      if (
+        call.arguments.length !== 1 ||
+        call.arguments[0]?.label !== null
+      ) {
+        return null;
+      }
+
+      const sizeValue = parseNumberLiteral(
+        call.arguments[0].value,
+        context
+      );
+      if (sizeValue === null) {
+        return null;
+      }
+
+      return {
+        kind: "fixed",
+        size: sizeValue,
+        minimum: null,
+        maximum: null,
+        spacing,
+      };
+    }
+    case "flexible":
+    case "adaptive": {
+      let minimum: number | null = null;
+      let maximum: number | null = null;
+
+      for (const argument of call.arguments) {
+        if (argument.label !== "minimum" && argument.label !== "maximum") {
+          return null;
+        }
+
+        const numericValue = parseNumberLiteral(argument.value, context);
+        if (numericValue === null) {
+          return null;
+        }
+
+        if (argument.label === "minimum") {
+          minimum = numericValue;
+        } else {
+          maximum = numericValue;
+        }
+      }
+
+      if (call.calleeName === "adaptive" && minimum === null) {
+        return null;
+      }
+
+      return {
+        kind: call.calleeName,
+        size: null,
+        minimum,
+        maximum,
+        spacing,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+function parseGridItemCall(
+  call: CallDetails,
+  context: ParseSourceContext
+): GridColumn | null {
+  if (call.calleeName !== "GridItem") {
+    return null;
+  }
+
+  let sizeCallNode: SyntaxNode | null = null;
+  let spacing: number | null = null;
+
+  for (const argument of call.arguments) {
+    if (argument.label === null) {
+      if (sizeCallNode) {
+        return null;
+      }
+
+      sizeCallNode = argument.value;
+      continue;
+    }
+
+    if (argument.label !== "spacing") {
+      return null;
+    }
+
+    if (spacing !== null) {
+      return null;
+    }
+
+    const spacingValue = parseNumberLiteral(argument.value, context);
+    if (spacingValue === null) {
+      return null;
+    }
+
+    spacing = spacingValue;
+  }
+
+  if (!sizeCallNode || sizeCallNode.type !== "call_expression") {
+    return null;
+  }
+
+  return parseGridSizeCall(
+    parseCallDetails(sizeCallNode, context),
+    spacing,
+    context
+  );
+}
+
+function parseGridAxisValues(
+  node: SyntaxNode,
+  context: ParseSourceContext
+): GridColumn[] | null {
+  if (node.type !== "array_literal") {
+    return null;
+  }
+
+  const axisValues: GridColumn[] = [];
+
+  for (const elementNode of node.namedChildren) {
+    if (elementNode.type !== "call_expression") {
+      return null;
+    }
+
+    const gridColumn = parseGridItemCall(
+      parseCallDetails(elementNode, context),
+      context
+    );
+    if (!gridColumn) {
+      return null;
+    }
+
+    axisValues.push(gridColumn);
+  }
+
+  return axisValues;
 }
 
 function parseRangeValues(
@@ -510,5 +701,89 @@ export function parseSectionCall(
   return withSourceRange(
     makeSection(children, header, footer),
     call.node
+  );
+}
+
+function parseGridCall(
+  call: CallDetails,
+  kind: GridNode["kind"],
+  axisLabel: "columns" | "rows",
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode {
+  const axisArgument = findArgument(call.arguments, axisLabel);
+  const contentNode =
+    findArgument(call.trailingClosureArguments, null)?.value ??
+    findArgument(call.arguments, "content")?.value ??
+    null;
+
+  if (!axisArgument || contentNode?.type !== "lambda_literal") {
+    return withSourceRange(
+      makeUnknown(kind, getNodeText(call.node, context)),
+      call.node
+    );
+  }
+
+  for (const argument of call.arguments) {
+    if (
+      argument.label !== axisLabel &&
+      argument.label !== "spacing"
+    ) {
+      return withSourceRange(
+        makeUnknown(kind, getNodeText(call.node, context)),
+        call.node
+      );
+    }
+  }
+
+  const axisValues = parseGridAxisValues(
+    axisArgument.value,
+    context
+  );
+  const spacing = parseGridSpacing(call, context);
+  if (!axisValues || spacing === undefined) {
+    return withSourceRange(
+      makeUnknown(kind, getNodeText(call.node, context)),
+      call.node
+    );
+  }
+
+  const children = parseViewNodesFromStatements(
+    getStatementsNodeFromLambda(contentNode),
+    context,
+    parseNestedView
+  );
+
+  return withSourceRange(
+    makeGridNode(kind, axisValues, spacing, children),
+    call.node
+  );
+}
+
+export function parseLazyVGridCall(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode {
+  return parseGridCall(
+    call,
+    "LazyVGrid",
+    "columns",
+    context,
+    parseNestedView
+  );
+}
+
+export function parseLazyHGridCall(
+  call: CallDetails,
+  context: ParseSourceContext,
+  parseNestedView: NestedViewParser
+): ViewNode {
+  return parseGridCall(
+    call,
+    "LazyHGrid",
+    "rows",
+    context,
+    parseNestedView
   );
 }

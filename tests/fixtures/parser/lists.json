@@ -83,5 +83,76 @@
         "style": "insetGrouped"
       }
     ]
+  },
+  {
+    "kind": "LazyVGrid",
+    "columns": [
+      {
+        "kind": "fixed",
+        "size": 80,
+        "minimum": null,
+        "maximum": null,
+        "spacing": 12
+      },
+      {
+        "kind": "flexible",
+        "size": null,
+        "minimum": 40,
+        "maximum": 120,
+        "spacing": null
+      },
+      {
+        "kind": "adaptive",
+        "size": null,
+        "minimum": 60,
+        "maximum": 140,
+        "spacing": 8
+      }
+    ],
+    "spacing": 16,
+    "children": [
+      {
+        "kind": "Text",
+        "content": "A",
+        "isDynamic": false,
+        "modifiers": []
+      },
+      {
+        "kind": "Text",
+        "content": "B",
+        "isDynamic": false,
+        "modifiers": []
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "kind": "LazyHGrid",
+    "rows": [
+      {
+        "kind": "fixed",
+        "size": 44,
+        "minimum": null,
+        "maximum": null,
+        "spacing": null
+      },
+      {
+        "kind": "adaptive",
+        "size": null,
+        "minimum": 60,
+        "maximum": null,
+        "spacing": 10
+      }
+    ],
+    "spacing": 20,
+    "children": [
+      {
+        "kind": "Text",
+        "content": "C",
+        "isDynamic": false,
+        "modifiers": []
+      }
+    ],
+    "modifiers": []
   }
 ]
