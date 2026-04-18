@@ -1,17 +1,17 @@
 # Runtime Prompt Status
 
-Updated: 2026-04-18
+Updated: 2026-04-18T22:42:06.6889931+03:00
 
 ## Status
 
 No active `ACTIVE_*.md` runtime prompt set is currently safe to keep.
 
-This run replaced the stale resolver traversal prompts with a diagnostics-only state because the current automation environment blocks the required build path before esbuild starts.
+The bounded Stage 3 task is still blocked at the verification gate, so prompt rotation remains in status-only mode rather than regenerating implementer or reviewer prompts.
 
 ## Current run outcome
 
 - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-- `cmd /c npm.cmd run diagnose:build-env` passed and emitted current-run JSON with:
+- `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and emitted current-run JSON with:
   - `summary.status: "environment_blocks_child_processes"`
   - `directProbe.ok: false`
   - `build.ok: false`
@@ -25,7 +25,7 @@ This run replaced the stale resolver traversal prompts with a diagnostics-only s
 
 None.
 
-The previous resolver traversal prompt set was retired because it no longer matched the live blocked state.
+Do not recreate `ACTIVE_COORDINATOR_PROMPT.md`, `ACTIVE_IMPLEMENTER_PROMPT.md`, `ACTIVE_REVIEW_PROMPT.md`, or `ACTIVE_FIX_PROMPT.md` until the direct child-process probe succeeds again.
 
 ## What the next automation run should do first
 
@@ -36,8 +36,17 @@ The previous resolver traversal prompt set was retired because it no longer matc
    - `cmd /c npm.cmd run build`
 3. Only if the direct child-process probe passes, reseed the bounded Stage 3 resolver traversal task and regenerate the active runtime prompts
 
+## Outside-automation recheck
+
+Run these exact commands in an interactive local shell outside scheduled automation:
+
+- `node .\node_modules\typescript\lib\tsc.js --noEmit`
+- `cmd /c npm.cmd run diagnose:build-env`
+- `cmd /c npm.cmd run build`
+
 ## Notes
 
-- Do not rely on the earlier green-build note from another run
-- Do not reopen resolver source work until the child-process probe succeeds again
+- Exact diagnostics status: `environment_blocks_child_processes`
+- Exact failing signature: `spawnSync C:\Program Files\nodejs\node.exe EPERM`
+- Source work must not resume until the outside-automation recheck is completed successfully or the automation environment changes and the direct child-process probe passes
 - Do not classify the current state as a repo-local post-spawn build failure unless the direct probe passes and the build still fails afterward

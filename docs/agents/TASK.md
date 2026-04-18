@@ -1,31 +1,34 @@
 # TASK SPECIFICATION
 Created by: stage-orchestrator
 Date: 2026-04-18
+Last refreshed: 2026-04-18T22:42:06.6889931+03:00
 Roadmap Phase: Phase 2 - Resolver
 Pipeline Stage: Stage 3 - Resolver traversal verification gate
 Research Layer: Build diagnostics in the current automation environment
 
 ## Objective
 
-Reproduce and classify the current-run build blocker that gates Stage 3 resolver traversal verification in this automation environment.
+Re-run the Stage 3 verification gate in the scheduled automation environment and keep resolver source work blocked until current-run evidence shows child-process launch is available again.
 
 ## Final status
 
 BLOCKED
 
-## Verified situation
+## Current-run evidence
 
 - No source code was edited in this run
 - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed in the current run
-- `cmd /c npm.cmd run diagnose:build-env` passed in the current run and emitted JSON with:
+- `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and emitted JSON with:
   - `summary.status: "environment_blocks_child_processes"`
   - `directProbe.ok: false`
   - `build.ok: false`
   - both failures rooted in `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- `cmd /c npm.cmd run build` failed in the current run before esbuild started with:
+- `cmd /c npm.cmd run build` failed again in the current run before esbuild started with:
   - `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
   - `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
-- The diagnostics JSON confirms the WASM assets exist, so missing assets are not the blocker in this run
+- The diagnostics JSON confirms both WASM assets exist, so missing assets are not the blocker in this run
+- No active `docs/agents/runtime-prompts/ACTIVE_*.md` files are safe to regenerate while this gate remains red
+- This remains a blocked verification state for the automation environment, not proof of a repo-local post-spawn build regression
 
 ## Acceptance criteria
 
@@ -33,8 +36,8 @@ BLOCKED
 - [x] Re-run `cmd /c npm.cmd run diagnose:build-env`
 - [x] Capture the diagnostics JSON from the current run
 - [x] Re-run `cmd /c npm.cmd run build`
-- [x] Classify the blocker from current-run evidence only
-- [x] Update the live state so later runs do not rely on stale green-build or stale `EPERM` assumptions
+- [x] Reconcile the live state and runtime status with current-run evidence only
+- [x] Leave the runtime prompt set retired until the direct child-process probe succeeds again
 
 ## Files touched
 
@@ -55,8 +58,9 @@ BLOCKED
 ## Known traps
 
 - Do not claim a repo-local build regression unless the direct child-process probe passes and the build still fails afterward
-- Do not rely on prior green-build notes when current-run command output disagrees
-- Do not resume Stage 3 source edits in this automation environment until the child-process probe succeeds again
+- Do not rely on earlier green-build notes when current-run command output disagrees
+- Do not resume Stage 3 source edits in this automation environment until the child-process probe succeeds again or the outside-automation recheck is completed successfully
+- Do not recreate `ACTIVE_*.md` runtime prompts while the bounded task is blocked at the verification gate
 
 ## Out of scope
 
