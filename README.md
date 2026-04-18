@@ -46,7 +46,7 @@ The partial implementation mattered.
 
 But the real artifact of this repository is the machine that built the machine.
 
-## The Real Flex: Context Engineering
+## Context Engineering
 
 I did not sit there hand-writing all of this TypeScript myself.
 
