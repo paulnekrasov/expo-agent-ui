@@ -21,6 +21,30 @@ Recommended target agent:
 - `.agents/agents/issue-fixer.md`
 - `.agents/agents/stage-orchestrator.md` when the bug needs re-bounding first
 
+## Outside-Automation Recheck Rule
+
+If the current run is inside automation and either of these occurs:
+
+- `cmd /c npm.cmd run diagnose:build-env` returns `environment_blocks_child_processes`
+- the direct child-process probe or `cmd /c npm.cmd run build` fails with `spawnSync ... EPERM`
+
+then the agent must:
+
+1. capture the automation-run evidence first
+2. stop treating automation `npm run build` as definitive repo build verification
+3. request or perform this exact recheck outside automation:
+   - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+   - `cmd /c npm.cmd run diagnose:build-env`
+   - `cmd /c npm.cmd run build`
+4. compare both environments before final classification
+
+Classification rule:
+
+- automation fails, outside automation passes -> automation-only blocker
+- automation fails, outside automation fails with the same direct-probe `EPERM` -> wider environment or policy blocker
+- outside automation direct probe passes but build still fails -> repo-local build failure
+- no outside-automation recheck yet -> use `BLOCKED` or `NEEDS_CONTEXT`, not a final external-blocker classification
+
 ---
 
 ## Prompt
@@ -143,6 +167,28 @@ Do not reopen them without new evidence.
 - If a test shells out only to observe local JS build behavior, prefer import-safe in-process testing instead of subprocess dependence.
 - Do not confuse environment-level subprocess denial with a repo-side algorithmic bug.
 - If the build contract can be tested through a programmatic API, prefer that over shelling out in Jest.
+
+## OUTSIDE-AUTOMATION RECHECK RULE
+
+If the current run is inside automation and either of these occurs:
+- `cmd /c npm.cmd run diagnose:build-env` returns `environment_blocks_child_processes`
+- the direct child-process probe or `cmd /c npm.cmd run build` fails with `spawnSync ... EPERM`
+
+then you must:
+
+1. capture the automation-run evidence first
+2. stop treating automation `npm run build` as definitive repo build verification
+3. request or perform this exact recheck outside automation:
+   - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+   - `cmd /c npm.cmd run diagnose:build-env`
+   - `cmd /c npm.cmd run build`
+4. compare both environments before final classification
+
+Classification rule:
+- automation fails, outside automation passes -> automation-only blocker
+- automation fails, outside automation fails with the same direct-probe `EPERM` -> wider environment or policy blocker
+- outside automation direct probe passes but build still fails -> repo-local build failure
+- no outside-automation recheck yet -> use `BLOCKED` or `NEEDS_CONTEXT`, not a final external-blocker classification
 
 ## REQUIRED READ ORDER FOR THIS BUG
 
@@ -302,6 +348,7 @@ NEVER:
 - hide a failing build test by skipping or excluding it
 - replace a semantic build contract with a fake no-op assertion
 - treat environment-level subprocess denial as automatic proof of a repo algorithm bug
+- treat an automation-only `EPERM` run as definitive repo build status without the outside-automation recheck
 - switch to hashed `.wasm` output when exact filenames are required
 - break the `npm run build` CLI path while fixing import-safe tests
 - widen into unrelated phase/stage work
@@ -310,6 +357,7 @@ NEVER:
 
 All must be true:
 - the targeted build/tooling/WASM bug is fixed
+- or the automation-only blocker has been compared against the outside-automation recheck and classified accurately
 - exact required WASM naming and path rules still hold
 - `tsc --noEmit` passes
 - targeted build/tooling tests pass

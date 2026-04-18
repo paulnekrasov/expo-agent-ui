@@ -1,25 +1,22 @@
 # REVIEW REPORT
 Reviewer session date: 2026-04-18
 Roadmap Phase: Phase 2 - Resolver
-Pipeline Stage: Stage 3 - Resolver traversal
-Task status: not reviewed yet
+Pipeline Stage: Stage 3 - Resolver traversal verification gate
+Task status: blocked
 
 ## Findings
 
-No review has been run for the newly seeded Stage 3 resolver traversal task yet.
+1. `BLOCKED`
+   - Affected area: current automation environment child-process launch, observed via `cmd /c npm.cmd run diagnose:build-env` and `cmd /c npm.cmd run build`
+   - Why it matters: Stage 3 work cannot satisfy the required build verification in this run because the direct child-process probe fails with `EPERM` before esbuild starts
+   - Governing rule: source changes require current-run build evidence; do not treat stale docs or earlier green runs as proof when the current run says otherwise
+   - Concrete fix direction: restore child-process launch for `C:\Program Files\nodejs\node.exe` in the automation environment, then rerun the `tsc` -> `diagnose:build-env` -> `build` trio before reseeding resolver implementation work
 
 ## Carry-forward notes
 
-- No `BUG` or `ACTIVE_STAGE_GAP` findings remain in the completed Stage 3 resolver scaffold diff.
-- The resolver scaffold now provides:
-  - `src/resolver/index.ts` with a no-throw `resolveViewTree` entry point
-  - `src/resolver/stateStubber.ts` and `src/resolver/modifierFlattener.ts` no-op passes
-  - focused resolver smoke coverage in `tests/resolver/resolver.test.ts`
-- Verification this run:
-  - `cmd /c npm.cmd test -- --runInBand tests/resolver/resolver.test.ts` passed (`1` suite, `4` tests)
+- No source code was reviewed or changed in this run
+- Current-run verification:
   - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-  - `cmd /c npm.cmd test -- --runInBand` passed (`11` suites, `65` tests)
-- Latest local build verification on 2026-04-18 no longer reproduces the historical external blocker:
-  - direct child-process probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` passed (`status=0`)
-  - `cmd /c npm.cmd run build` passed (`Copied web-tree-sitter.wasm`, `Copied tree-sitter-swift.wasm`, `Build complete`)
-- The next review pass should focus only on the bounded Stage 3 resolver traversal diff and should not carry forward the historical `EPERM` build result unless the direct probe and build command fail again in the same run.
+  - `cmd /c npm.cmd run diagnose:build-env` passed and reported `summary.status: "environment_blocks_child_processes"`
+  - `cmd /c npm.cmd run build` failed before esbuild started with `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
+- Current-run diagnostics also report that both expected WASM assets exist, so `missing_wasm_assets` is not the right classification for this run

@@ -38,6 +38,28 @@ Shared startup guide for Codex, Claude, Gemini, and any other agent working in t
 - Use the shared constants and stub rules from `docs/reference/INDEX.md`.
 - Do not create temporary debug artifacts, scratch build folders, or throwaway compiled-output directories unless they are strictly necessary to investigate an issue. If one is created, remove it before finishing unless the developer explicitly asks to keep it.
 
+## Git workflow
+
+Repository: `https://github.com/paulnekrasov/swiftui-parser`
+Default branch: `master` - stable only. Never commit directly to master.
+Submodule: `tree-sitter-swift` - run `git submodule update --init` after cloning.
+
+| Branch | Scope |
+|---|---|
+| `master` | Stable integration - PRs only |
+| `dev/parser` | Stages 1-2: tree-sitter, AST walking, IR extraction |
+| `dev/resolver` | Stage 3: resolver traversal, stub injection, modifier flattening |
+| `dev/renderer` | Stages 5-6: Canvas painter, iOS colors, device chrome |
+| `dev/extension` | VS Code host, WebView bridge, OutputChannel |
+| `dev/mcp-server` | MCP server packaging and protocol |
+
+- Work on the branch matching your stage. See Section 3 of `docs/CLAUDE.md` for stage definitions.
+- Commit messages must identify the stage: e.g. `Stage 3 (Resolver): add recursive traversal for modifier-hosted views`
+- Open a PR into `master` when the branch is ready - do not merge directly.
+- If a downstream stage branch depends on an unmerged upstream stage branch, it may temporarily stack on that upstream branch.
+- Merge stacked branches in stage order. Example: merge `dev/parser` into `master` before merging `dev/resolver` into `master`.
+- Do not enable GitHub auto-merge for a stacked PR into `master` until its upstream stage branch has already landed and the PR is conflict-free against the current `master`.
+
 ## Session rule
 
 If `docs/reference/INDEX.md` and `docs/CLAUDE.md` appear to disagree, verify the source material before changing behavior. The index is the router; `docs/CLAUDE.md` is the fuller project brief.

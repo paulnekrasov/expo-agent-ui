@@ -15,6 +15,7 @@ Important:
 - [ ] No unrelated architectural drift was introduced
 - [ ] The relevant reference docs were followed
 - [ ] Build and relevant tests were run, or the limitation is explicitly stated
+- [ ] If build verification was blocked by environment-level `EPERM`, the review clearly distinguishes automation evidence, outside-automation recheck status, and whether the repo is blocked or only the automation runner is blocked
 - [ ] Future-stage work is not mislabeled as a current bug
 
 ## Stage 1 and Stage 2

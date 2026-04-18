@@ -119,6 +119,16 @@ If the automation cannot seed a new bounded task safely:
 - mark the state in `HANDOFF.md` and `PHASE_STATE.md`,
 - do not leave stale prompts in place.
 
+If the reason is an automation-only build-verification blocker, `RUNTIME_STATUS.md` must also include:
+
+- the exact diagnostics status
+- the exact failing `EPERM` signature when present
+- the exact outside-automation recheck commands:
+  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+  - `cmd /c npm.cmd run diagnose:build-env`
+  - `cmd /c npm.cmd run build`
+- the rule that source work must not resume until that outside-automation recheck is completed or the environment changes
+
 ## Runtime prompt quality bar
 
 Each active runtime prompt must include:

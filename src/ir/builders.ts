@@ -4,14 +4,21 @@
 import type {
   ViewNode, Modifier,
   VStackNode, HStackNode, ZStackNode,
-  TextNode, ButtonNode, ImageNode, LabelNode, SpacerNode, DividerNode,
-  ScrollViewNode, GeometryReaderNode, NavigationStackNode, NavigationLinkNode,
-  ListNode, ForEachNode, SectionNode,
+  TextNode, ButtonNode, ImageNode, AsyncImageNode, LabelNode, SpacerNode, DividerNode,
+  ScrollViewNode, GeometryReaderNode,
+  NavigationStackNode, NavigationViewNode, NavigationLinkNode,
+  ListNode, ForEachNode, LazyVStackNode, LazyHStackNode,
+  LazyVGridNode, LazyHGridNode, GridColumn, SectionNode,
   FormNode, GroupNode,
   TextFieldNode, SecureFieldNode, ToggleNode, PickerNode,
   SliderNode, StepperNode, DatePickerNode,
-  RectangleNode, CircleNode, CapsuleNode, RoundedRectangleNode, EllipseNode,
-  TabViewNode, ConditionalContentNode, CustomViewNode, UnknownNode,
+  MenuNode, ContextMenuNode,
+  LinkNode,
+  RectangleNode, CircleNode, CapsuleNode, RoundedRectangleNode, EllipseNode, PathNode,
+  TabViewNode, TabItemNode,
+  SheetNode, AlertNode, ConfirmationDialogNode,
+  ToolbarNode, ToolbarItemNode,
+  ConditionalContentNode, CustomViewNode, UnknownNode,
   Alignment, ConditionExpr,
 } from "./types";
 
@@ -268,6 +275,15 @@ export function makeTabView(
   return { kind: "TabView", children, ...base(modifiers) };
 }
 
+export function makeTabItem(
+  label: ViewNode,
+  child: ViewNode,
+  systemImage: string | null = null,
+  modifiers: Modifier[] = []
+): TabItemNode {
+  return { kind: "TabItem", label, child, systemImage, ...base(modifiers) };
+}
+
 export function makeConditionalContent(
   condition: ConditionExpr,
   children: ViewNode[] = [],
@@ -279,6 +295,120 @@ export function makeConditionalContent(
     children,
     ...base(modifiers),
   };
+}
+
+export function makeNavigationView(
+  child: ViewNode,
+  modifiers: Modifier[] = []
+): NavigationViewNode {
+  return { kind: "NavigationView", child, ...base(modifiers) };
+}
+
+export function makeLazyVStack(
+  alignment: Alignment = "center",
+  spacing: number | null = null,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): LazyVStackNode {
+  return { kind: "LazyVStack", alignment, spacing, children, ...base(modifiers) };
+}
+
+export function makeLazyHStack(
+  alignment: Alignment = "center",
+  spacing: number | null = null,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): LazyHStackNode {
+  return { kind: "LazyHStack", alignment, spacing, children, ...base(modifiers) };
+}
+
+export function makeLazyVGrid(
+  columns: GridColumn[],
+  spacing: number | null = null,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): LazyVGridNode {
+  return { kind: "LazyVGrid", columns, spacing, children, ...base(modifiers) };
+}
+
+export function makeLazyHGrid(
+  rows: GridColumn[],
+  spacing: number | null = null,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): LazyHGridNode {
+  return { kind: "LazyHGrid", rows, spacing, children, ...base(modifiers) };
+}
+
+export function makeAsyncImage(
+  url: string,
+  modifiers: Modifier[] = []
+): AsyncImageNode {
+  return { kind: "AsyncImage", url, ...base(modifiers) }; // STUB: gray box + photo symbol
+}
+
+export function makeLink(
+  label: ViewNode,
+  destination: string,
+  modifiers: Modifier[] = []
+): LinkNode {
+  return { kind: "Link", label, destination, ...base(modifiers) };
+}
+
+export function makePath(modifiers: Modifier[] = []): PathNode {
+  return { kind: "Path", stub: true, ...base(modifiers) }; // STUB: gray box labeled "Path"
+}
+
+export function makeMenu(
+  label: ViewNode,
+  children: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): MenuNode {
+  return { kind: "Menu", label, children, ...base(modifiers) };
+}
+
+export function makeContextMenu(
+  child: ViewNode,
+  menuItems: ViewNode[] = [],
+  modifiers: Modifier[] = []
+): ContextMenuNode {
+  return { kind: "ContextMenu", child, menuItems, ...base(modifiers) };
+}
+
+export function makeSheet(
+  content: ViewNode,
+  modifiers: Modifier[] = []
+): SheetNode {
+  return { kind: "Sheet", content, ...base(modifiers) }; // STUB: not presented
+}
+
+export function makeAlert(
+  title: string,
+  modifiers: Modifier[] = []
+): AlertNode {
+  return { kind: "Alert", title, ...base(modifiers) }; // STUB: ignored
+}
+
+export function makeConfirmationDialog(
+  title: string,
+  modifiers: Modifier[] = []
+): ConfirmationDialogNode {
+  return { kind: "ConfirmationDialog", title, ...base(modifiers) }; // STUB: ignored
+}
+
+export function makeToolbar(
+  items: ToolbarItemNode[],
+  modifiers: Modifier[] = []
+): ToolbarNode {
+  return { kind: "Toolbar", items, ...base(modifiers) };
+}
+
+export function makeToolbarItem(
+  placement: string,
+  child: ViewNode,
+  modifiers: Modifier[] = []
+): ToolbarItemNode {
+  return { kind: "ToolbarItem", placement, child, ...base(modifiers) };
 }
 
 export function makeCustomView(

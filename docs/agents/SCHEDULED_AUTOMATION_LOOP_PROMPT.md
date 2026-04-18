@@ -123,6 +123,16 @@ Verification rules:
   - npm test -- --runInBand
   - npm run build
   - node .\\node_modules\\typescript\\lib\\tsc.js --noEmit
+- If build verification fails with automation-only child-process denial such as `spawnSync ... EPERM` or diagnostics status `environment_blocks_child_processes`:
+  - run `node .\\node_modules\\typescript\\lib\\tsc.js --noEmit`
+  - run `cmd /c npm.cmd run diagnose:build-env`
+  - record the exact automation-run evidence in the state files
+  - switch the run into diagnostics and handoff mode instead of spending fix cycles on unrelated source code
+  - write the exact outside-automation recheck commands into the live state:
+    - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+    - `cmd /c npm.cmd run diagnose:build-env`
+    - `cmd /c npm.cmd run build`
+  - do not treat automation `npm run build` as definitive repo build verification
 - If only docs or prompt files changed, state that code verification was not required.
 
 Before finishing, you must update:

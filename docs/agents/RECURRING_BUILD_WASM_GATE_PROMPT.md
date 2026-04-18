@@ -19,6 +19,7 @@ This prompt is stronger than the generic build/WASM debugging template because i
 
 - if the issue is repo-local, fix it and add regression coverage so future development does not reintroduce it silently
 - if the issue is truly external-only, add or refresh durable guardrails so future runs classify it immediately instead of reopening it as ambiguous build/WASM thrash
+- if automation is the thing that is blocked, require the exact outside-automation recheck before final external-blocker classification
 
 If this issue closes and the next bug is not build/tooling/WASM-centered, stop and regenerate the next prompt from `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md`.
 
@@ -107,6 +108,28 @@ The bug class you are investigating is:
 - a direct child-process probe may fail with the same `EPERM`
 
 Do not assume this automatically means "external blocker only."
+
+## OUTSIDE-AUTOMATION RECHECK RULE
+
+If the current run is inside automation and either of these occurs:
+- `cmd /c npm.cmd run diagnose:build-env` returns `environment_blocks_child_processes`
+- the direct child-process probe or `cmd /c npm.cmd run build` fails with `spawnSync ... EPERM`
+
+then you must:
+
+1. capture the automation-run diagnostics first
+2. stop treating automation `npm run build` as definitive repo build verification
+3. request or perform this exact recheck outside automation:
+   - `node .\node_modules\typescript\lib\tsc.js --noEmit`
+   - `cmd /c npm.cmd run diagnose:build-env`
+   - `cmd /c npm.cmd run build`
+4. compare both environments before final disposition
+
+Disposition guard:
+- automation fails, outside automation passes -> automation-only blocker
+- automation fails, outside automation fails with the same direct-probe `EPERM` -> wider environment or policy blocker
+- outside automation direct probe passes but build still fails -> repo-local build failure
+- if the outside-automation recheck has not happened yet, the correct status is `BLOCKED` or `NEEDS_CONTEXT`, not `EXTERNAL_BLOCKER_PROVEN`
 
 ## VERIFIED SITUATION FOR THIS RUN
 
@@ -244,7 +267,7 @@ If the build path is repo-fixable:
 If the blocker is truly external-only after all bounded repo-local paths are disproved:
 - make that classification durable and explicit in the state docs
 - ensure future runs do not misclassify it as a parser/extractor regression
-- ensure future runs know the exact first-step probe/build sequence to confirm whether the environment changed
+- ensure future runs know the exact first-step automation probe/build sequence and the exact outside-automation recheck sequence
 - if a repo-local guardrail can classify this earlier without breaking real build verification, implement it
 
 State clearly which path you chose and why.
@@ -334,6 +357,7 @@ If the task closes or materially advances, update:
 NEVER:
 - stop immediately at "spawn probe failed, therefore no repo fix is possible"
 - treat the direct probe as stronger than the actual build-contract analysis
+- treat an automation-only `EPERM` run as sufficient for `EXTERNAL_BLOCKER_PROVEN`
 - hide the build failure by skipping verification
 - switch to hashed `.wasm` outputs when exact names are required
 - break watch-mode expectations without explicitly documenting the tradeoff
@@ -344,7 +368,7 @@ NEVER:
 
 All must be true:
 - either the repo build gate is actually fixed and `cmd /c npm.cmd run build` passes
-- or every viable repo-side bounded fix path is explicitly disproved with evidence, leaving a clearly documented external blocker
+- or every viable repo-side bounded fix path is explicitly disproved with evidence and the outside-automation recheck has been compared, leaving a clearly documented external blocker
 - exact WASM naming and packaging rules still hold
 - targeted build/tooling tests pass
 - full Jest suite still passes
@@ -370,6 +394,9 @@ In FINAL DISPOSITION, choose one:
 - EXTERNAL_BLOCKER_PROVEN
 - NEEDS_CONTEXT
 - BLOCKED
+
+You must not choose `EXTERNAL_BLOCKER_PROVEN` unless the outside-automation recheck has been attempted and compared against the automation run.
+If that recheck has not happened yet, choose `BLOCKED` or `NEEDS_CONTEXT`.
 ```
 
 ---
@@ -379,3 +406,4 @@ In FINAL DISPOSITION, choose one:
 - Use this only when current-run verification has reopened the recurring class where a bounded non-build slice is green but the build/WASM gate fails again.
 - This prompt does not promise that an external automation environment will never deny spawning again.
 - It does require the agent to do the strongest repo-local hardening available so the same class of failure does not keep reopening ambiguously after later development.
+- It also requires the exact outside-automation recheck before a final external-blocker classification.

@@ -735,7 +735,33 @@ Confirm the roadmap phase, pipeline stage, and exit condition before writing cod
 Treat chat state as ephemeral — the files are the durable memory
 When the developer describes a feature, map it to a stage before writing any code
 ---
-Last updated: 2026-04-16
+16. GIT WORKFLOW
+Repository: https://github.com/paulnekrasov/swiftui-parser
+Default branch: `master` - stable, reviewed code only. Never commit directly to master.
+Submodule: `tree-sitter-swift` is a git submodule (alex-pinkus/tree-sitter-swift).
+After cloning, run: `git submodule update --init`
+
+Branch structure
+```
+master              <- stable integration branch (default)
+  dev/parser        <- Stages 1-2: tree-sitter parsing, AST walking, IR extraction
+  dev/resolver      <- Stage 3: resolver traversal, stub injection, modifier flattening
+  dev/renderer      <- Stages 5-6: Canvas 2D painter, iOS colors, device chrome
+  dev/extension     <- VS Code extension host, WebView bridge, OutputChannel
+  dev/mcp-server    <- Stage 7+: MCP server packaging and protocol
+```
+
+Rules for agents
+- Always work on the branch that matches the stage you are in (see Section 3).
+- Never push directly to `master`.
+- Keep commits focused on one stage - do not mix parser, resolver, layout, renderer, or packaging work in one commit.
+- Commit messages must state the stage: e.g. "Stage 3 (Resolver): add recursive traversal for modifier-hosted views"
+- When a dev branch is ready to merge, a pull request into `master` is required.
+- A downstream stage branch may temporarily stack on an unmerged upstream stage branch only when the downstream work depends on it.
+- Stacked branches must merge into `master` in stage order.
+- Do not enable GitHub auto-merge for a stacked PR into `master` until its upstream stage branch has already landed and the PR is conflict-free against the current `master`.
+---
+Last updated: 2026-04-18
 Developer OS: Windows
 Project type: Personal tool — not a product
 Primary target device: iPhone 16 Pro (393 × 852 pt)

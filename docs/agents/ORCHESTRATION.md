@@ -141,6 +141,30 @@ Use this bounded loop unless the developer explicitly asks for something else:
 - Never delete stable prompt library files during routine automation runs.
 - Only rotate disposable prompt files under `docs/agents/runtime-prompts/`.
 
+## Build verification split for automation-only blockers
+
+If build verification fails in an automation run with direct child-process denial such as
+`spawnSync ... EPERM` or diagnostics status `environment_blocks_child_processes`, treat
+automation diagnostics and repo build verification as separate lanes.
+
+Automation lane owns:
+
+- `node .\node_modules\typescript\lib\tsc.js --noEmit`
+- `cmd /c npm.cmd run diagnose:build-env`
+- current-run state updates that record the blocked automation environment accurately
+
+Outside-automation lane owns:
+
+- `node .\node_modules\typescript\lib\tsc.js --noEmit`
+- `cmd /c npm.cmd run diagnose:build-env`
+- `cmd /c npm.cmd run build`
+
+Run the outside-automation lane in an interactive local shell outside scheduled automation.
+
+Do not classify the repo build as an external blocker from automation evidence alone.
+Until the outside-automation recheck is attempted, the correct disposition is a blocked
+verification state, not final proof that the repo build itself is externally blocked.
+
 ## Startup contract
 
 At the start of any coding or review session:

@@ -4,47 +4,40 @@ Updated: 2026-04-18
 
 ## Status
 
-The runtime prompt set has been rotated away from the completed Stage 3 resolver scaffold slice and onto the next bounded Phase 2 / Stage 3 resolver traversal task.
+No active `ACTIVE_*.md` runtime prompt set is currently safe to keep.
 
-As of 2026-04-18, the build gate is not blocked in the current local environment: the direct child-process probe passes and `cmd /c npm.cmd run build` completes successfully.
-
-Historical note: the recurring child-process `EPERM` failure remains a known environment-sensitive failure shape, but it is not a current carry-forward blocker.
+This run replaced the stale resolver traversal prompts with a diagnostics-only state because the current automation environment blocks the required build path before esbuild starts.
 
 ## Current run outcome
 
-- Implemented the bounded Stage 3 resolver scaffold in `src/resolver/`
-- `cmd /c npm.cmd test -- --runInBand tests/resolver/resolver.test.ts` passed (`1` suite, `4` tests)
 - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-- `cmd /c npm.cmd test -- --runInBand` passed (`11` suites, `65` tests)
-- direct child-process probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` passed (`status=0`)
-- `cmd /c npm.cmd run build` passed:
-  - `Copied web-tree-sitter.wasm`
-  - `Copied tree-sitter-swift.wasm`
-  - `Build complete`
-- Reviewed the scaffold diff cleanly and seeded the next bounded task: Stage 3 resolver traversal
+- `cmd /c npm.cmd run diagnose:build-env` passed and emitted current-run JSON with:
+  - `summary.status: "environment_blocks_child_processes"`
+  - `directProbe.ok: false`
+  - `build.ok: false`
+  - failure root: `spawnSync C:\Program Files\nodejs\node.exe EPERM`
+- `cmd /c npm.cmd run build` failed before esbuild started with:
+  - `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
+  - `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
+- Diagnostics also report both WASM assets as present in this run
 
 ## Active runtime prompts
 
-- `ACTIVE_COORDINATOR_PROMPT.md` now binds the automation to the bounded Stage 3 resolver traversal slice
-- `ACTIVE_IMPLEMENTER_PROMPT.md` constrains code-writing work to recursive resolver traversal plus focused resolver coverage
-- `ACTIVE_REVIEW_PROMPT.md` constrains review to the traversal diff and the Stage 3 checklist
-- `ACTIVE_FIX_PROMPT.md` keeps the historical `EPERM` failure shape as context only, so the next implementation loop does not reopen build-tooling thrash unless the failure actually reproduces
+None.
+
+The previous resolver traversal prompt set was retired because it no longer matched the live blocked state.
 
 ## What the next automation run should do first
 
 1. Read `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and this file
-2. Read `docs/reference/layer-3-viewbuilder/result-builder-transforms.md`, `docs/reference/ir/viewnode-types.md`, and `docs/CLAUDE.md`
-3. Implement only the bounded Stage 3 resolver traversal slice described in `docs/agents/TASK.md`
-4. If source changes, re-run:
-   - `cmd /c npm.cmd test -- --runInBand tests/resolver/resolver.test.ts`
+2. Re-run the current-run evidence trio if the automation environment may have changed:
    - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-   - `cmd /c npm.cmd test -- --runInBand`
+   - `cmd /c npm.cmd run diagnose:build-env`
    - `cmd /c npm.cmd run build`
-5. Record the current build result. Only treat the historical classified `Build verification blocked before esbuild started ... EPERM` message as an environment-sensitive blocker if it reappears and the direct probe fails in the same run
+3. Only if the direct child-process probe passes, reseed the bounded Stage 3 resolver traversal task and regenerate the active runtime prompts
 
 ## Notes
 
-- Do not reopen the completed Stage 3 resolver scaffold by default
-- Do not widen straight into real property-wrapper semantics before the traversal task lands
-- Do not reopen build/tooling files unless build verification regresses or the historical classified failure shape reappears
-- If the build environment changes and the direct probe or build command fails again, immediately update the live state instead of reusing this green build status
+- Do not rely on the earlier green-build note from another run
+- Do not reopen resolver source work until the child-process probe succeeds again
+- Do not classify the current state as a repo-local post-spawn build failure unless the direct probe passes and the build still fails afterward
