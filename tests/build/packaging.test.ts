@@ -26,4 +26,16 @@ describe("packaging configuration", () => {
 
     expect(vscodeIgnoreLines).toContain("tree-sitter-swift.wasm");
   });
+
+  it("excludes repo-only diagnostics scripts from packaged output", () => {
+    const vscodeIgnoreLines = readFileSync(
+      path.join(repoRoot, ".vscodeignore"),
+      "utf8"
+    )
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    expect(vscodeIgnoreLines).toContain("scripts/**");
+  });
 });

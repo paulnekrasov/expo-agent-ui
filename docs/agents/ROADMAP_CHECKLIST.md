@@ -11,7 +11,7 @@ Do not replace `docs/swiftui_planning_full.md` with it.
 
 ## Phase 1 - Parser Foundation
 Pipeline Stages: Stage 1 Parser, Stage 2 Extractor
-Status: Complete in the current worktree (required build verification remains externally blocked)
+Status: Complete in the current worktree (build verification passes in the current local environment as of 2026-04-18)
 
 ### Foundations
 
@@ -79,14 +79,15 @@ Status: Complete in the current worktree (required build verification remains ex
 Pipeline Stage: Stage 3 Resolver
 Status: In progress
 
-- [ ] Add resolver module structure under `src/resolver`
+- [x] Add resolver module structure under `src/resolver`
+- [ ] Add recursive resolver traversal across current `ViewNode` graph shapes
 - [ ] Implement state and binding stub injection per `docs/reference/ir/property-wrapper-stubs.md`
 - [ ] Harden modifier flattening contracts
-- [ ] Add resolver tests
+- [x] Add resolver tests
 
 ### Recommended next bounded tasks
 
-- [ ] Add the bounded Stage 3 resolver module scaffold plus focused smoke tests
+- [ ] Add the bounded Stage 3 recursive traversal pass before real stub injection or modifier-flattening semantics
 
 ## Phase 3 - Layout Foundation
 Pipeline Stage: Stage 4 Layout

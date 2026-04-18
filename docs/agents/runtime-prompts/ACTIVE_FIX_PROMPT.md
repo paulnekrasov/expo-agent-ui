@@ -1,15 +1,15 @@
 # Active Fix Prompt
 
 Roadmap Phase: Phase 2 - Resolver
-Pipeline Stage: Stage 3 - Resolver scaffolding
-Research Layer: Layer 3 result-builder transforms + IR property-wrapper stubs
+Pipeline Stage: Stage 3 - Resolver traversal
+Research Layer: Layer 3 result-builder transforms + IR ViewNode traversal contracts
 Role: issue-fixer
 
 ## Current objective
 
-Fix only valid `BUG` or `ACTIVE_STAGE_GAP` findings in the bounded Stage 3 resolver scaffolding slice.
+Fix only valid `BUG` or `ACTIVE_STAGE_GAP` findings in the bounded Stage 3 resolver traversal slice.
 
-This is not a parser or build-tooling task anymore. The recurring build gate is carry-forward context only.
+This is not a parser or build-tooling task anymore. The historical build/WASM gate is context only unless it fails again in the current run.
 
 ## Required docs to read before doing any work
 
@@ -22,13 +22,12 @@ This is not a parser or build-tooling task anymore. The recurring build gate is 
 7. `docs/agents/REVIEW.md`
 8. `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
 9. `docs/reference/layer-3-viewbuilder/result-builder-transforms.md`
-10. `docs/reference/ir/property-wrapper-stubs.md`
-11. `docs/reference/ir/viewnode-types.md`
-12. `docs/CLAUDE.md`
-13. `src/resolver/index.ts`
-14. `src/resolver/stateStubber.ts`
-15. `src/resolver/modifierFlattener.ts`
-16. `tests/resolver/resolver.test.ts`
+10. `docs/reference/ir/viewnode-types.md`
+11. `docs/CLAUDE.md`
+12. `src/resolver/index.ts`
+13. `src/resolver/stateStubber.ts`
+14. `src/resolver/modifierFlattener.ts`
+15. `tests/resolver/resolver.test.ts`
 
 If `$context-prompt-engineering` is available, use it before acting so the task stays explicit, bounded, and verification-driven.
 
@@ -37,24 +36,24 @@ If a debugging skill is available, use it before proposing a fix.
 ## Verified carry-forward facts
 
 - The recurring build/WASM gate has already been classified and hardened in `esbuild.config.js`
-- In this automation environment, `cmd /c npm.cmd run build` may still fail with:
-  - `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
-  - `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
-- Treat that exact classified build result as a carry-forward external blocker unless the direct probe or message shape changes
+- Latest local verification on 2026-04-18 passed:
+  - direct child-process probe `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` -> `status=0`
+  - `cmd /c npm.cmd run build` -> `Copied web-tree-sitter.wasm`, `Copied tree-sitter-swift.wasm`, `Build complete`
+- If the historical `EPERM` failure shape reappears in another environment, re-check the direct probe in the same run before treating it as an environment-sensitive blocker
 
 ## Scope boundary
 
-Stay inside the current resolver scaffold allowlist from `docs/agents/TASK.md`.
+Stay inside the current resolver allowlist from `docs/agents/TASK.md`.
 
-Do not edit parser, layout, renderer, or build/tooling files unless the classified build message changes or resolver verification directly implicates them.
+Do not edit parser, layout, renderer, or build/tooling files unless build verification regresses or resolver verification directly implicates them.
 
-Do not widen into real property-wrapper semantics, modifier flattening behavior, or later pipeline stages.
+Do not widen into real property-wrapper semantics, modifier rewriting behavior, parser-side wrapper extraction, or later pipeline stages.
 
 ## Non-negotiable repo rules
 
 - Keep Stage 3 logic pure and degrade gracefully instead of throwing
-- Preserve modifier order
-- Return the original node/tree unmodified if scaffolded resolver code fails
+- Preserve `id`, `sourceRange`, and modifier order
+- Return the original node/tree unmodified if traversal code fails
 - Keep the existing `ViewNode[]` contract rather than inventing a parallel type system
 - Do not hide failures with skipped tests or weakened assertions
 
@@ -67,13 +66,13 @@ Run these unless a stronger bounded equivalent is justified explicitly:
 3. `cmd /c npm.cmd test -- --runInBand`
 4. `cmd /c npm.cmd run build`
 
-If the build command still emits the classified `EPERM` message above, record it as a carry-forward blocker and do not treat it as a new resolver defect by default.
+If the build command emits the historical classified `EPERM` message again, record the same-run direct probe result and do not treat it as a new resolver defect by default.
 
 ## Exit condition
 
 This prompt is complete only when one of these is true:
 
-- all `BUG` / `ACTIVE_STAGE_GAP` findings in the bounded resolver scaffold diff are fixed and verification is recorded, or
+- all `BUG` / `ACTIVE_STAGE_GAP` findings in the bounded resolver traversal diff are fixed and verification is recorded, or
 - the slice is blocked with explicit current-stage evidence and no stage-boundary drift
 
 ## Required final status token

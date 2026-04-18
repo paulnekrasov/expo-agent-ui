@@ -84,7 +84,9 @@ You care about:
 - Windows-safe path handling
 - verification without fake green outcomes
 
-## VERIFIED SITUATION (DO NOT RE-INVESTIGATE THESE FACTS)
+## VERIFIED SITUATION FOR THIS RUN
+
+Only include facts rechecked in the current run or explicitly date-stamped historical facts.
 
 1. WHAT PASSES
    - <passing test suites / commands / invariants>

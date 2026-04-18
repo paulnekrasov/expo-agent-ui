@@ -1,15 +1,15 @@
 # Recurring Build / WASM Gate Prompt
 
-Use this prompt when the SwiftUI Preview repository hits the recurring build-verification class of failure where:
+Use this prompt only when current-run verification has reopened the recurring build-verification class of failure where:
 
-- the bounded Phase 1 / Stage 2 code slice is green,
+- the current bounded non-build implementation slice is green,
 - parser tests and `tsc --noEmit` pass,
 - but the required build gate reopens around esbuild / WASM handling,
 - often with `spawn EPERM` or a closely related child-process failure.
 
 This prompt is specifically designed for the recurring class shown in prior runs:
 
-- Stage 2 implementation is done
+- a bounded non-build implementation slice is done
 - repo-level verification reaches the build step
 - `cmd /c npm.cmd run build` fails in/around the esbuild path
 - a direct `spawnSync(process.execPath, ['-e', 'process.exit(0)'])` probe may fail too
@@ -99,7 +99,7 @@ Debug this recurring build/WASM verification issue:
 ## RECURRING ISSUE SHAPE
 
 The bug class you are investigating is:
-- the bounded Stage 2 code/test diff is green
+- the current bounded non-build code/test diff is green
 - focused parser tests pass
 - full Jest may pass
 - `tsc --noEmit` passes
@@ -108,9 +108,10 @@ The bug class you are investigating is:
 
 Do not assume this automatically means "external blocker only."
 
-## VERIFIED SITUATION (DO NOT RE-INVESTIGATE THESE FACTS WITHOUT CONTRADICTORY EVIDENCE)
+## VERIFIED SITUATION FOR THIS RUN
 
 Fill this section with the current live facts before changing code.
+Only include facts rechecked in the current run or explicitly date-stamped historical facts.
 
 1. WHAT PASSES
    - <targeted parser/extractor tests>
@@ -128,7 +129,7 @@ Fill this section with the current live facts before changing code.
    - PARTIAL EVIDENCE ONLY: <known facts, open questions>
 
 4. WHAT THE FIX MUST NOT DO
-   - Must not reopen the bounded Stage 2 source diff unless tests or `tsc` now implicate it
+   - Must not reopen the current bounded non-build source diff unless tests or `tsc` now implicate it
    - Must not hide failures with `jest.skip`, `xit`, `xtest`, exclusions, or weakened assertions
    - Must not break exact WASM filename and packaging rules
    - Must not replace semantic build verification with a fake no-op
@@ -164,7 +165,7 @@ Rules:
 ## VERIFIED NON-CAUSES
 
 Do not reopen these without contradictory evidence:
-- "The current Stage 2 source diff is automatically the cause" when its targeted tests, full Jest, and `tsc` are still green
+- "The current bounded non-build source diff is automatically the cause" when its targeted tests, full Jest, and `tsc` are still green
 - "The build test suite is subprocess-based again" if `tests/build/esbuild.test.ts` still uses the in-process pattern
 - "A failing direct spawn probe alone proves there is no repo-local fix path"
 
@@ -193,7 +194,8 @@ Continue for every required file.
 
 ## REQUIRED FAILURE ANALYSIS
 
-You must analyze both of these:
+You must always analyze the build command.
+Analyze the direct child-process probe too when it fails or when you need it for environment classification.
 
 FAILING COMMAND 1: `cmd /c npm.cmd run build`
 Intent: <what semantic build contract it is supposed to satisfy>
@@ -201,7 +203,7 @@ Failure point: <exact code path / API dependency / observed error>
 Why it fails: <best current explanation>
 Semantic goal: <what the build command should accomplish independent of the current implementation>
 
-FAILING COMMAND 2: direct child-process probe
+DIRECT PROBE: direct child-process probe (if run for classification)
 Intent: <what the probe is actually testing>
 Failure point: <exact failure>
 Why it fails: <best current explanation>
@@ -374,6 +376,6 @@ In FINAL DISPOSITION, choose one:
 
 ## Usage notes
 
-- Use this only when the recurring class is "bounded Stage 2 slice is green but build/WASM gate reopened."
+- Use this only when current-run verification has reopened the recurring class where a bounded non-build slice is green but the build/WASM gate fails again.
 - This prompt does not promise that an external automation environment will never deny spawning again.
 - It does require the agent to do the strongest repo-local hardening available so the same class of failure does not keep reopening ambiguously after later development.
