@@ -6,6 +6,34 @@ Source directive: user research summary, X + web, April 2026
 Old repo identity: SwiftUI static parser and VS Code preview
 New repo identity: Expo drop-in component, semantic runtime, local agent tools, and agent skill
 
+## April 26, 2026 Expo UI Capability Update
+
+Expo UI's SwiftUI surface now supports custom SwiftUI views and custom modifiers through
+`@expo/ui/swift-ui` extension points. This is a major improvement for the optional iOS-native
+adapter path, but it does not change the project's scope.
+
+Planning impact:
+
+- Keep Expo Agent UI as a lightweight Expo + React Native package, local agent tool bridge, MCP
+  server, and reusable agent skill.
+- Keep the core runtime React Native-first, JavaScript-only for v0, and usable without `@expo/ui`.
+- Keep Reanimated for cross-platform motion, gestures, layout transitions, and Android/web
+  fallbacks.
+- Adapt seamlessly when the host app already uses real native SwiftUI through `@expo/ui/swift-ui`,
+  including app-owned custom SwiftUI views and modifiers.
+- Use real native SwiftUI on iOS for Agent UI-owned adapter features when it materially improves
+  fidelity, platform controls, custom native modifiers, or native presentation behavior.
+- Treat native SwiftUI as an adapter/rendering capability, not as the source of truth for agent
+  semantics. The JavaScript semantic registry remains authoritative.
+- Do not turn the project into a SwiftUI clone, native UI framework, or mandatory native-module
+  package.
+
+Concrete Stage 7 implication: the optional SwiftUI adapter must preserve and wrap user-owned
+custom SwiftUI views/modifiers instead of forcing a rewrite. Agent UI may also expose its own
+native custom components and modifiers such as `agentHighlight`, native focus/debug overlays, or
+app-specific control styles. Each Agent UI-owned native addition still needs a clear use case,
+fallback behavior, development-build compatibility notes, and semantic wrapper tests.
+
 ## Goal
 
 Rebuild this repository into a lightweight Expo and React Native package that gives agents a
@@ -118,6 +146,11 @@ useful mental model into React Native:
 The old SwiftUI parser references should not be used as implementation contracts anymore.
 They can survive as design DNA for layout, modifier ordering, semantic colors, and animation
 feel.
+
+The April 2026 Expo UI SwiftUI extension points strengthen this layer on iOS: Agent UI can use
+actual native SwiftUI components and modifiers behind the optional adapter where they are a better
+fit than React Native or Reanimated approximations. The public product language should still say
+"SwiftUI-inspired" because the package must remain cross-platform and Expo-first.
 
 ### "Fully agent-controllable mobile environment"
 
@@ -321,17 +354,41 @@ should expose tools only for capabilities implemented by the runtime.
 
 ### "Context Engineering Layer"
 
-This is the part of the current repo that should survive most strongly. The old pipeline
-stages are obsolete, but the method is valuable:
+This is part of the product, but it is not user-facing UI. Treat it as the hidden intelligence
+backend of the plugin: the private agent-control plane that lets agents plan, build, inspect,
+debug, validate, hand off, and safely evolve an Expo Agent UI app.
 
-- router index
-- durable project brief
+The old pipeline stages are obsolete, but the context-engineering method is core product DNA. It
+should survive as structured agent backend state:
+
+- project brief and non-goals
+- reference router and stage-specific references
 - bounded task specs
-- phase state
-- handoff notes
-- review checklist
-- prompt rotation protocol
-- stage-specific references
+- phase/product-stage state
+- handoff notes and review logs
+- validation rules and review checklists
+- prompt resources and prompt rotation protocol
+- research status and implementation gates
+- flow specs and patch proposal policies
+
+Visibility boundary:
+
+- App end users must not see this layer.
+- The mobile app should not render this layer as settings, debug panels, or visible copy.
+- Agents and local developer tooling may read it through skill files, local docs, MCP resources,
+  prompts, or CLI diagnostics.
+- Anything exported through MCP must be intentionally scoped, redacted, and useful for agent work.
+
+The context backend should power:
+
+- what references an agent loads,
+- what stage the project is in,
+- which task is active,
+- which files are in scope,
+- which capabilities are implemented,
+- what validation must pass before work is considered done,
+- how agents propose patches without unsafe automatic mutation,
+- how future agents resume work without relying on chat history.
 
 The new system should rename "pipeline stages" to product slices:
 
@@ -726,6 +783,11 @@ MCP resources:
 - `agent-ui://screens`
 - `agent-ui://flows`
 - `agent-ui://diagnostics`
+- `agent-ui://project-brief`
+- `agent-ui://reference-index`
+- `agent-ui://active-task`
+- `agent-ui://validation-rules`
+- `agent-ui://handoff`
 
 MCP prompts:
 
@@ -733,6 +795,9 @@ MCP prompts:
 - `debug_flow`
 - `improve_semantics`
 - `patch_screen`
+- `plan_task`
+- `review_stage`
+- `resume_handoff`
 
 Verification:
 
@@ -779,6 +844,9 @@ Official Expo UI docs establish:
 - components import from `@expo/ui/swift-ui`,
 - `Host` is required to cross from React Native/UIKit to SwiftUI,
 - modifiers import from `@expo/ui/swift-ui/modifiers`,
+- custom SwiftUI components can be exposed to React Native through Expo native views,
+- custom SwiftUI modifiers can be registered natively and created from JavaScript modifier
+  helpers,
 - Expo UI is a primitives library, not an opinionated design kit,
 - universal support is still staged; strong SwiftUI support is the first milestone.
 
@@ -788,12 +856,20 @@ Implementation:
 - Core components remain usable without Expo UI.
 - Adapter code should be tree-shakeable and optional.
 - Android should degrade to React Native primitives or future Jetpack Compose adapter.
+- User-owned custom SwiftUI views/modifiers are first-class interop surfaces. The adapter should
+  preserve unknown custom modifier configs, allow semantic wrappers around custom native views,
+  and avoid requiring users to rewrite existing Expo UI SwiftUI code.
+- Agent UI-owned native custom SwiftUI views/modifiers belong behind this adapter boundary and
+  require documented fallbacks.
+- Agent semantic metadata is registered in JavaScript wrappers before native rendering; native
+  SwiftUI accessibility modifiers mirror semantics for the OS but do not replace the registry.
 
 Verification:
 
 - Example iOS screen using Expo UI `Host`.
 - Fallback screen without Expo UI.
 - Tests guard optional dependency behavior.
+- Smoke tests for any custom native SwiftUI component or modifier before it becomes public API.
 
 ### Stage 8 - Agent Skill
 
@@ -825,6 +901,10 @@ Skill requirements:
 - detailed API tables go in references,
 - examples must be complete,
 - validation script must catch duplicate IDs and missing intents on actionable nodes.
+- skill behavior must use the hidden context backend through progressive disclosure: load only the
+  brief, task, references, validation rules, and handoff notes needed for the current job.
+- context backend content is for agents and developer tooling only; it must not be generated as
+  visible mobile UI or exposed to app end users.
 
 Potential trigger phrases:
 
@@ -1027,6 +1107,11 @@ Mitigation:
 - Keep `@expo/ui` optional.
 - Wrap it in an adapter layer.
 - Maintain versioned reference docs.
+- Preserve user-owned custom SwiftUI components/modifiers through pass-through and semantic
+  wrapping rather than replacement.
+- Keep Agent UI-owned custom native SwiftUI components and modifiers narrow, documented, and
+  fallback-backed.
+- Do not expose native custom modifiers as core API until managed and bare workflows are verified.
 
 ### Risk: MCP surface promises too much
 
@@ -1158,4 +1243,3 @@ Mitigation:
 - React Native accessibility docs: https://reactnative.dev/docs/0.84/accessibility
 - MCP specification: https://modelcontextprotocol.io/specification/draft
 - MCP TypeScript SDK: https://github.com/modelcontextprotocol/typescript-sdk
-

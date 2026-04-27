@@ -20,7 +20,9 @@ mobile environment through:
 - a live semantic runtime,
 - local structured agent tools,
 - a local MCP server,
-- and a reusable agent skill.
+- a reusable agent skill,
+- and a hidden context-engineering backend that guides agent planning, memory, validation, and
+  handoff behavior.
 
 ## What This Is
 
@@ -33,6 +35,8 @@ mobile environment through:
 - An MCP server for compatible agent hosts.
 - An agent skill that teaches agents how to use the primitives, semantic IDs, tools, and flow
   runner correctly.
+- A private context-engineering layer for agents: project brief, reference routing, active task
+  state, validation rules, review notes, handoffs, and prompt resources.
 
 ## What This Is Not
 
@@ -44,6 +48,8 @@ mobile environment through:
 - Not a paid remote MCP service.
 - Not a screenshot-first or coordinate-first automation system.
 - Not a full IDE.
+- Not a user-visible mobile UI surface. The context-engineering layer is hidden agent backend
+  behavior, not app content or app settings.
 
 ## Core Architecture
 
@@ -81,7 +87,19 @@ MCP stdio server
   +-- input
   +-- waitFor
   +-- observeEvents
+  |
+  v
+Agent skill + hidden context backend
+  |
+  +-- project brief and reference router
+  +-- active task and phase state
+  +-- validation and review rules
+  +-- handoff and prompt resources
 ```
+
+The context backend is an agent-facing control plane. It may be exposed to local agent hosts as
+resources, prompts, validation rules, or task state, but it must not render inside the mobile app
+or become visible to app end users.
 
 ## Product Stages
 
