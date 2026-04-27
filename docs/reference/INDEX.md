@@ -1,240 +1,95 @@
-# docs/reference - Shared Agent Index
+# Reference Index - Expo Agent UI
 
-> Read this file at the start of every coding or research session.
-> It is the shared entrypoint for Codex, Claude, Gemini, and other agents.
-> Never guess a filename or source of truth; look it up here first.
+Read this file at the start of every coding or research session. It is the router into the
+current reference library for the Expo Agent UI rebuild.
 
-## Session-start protocol
+The old SwiftUI parser, tree-sitter, VS Code WebView, and Canvas renderer reference trees have
+been removed from active context. Use this index as the complete router for current work.
 
-1. Read this file.
-2. Map the task to a pipeline stage before touching code.
-3. Open the first file listed for that stage in the table below.
-4. If the task changes architecture or behavior, cross-check `docs/CLAUDE.md`.
+## Session-Start Protocol
 
-`docs/CLAUDE.md` is the detailed project brief. Its filename is historical; use it as project guidance even when the active agent is not Claude.
+1. Read `docs/PROJECT_BRIEF.md`.
+2. Read this file.
+3. Read `docs/agents/ORCHESTRATION.md`.
+4. Read `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and
+   `docs/agents/ROADMAP_CHECKLIST.md`.
+5. Read `docs/agents/TASK.md` if it is populated.
+6. Open only the reference docs required by the active stage.
 
-## Quick-start by pipeline stage
+## Current High-Signal References
 
-| Starting work on... | Open first |
+| Work Area | Open First |
 |---|---|
-| Stage 1 - Parser (tree-sitter AST) | `layer-1-grammar/node-types.md` |
-| Stage 1 - Inferred node type specs (fields, children, constraints) | `layer-1-grammar/node-type-specs.md` |
-| Stage 1 - Modifier chains / trailing closures | `layer-1-grammar/corpus-examples.md` |
-| Stage 1 - Edge cases (`@State`, interpolation, conditionals) | `layer-1-grammar/parsing-edge-cases.md` |
-| Stage 2 - web-tree-sitter WASM API calls | `layer-2-parser-api/web-tree-sitter-api.md` |
-| Stage 2 - Logging, progress, node helpers | `layer-2-parser-api/web-tree-sitter-extras.md` |
-| Stage 3 - `@ViewBuilder` / result-builder transforms | `layer-3-viewbuilder/result-builder-transforms.md` |
-| Stage 3 - ViewBuilder containers (`Group`, `if/else`, `switch`) | `layer-3-viewbuilder/viewbuilder-swiftui-api.md` |
-| Stage 4 - `VStack` / `HStack` / `ZStack` / `Spacer` layout | `layer-4-layout/core-containers.md` |
-| Stage 4 - `.frame`, `.infinity`, `fixedSize`, `GeometryReader` | `layer-4-layout/frame-fixedsize-geometry.md` |
-| Stage 4 - `ScrollView` children and layout contract | `layer-4-layout/scrollview.md` |
-| Stage 4 - `NavigationStack` / `TabView` layout | `layer-4-layout/navigation-tabview.md` |
-| Stage 4 - `LazyVGrid` / `LazyHGrid` | `layer-4-layout/grid.md` |
-| Stage 4 - Worked fixture calculations | `layer-4-layout/fixture-calculations.md` |
-| Stage 4 - Overlay, background, alignment anchors | `layer-4-layout/extended-topics.md` |
-| Stage 5 - iOS HIG: touch targets, typography, colors, tab bar | `layer-5-hig/touch-typography-colors.md` |
-| Stage 5 - iOS HIG: nav bar, toolbars, lists, controls | `layer-5-hig/navigation-toolbars-lists.md` |
-| Stage 5 - Toggle, Picker, Slider, Stepper, DatePicker chrome | `layer-5-hig/control-visual-specs.md` |
-| Stage 5 - Full iOS/iPadOS UI specification | `layer-5-hig/ios-ui-specs.md` |
-| Stage 5 - Canvas 2D drawing primitives | `renderer/canvas-2d-reference.md` |
-| Stage 5 - SF Symbols to SVG rendering | `renderer/sf-symbols-rendering.md` |
-| Stage 6 - Device frame chrome | `layer-8-device-frames/device-frames.md` |
-| Stage 7 - Push/pop navigation transitions | `layer-9-animations/navigation-transitions.md` |
-| Stage 7 - SwiftUI transition types to CSS equivalents | `layer-9-animations/swiftui-transitions.md` |
-| IR types - `ViewNode` union, `Modifier` union | `ir/viewnode-types.md` |
-| IR types - `@State` / `@Binding` / `@ObservedObject` stubs | `ir/property-wrapper-stubs.md` |
-| Swift syntax - View initializer signatures | `swift-syntax/view-initializer-signatures.md` |
-| Swift syntax - Modifier call signatures | `swift-syntax/modifier-signatures.md` |
-| Swift syntax - Parsing edge cases | `swift-syntax/edge-cases.md` |
-| VS Code extension - WebView CSP, packaging, WASM loading | `layer-6-vscode/extension-packaging-csp.md` |
-| MCP server - protocol spec, tool definitions, stdio transport | `layer-7-mcp/mcp-protocol.md` |
-| MCP server - packaging and agent/client configuration | `layer-7-mcp/mcp-server-packaging.md` |
-| Project goals and problem statement | `planning/problem-statement.md` |
-| Full pipeline design and planning | `planning/pipeline-overview.md` |
-| Cross-layer confirmed findings and test strategy | `planning/cross-layer-research.md` |
-| Research prompt template for dedicated research sessions | `planning/research-agent-prompt.md` |
+| Overall rebuild plan | `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md` |
+| Research completion status | `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
+| Package foundation and Expo SDK | `expo/package-foundation.md` |
+| Expo UI SwiftUI adapter | `expo/expo-ui-swift-ui.md` |
+| Reanimated motion layer | `motion/reanimated-4.md` |
+| Semantic accessibility contract | `react-native/accessibility-semantics.md` |
+| Runtime bridge and MCP transport | `agent/mcp-transport-architecture.md` |
+| Security and privacy | `agent/security-privacy.md` |
+| Navigation adapters | `react-native/navigation-adapters.md` |
+| Testing and devtools | `react-native/testing-and-devtools.md` |
+| SwiftUI-inspired layout DNA | `design/swiftui-layout-dna.md` |
+| iOS-inspired tokens | `design/ios-tokens.md` |
+| Control chrome guidance | `design/control-chrome.md` |
+| SwiftUI motion mapping | `motion/swiftui-motion-mapping.md` |
+| Symbols and icons | `native/symbols-and-icons.md` |
+| Cross-platform future adapters | `expo/cross-platform-adapters.md` |
+| Figma/design-system future import | `design/figma-design-system-import.md` |
+| Cloud flows and visual comparison | `agent/cloud-flows-visual-comparison.md` |
 
-## Node name traps - wrong to right
+## Stage-To-Reference Map
 
-These are the most common mistakes. The wrong name silently returns no matches.
-
-| Wrong (do not use) | Correct tree-sitter-swift name |
+| Product Stage | Required References |
 |---|---|
-| `string_literal` | `line_string_literal` / `multi_line_string_literal` |
-| `float_literal` | `real_literal` |
-| `for_in_statement` | `for_statement` |
-| `if_expression` | `if_statement` |
-| `variable_declaration` | `property_declaration` |
-| `trailing_closure` | `lambda_literal` as a child of `call_suffix` |
-| `interpolated_string_expression` | `interpolation` |
-| `function_call` | `call_expression` |
-| `member_access` | `navigation_expression` or `member_modifier`, depending on context |
-| `argument` | `value_argument` |
-| `closure_expression` | `lambda_literal` |
+| Stage 0 - Repo Reset | `docs/PROJECT_BRIEF.md`, this index, `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md`, `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
+| Stage 1 - Package Foundation | `expo/package-foundation.md` |
+| Stage 2 - Component Primitives | `react-native/accessibility-semantics.md`, `design/swiftui-layout-dna.md`, `design/ios-tokens.md`, `design/control-chrome.md`, `native/symbols-and-icons.md`, `expo/expo-ui-swift-ui.md` for optional adapter boundaries |
+| Stage 3 - Semantic Runtime | `react-native/accessibility-semantics.md`, `agent/security-privacy.md` |
+| Stage 4 - Agent Tool Bridge | `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/navigation-adapters.md` when navigation tools are in scope |
+| Stage 5 - MCP Server | `agent/mcp-transport-architecture.md`, `agent/security-privacy.md` |
+| Stage 6 - Motion Layer | `motion/reanimated-4.md`, `motion/swiftui-motion-mapping.md` |
+| Stage 7 - Expo UI Adapter | `expo/expo-ui-swift-ui.md`, `expo/cross-platform-adapters.md` for future Android/Web boundaries |
+| Stage 8 - Agent Skill | `docs/agents/research-prompts/expo-agent-ui/README.md`, `react-native/accessibility-semantics.md`, `agent/mcp-transport-architecture.md` |
+| Stage 9 - Flow Runner And Patch Proposals | `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/testing-and-devtools.md` |
+| Stage 10 - Publish Readiness | `expo/package-foundation.md`, all compatibility and install decisions from research status |
 
-Full grammar rules: `layer-1-grammar/grammar-rules.md`
+## MVP Decisions From Research
 
-Full node type specs: `layer-1-grammar/node-types.md`
+- Proceed with Expo SDK 55 as the researched baseline, but verify exact package metadata during
+  implementation.
+- Build core runtime JS-only.
+- Use npm workspaces.
+- Keep config plugin optional and defer native modules.
+- Keep `@expo/ui` optional behind explicit adapter imports.
+- Use React Native accessibility props as the semantic foundation.
+- Map stable semantic IDs to `testID`, but do not treat `testID` alone as sufficient semantics.
+- Build local stdio MCP over a development-only app WebSocket bridge.
+- Bind bridge to loopback by default and require pairing tokens.
+- Use MCP SDK v1.x for v0 unless implementation-time research says otherwise.
+- Use Jest and React Native Testing Library for v0 semantic correctness.
+- Treat Maestro, Detox, Appium, Figma import, cloud flows, and visual diff as post-v0.
 
-## Constants every stage must use
+## Known Implementation Gates
 
-### Layout and device dimensions
+- Verify Expo/Reanimated package versions before writing peer ranges.
+- Verify Worklets Babel/plugin setup in managed and bare lanes.
+- Define bridge pairing/session-discovery UX before implementing Stage 4.
+- Implement redaction before any semantic tree leaves the app runtime.
+- Do not support physical-device LAN bridge by default until the secure setup is verified.
+- Do not promise native automation selector mappings until compiled fixtures confirm behavior.
 
-| Constant | Value | Used in |
-|---|---|---|
-| Default device | iPhone 16 Pro | Stages 4, 5, 6 |
-| Screen logical size | 393 x 852 pt | Stage 4 layout root |
-| Status bar height (Face ID) | 59 pt | Stages 4, 5 |
-| Home indicator safe area | 34 pt | Stages 4, 5 |
-| Navigation bar height | 44 pt | Stage 5 renderer |
-| Large title bar extra height | 52 pt | Stage 5 renderer |
-| Full large-title stack height | 96 pt | Stage 5 renderer |
-| Tab bar height | 49 pt | Stage 5 renderer |
-| Minimum touch target | 44 x 44 pt | Stage 5 renderer |
-| List cell minimum height | 44 pt | Stage 5 renderer |
-| List group corner radius | 10 pt | Stage 5 renderer |
-| List separator left inset | 16 pt | Stage 5 renderer |
+## Cleanup Status
 
-### Typography
+The retired parser/reference tree was intentionally cleaned up after the Expo Agent UI pivot.
+Reusable ideas were compressed into:
 
-Never use `canvas.measureText()` as the source of truth for SwiftUI sizing.
+- `design/swiftui-layout-dna.md`
+- `design/ios-tokens.md`
+- `design/control-chrome.md`
+- `motion/swiftui-motion-mapping.md`
+- `native/symbols-and-icons.md`
 
-| Style | Size (pt) | Weight | Line-height multiplier |
-|---|---|---|---|
-| `largeTitle` | 34 | 700 | 1.21 |
-| `title` | 28 | 700 | 1.21 |
-| `title2` | 22 | 700 | 1.23 |
-| `title3` | 20 | 600 | 1.25 |
-| `headline` | 17 | 600 | 1.29 |
-| `body` | 17 | 400 | 1.29 |
-| `callout` | 16 | 400 | 1.31 |
-| `subheadline` | 15 | 400 | 1.33 |
-| `footnote` | 13 | 400 | 1.38 |
-| `caption` | 12 | 400 | 1.42 |
-| `caption2` | 11 | 400 | 1.45 |
-
-### Animation timing
-
-| Name | Curve | Duration |
-|---|---|---|
-| Push/pop transition | `cubic-bezier(0.42, 0, 0.58, 1.0)` | 350 ms |
-| `.easeInOut` | `cubic-bezier(0.42, 0, 0.58, 1.0)` | per modifier |
-| `.easeIn` | `cubic-bezier(0.42, 0, 1.0, 1.0)` | per modifier |
-| `.easeOut` | `cubic-bezier(0, 0, 0.58, 1.0)` | per modifier |
-| `.spring()` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | per modifier |
-| `.bouncy` | `cubic-bezier(0.34, 1.8, 0.64, 1)` | per modifier |
-| `.snappy` | `cubic-bezier(0.2, 0, 0, 1.0)` | short |
-
-### Light-mode color anchors
-
-| Token | Value |
-|---|---|
-| `label` | `#000000` |
-| `secondaryLabel` | `rgba(60,60,67,0.6)` |
-| `systemBackground` | `#ffffff` |
-| `secondarySystemBackground` | `#f2f2f7` |
-| `systemGroupedBackground` | `#f2f2f7` |
-| `secondarySystemGroupedBackground` | `#ffffff` |
-| `separator` | `rgba(60,60,67,0.29)` |
-| `systemBlue` / `accentColor` | `#007aff` |
-| `systemGreen` | `#34c759` |
-| `systemRed` | `#ff3b30` |
-| `systemGray` | `#8e8e93` |
-
-Full light and dark color tables: `layer-5-hig/touch-typography-colors.md`
-
-## Stub rules - quick reference
-
-| Feature | Stub behavior |
-|---|---|
-| `@State` / `@Binding` | zero / `""` / `false` / `nil` |
-| `@ObservedObject` / `@StateObject` | all published properties as type defaults |
-| `ForEach` over dynamic data | render exactly 3 placeholder rows |
-| `ForEach` over static literal array | render actual items |
-| `AsyncImage` | gray box plus `photo` SF Symbol |
-| `Sheet` / `FullScreenCover` | not presented |
-| `Alert` / `ConfirmationDialog` | ignored entirely |
-| `Animation` modifier | render final non-animated state |
-| `withAnimation` block | evaluate without animation |
-| `matchedGeometryEffect` | ignored; render normally |
-| `PhaseAnimator` / `KeyframeAnimator` | first phase only |
-| `TimelineView` | render at `t=0` |
-| `Canvas` view | gray box labeled `Canvas` |
-| `UIViewRepresentable` | gray box with type name |
-| Custom `Layout` protocol | `VStack` fallback |
-
-All stubs must carry the comment `// STUB: <reason>`.
-
-Full stub contracts: `ir/property-wrapper-stubs.md`
-
-## Error handling fallback chain
-
-```text
-Stage 1 (Parser)    -> catch all -> return UnknownNode, log to OutputChannel
-Stage 2 (Extractor) -> catch all -> return UnknownNode, log to OutputChannel
-Stage 3 (Resolver)  -> catch all -> return node unmodified, log warning
-Stage 4 (Layout)    -> catch all -> clamp size to zero, log warning
-Stage 5 (Renderer)  -> catch all -> draw red error placeholder box with message
-Stage 6 (Device)    -> catch all -> render content without chrome
-```
-
-Never omit `UnknownNode` as the final fallback in any extractor.
-
-Never throw in Stages 1-4; always degrade gracefully.
-
-## File map
-
-```text
-docs/reference/
-|- INDEX.md
-|- layer-1-grammar/
-|  |- node-types.md
-|  |- node-type-specs.md
-|  |- grammar-rules.md
-|  |- parsing-edge-cases.md
-|  `- corpus-examples.md
-|- layer-2-parser-api/
-|  |- web-tree-sitter-api.md
-|  `- web-tree-sitter-extras.md
-|- layer-3-viewbuilder/
-|  |- result-builder-transforms.md
-|  `- viewbuilder-swiftui-api.md
-|- layer-4-layout/
-|  |- core-containers.md
-|  |- frame-fixedsize-geometry.md
-|  |- scrollview.md
-|  |- navigation-tabview.md
-|  |- grid.md
-|  |- fixture-calculations.md
-|  `- extended-topics.md
-|- layer-5-hig/
-|  |- touch-typography-colors.md
-|  |- navigation-toolbars-lists.md
-|  |- control-visual-specs.md
-|  `- ios-ui-specs.md
-|- layer-6-vscode/
-|  `- extension-packaging-csp.md
-|- layer-7-mcp/
-|  |- mcp-protocol.md
-|  `- mcp-server-packaging.md
-|- layer-8-device-frames/
-|  `- device-frames.md
-|- layer-9-animations/
-|  |- navigation-transitions.md
-|  `- swiftui-transitions.md
-|- ir/
-|  |- viewnode-types.md
-|  `- property-wrapper-stubs.md
-|- renderer/
-|  |- canvas-2d-reference.md
-|  `- sf-symbols-rendering.md
-|- swift-syntax/
-|  |- view-initializer-signatures.md
-|  |- modifier-signatures.md
-|  `- edge-cases.md
-`- planning/
-   |- problem-statement.md
-   |- pipeline-overview.md
-   |- research-agent-prompt.md
-   `- cross-layer-research.md
-```
+Do not recreate old parser, resolver, VS Code extension, WASM, or Canvas renderer references unless
+the user explicitly asks for historical archive analysis.

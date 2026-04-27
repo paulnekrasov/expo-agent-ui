@@ -1,9 +1,8 @@
 # File Templates
 
-Use these templates when reseeding or refreshing the workflow files.
+Use these templates when reseeding or refreshing workflow files.
 
-Keep the headers stable.
-Keep the terminology stable.
+Keep the headers stable. Keep terminology aligned with Expo Agent UI product stages.
 
 ## `PHASE_STATE.md`
 
@@ -12,18 +11,18 @@ Keep the terminology stable.
 Updated: YYYY-MM-DD
 Active Phase: Phase X - Name
 Active Stage: Stage Y - Name
-Active File: path/to/file.ts
+Active File: path/to/file
 
-## Completed this session
+## Completed This Session
 
 - [x] ...
 
-## Baseline repo status
+## Baseline Repo Status
 
 - [x] ...
 - [ ] ...
 
-## In progress
+## In Progress
 
 - [ ] ...
 
@@ -31,12 +30,12 @@ Active File: path/to/file.ts
 
 - [ ] ...
 
-## Next agent must start with
+## Next Agent Must Start With
 
 1. ...
 2. ...
 
-## Suggested next target
+## Suggested Next Target
 
 - ...
 ```
@@ -48,33 +47,41 @@ Active File: path/to/file.ts
 Created by: role or agent name
 Date: YYYY-MM-DD
 Roadmap Phase: Phase X - Name
-Pipeline Stage: Stage Y - Name
-Research Layer: Layer N or multiple layers
+Product Stage: Stage Y - Name
+Research Area: short domain name
 
 ## Objective
 
 One sentence only.
 
-## Acceptance criteria
+## Status
+
+ACTIVE_READY | BLOCKED | REVIEW_READY | COMPLETE
+
+## Acceptance Criteria
 
 - [ ] ...
 - [ ] ...
 
-## Files to touch
+## File Allowlist
 
 - `path/to/file.ts`
 
-## Reference docs to read before starting
+## Reference Docs To Read Before Starting
 
 - `docs/reference/...`
 
-## Known traps
+## Known Traps
 
 - ...
 
-## Out of scope
+## Out Of Scope
 
 - ...
+
+## Verification
+
+- command or doc-only verification step
 ```
 
 ## `REVIEW.md`
@@ -83,7 +90,7 @@ One sentence only.
 # REVIEW REPORT
 Reviewer session date: YYYY-MM-DD
 Roadmap Phase: Phase X - Name
-Pipeline Stage: Stage Y - Name
+Product Stage: Stage Y - Name
 Task status: open | needs fixes | clear
 
 ## Findings
@@ -109,24 +116,23 @@ From: role or agent name
 To: next role or next agent
 Session date: YYYY-MM-DD
 
-## What I did
+## What I Did
 
 - ...
 
-## What I found
+## What I Found
 
 - ...
 
-## What the next agent must do first
+## What The Next Agent Must Do First
 
 - ...
 
-## What the next agent must not do
+## What The Next Agent Must Not Do
 
 - ...
 
-## Confidence level on current build
+## Confidence Level
 
-- Phase 1 / Parser Foundation: NN%
-- Phase 2 / Resolver: NN%
+- Phase X / Stage Y: NN%
 ```

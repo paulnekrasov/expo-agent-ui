@@ -1,49 +1,68 @@
 # HANDOFF NOTE
-From: stage-orchestrator
-To: next orchestrator, reviewer, or diagnostics pass
-Session date: 2026-04-18
-Last refresh: 2026-04-18T22:42:06.6889931+03:00
+From: cleanup archivist
+To: component primitives implementer
+Session date: 2026-04-27
 
-## What I did
+## What I Did
 
-- Re-ran the required command trio in the current automation environment:
-  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-  - `cmd /c npm.cmd run diagnose:build-env`
-  - `cmd /c npm.cmd run build`
-- Confirmed the current automation environment still denies child-process launch before esbuild starts
-- Kept the runtime prompt set retired and refreshed the live state files with the latest evidence
-- Made no source-code edits
+- Continued the Expo Agent UI rebuild cleanup.
+- Loaded and applied `$context-prompt-engineering` for markdown rewrite structure.
+- Deleted the retired old-project implementation and build surfaces:
+  - old `src/`, `tests/`, `scripts/`, and `out/`
+  - `tree-sitter-swift`, `tree-sitter-swift.wasm`, and `.gitmodules`
+  - `.vscodeignore`, `esbuild.js`, and `esbuild.config.js`
+  - old repo-local `skills/`
+- Removed old layer-based reference folders for tree-sitter, parser, resolver, VS Code, Canvas
+  renderer, Swift syntax, device frames, and old planning.
+- Removed old root-level SwiftUI preview research and planning markdown files under `docs/`.
+- Removed stale parser/WASM/debugging prompt templates from `docs/agents`.
+- Added compact replacement references for layout DNA, iOS tokens, control chrome, motion mapping,
+  and icons.
+- Rewrote `.agents/agents/*` from old parser/resolver roles into Expo Agent UI product-stage
+  roles.
+- Updated `AGENTS.md`, `README.md`, `docs/PROJECT_BRIEF.md`, `docs/reference/INDEX.md`, roadmap,
+  runtime prompt status, and review/orchestration rules to reflect cleanup completion.
 
-## What I found
+## What I Found
 
-- `node .\node_modules\typescript\lib\tsc.js --noEmit` passed in the current run
-- `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and emitted JSON with:
-  - `summary.status: "environment_blocks_child_processes"`
-  - `directProbe.ok: false`
-  - `build.ok: false`
-  - the shared failure root `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- `cmd /c npm.cmd run build` failed before esbuild started with the same direct-probe `EPERM` evidence
-- The diagnostics JSON reports both WASM assets as present, so the current-run classification is not `missing_wasm_assets`
-- Because the build path is blocked before esbuild starts, this run still does not support treating the failure as a repo-local post-spawn build regression
+- The old implementation surfaces were still present even though active docs had already pivoted.
+- The useful parts of the old docs were design principles, not implementation contracts.
+- Old role prompts were a real drift risk because they still routed agents to parser, resolver,
+  layout, renderer, and VS Code work.
+- Remote old branches still exist on `origin`; I did not delete remote branches because that is a
+  shared-repository operation that should be explicitly requested.
 
-## What the next agent must do first
+## Verification Completed
 
-- Start from `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
-- Re-run the same `tsc` -> `diagnose:build-env` -> `build` trio if the automation environment may have changed
-- Only if the direct child-process probe starts passing again, reseed the bounded Stage 3 resolver traversal task and regenerate active runtime prompts
+- `npm run typecheck --workspaces --if-present`
+- `npm run build --workspaces --if-present`
+- `npm test --workspaces --if-present`
 
-## What the next agent must not do
+Build output folders under `packages/*/dist` were removed after verification.
 
-- Do not recreate `ACTIVE_*.md` runtime prompts while the verification gate is still blocked
-- Do not resume Stage 3 resolver edits while `spawnSync C:\Program Files\nodejs\node.exe` is still failing with `EPERM`
-- Do not relabel this as `repo_local_build_failure_after_spawn` unless the direct probe passes and the build still fails afterward
+## What The Next Agent Must Do First
 
-## Confidence level on current state
+1. Read `docs/PROJECT_BRIEF.md`.
+2. Read `docs/reference/INDEX.md`.
+3. Read `docs/reference/react-native/accessibility-semantics.md`.
+4. Read `docs/reference/design/swiftui-layout-dna.md`.
+5. Read `docs/reference/design/ios-tokens.md`.
+6. Read `docs/agents/TASK.md`.
+7. Check `git status --short --branch`.
 
-- Phase 1 / Parser Foundation: 97%
-- Phase 2 / Resolver implementation readiness: 28%
-- Current automation-environment build gate classification: 98% (`environment_blocks_child_processes` from current-run diagnostics JSON plus matching build failure)
-- Phase 3 / Layout Foundation: 0%
-- Phase 4 / Renderer Foundation: 0%
-- Phase 5 / Device and Interaction: 0%
-- Phase 6 / MCP Surface: 0%
+## What The Next Agent Must Not Do
+
+- Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas
+  renderer assets.
+- Do not implement Stage 3 semantic registry behavior inside the Stage 2 primitive task.
+- Do not make `@expo/ui`, Expo Router, React Navigation, MCP SDK, or native modules mandatory in
+  `packages/core`.
+- Do not expose MCP tools before the runtime exists.
+
+## Confidence Level
+
+- Cleanup completeness for active context: 90%
+- Stage 2 readiness: 85%
+- Need for remote branch cleanup: 60%, pending explicit user decision
+- Dependency audit readiness: 60% because npm still reports moderate findings from the dependency
+  graph

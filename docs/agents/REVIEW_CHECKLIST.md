@@ -1,76 +1,112 @@
-# Review Checklist
+# Review Checklist - Expo Agent UI
 
-Use this checklist during review cycles.
-
-Important:
-
-- Apply only the sections that match the active pipeline stage.
-- Do not review Stage 4 or Stage 5 obligations during a pure Stage 2 task.
-- Record findings in `docs/agents/REVIEW.md` using the approved issue classes only.
+Use this checklist during review cycles. Apply only the sections matching the active product
+stage. Do not review future-stage obligations during an earlier-stage task.
 
 ## Always
 
-- [ ] The task stays inside one pipeline stage
-- [ ] The touched files match the allowlist in `docs/agents/TASK.md`
-- [ ] No unrelated architectural drift was introduced
-- [ ] The relevant reference docs were followed
-- [ ] Build and relevant tests were run, or the limitation is explicitly stated
-- [ ] If build verification was blocked by environment-level `EPERM`, the review clearly distinguishes automation evidence, outside-automation recheck status, and whether the repo is blocked or only the automation runner is blocked
-- [ ] Future-stage work is not mislabeled as a current bug
+- [ ] The task stays inside one product stage.
+- [ ] Touched files match the allowlist in `docs/agents/TASK.md`.
+- [ ] No old SwiftUI parser work was resumed accidentally.
+- [ ] No unrelated architectural drift was introduced.
+- [ ] Relevant reference docs were followed.
+- [ ] Verification commands were run, or limitations are explicitly stated.
+- [ ] Future-stage work is not mislabeled as a current bug.
+- [ ] Dirty user/research files outside the task scope were preserved.
 
-## Stage 1 and Stage 2
+## Stage 0 - Repo Reset
 
-- [ ] All tree-sitter node names match `docs/reference/layer-1-grammar/node-types.md`
-- [ ] Modifier chains preserve order correctly
-- [ ] `UnknownNode` fallback exists where unsupported extraction is possible
-- [ ] No `any` types were introduced in touched files
-- [ ] Recursive extraction degrades gracefully rather than throwing
-- [ ] CRLF normalization still happens before parsing
-- [ ] Windows-safe path handling remains intact
-- [ ] Tests use Swift snippet fixtures rather than mocked AST structures when possible
+- [ ] Startup docs point to `docs/PROJECT_BRIEF.md`.
+- [ ] `docs/reference/INDEX.md` routes to Expo Agent UI references.
+- [ ] Old resolver/parser task is no longer active.
+- [ ] Research status is discoverable.
+- [ ] Old parser assets are not recreated unless historical archive work is explicitly in scope.
 
-## Stage 3
+## Stage 1 - Package Foundation
 
-- [ ] Resolver work does not add layout or rendering behavior
-- [ ] Stub rules follow `docs/reference/ir/property-wrapper-stubs.md`
-- [ ] Modifier flattening preserves source order
-- [ ] Resolver failures degrade gracefully and keep the node usable when possible
-- [ ] Resolver tests cover the new behavior
+- [ ] npm workspace boundaries are clear.
+- [ ] Package names and scripts are consistent.
+- [ ] Core package remains JS-only.
+- [ ] Native modules and config-plugin mutations are deferred unless justified.
+- [ ] Optional dependencies are not made mandatory without a reference-backed reason.
+- [ ] TypeScript strictness is preserved or improved.
+- [ ] Build/typecheck/test scripts are meaningful or clearly marked as placeholders.
 
-## Stage 4
+## Stage 2 - Component Primitives
 
-- [ ] Layout code follows the propose -> accept -> place contract
-- [ ] New layout work matches the relevant layer-4 reference docs
-- [ ] No view exceeds its proposal unless the documented rule allows it
-- [ ] `Spacer` behavior is correct on primary and cross axes
-- [ ] Font metrics come from lookup tables, not `canvas.measureText()`
-- [ ] Layout fixtures or expected calculations cover the new logic
+- [ ] Components render real React Native UI.
+- [ ] Components emit accessibility props where appropriate.
+- [ ] Actionable components require stable semantic IDs or warn in development.
+- [ ] `@expo/ui` usage stays behind optional adapter boundaries.
+- [ ] Primitive APIs do not replace Expo or React Native concepts unnecessarily.
 
-## Stage 5
+## Stage 3 - Semantic Runtime
 
-- [ ] Renderer work uses semantic color tokens rather than arbitrary hardcoded values where tokens exist
-- [ ] Light and dark rendering behavior is considered
-- [ ] SF Symbol fallback behavior still exists for unmapped symbols
-- [ ] New renderer behavior has visual or structural verification where practical
+- [ ] Semantic node schema includes ID, role/type, label, state, actions, screen, and privacy where relevant.
+- [ ] Registry handles mount/unmount correctly.
+- [ ] Duplicate IDs are detected.
+- [ ] Sensitive values are redacted before serialization.
+- [ ] Tests cover tree snapshots and action metadata.
 
-## Stage 6
+## Stage 4 - Agent Tool Bridge
 
-- [ ] Device chrome uses the shared device constants and reference docs
-- [ ] Safe-area handling is device-aware rather than ad hoc
-- [ ] Device-selection persistence does not break the core preview flow
+- [ ] Bridge is development-only and fail-closed by default.
+- [ ] Loopback is the default bind mode.
+- [ ] Pairing token or equivalent auth exists before control tools work.
+- [ ] Origin/session checks exist where applicable.
+- [ ] Mutating tools check per-node permissions.
+- [ ] Structured error codes exist for failed actions.
+- [ ] Redaction happens before bridge responses and logs.
 
-## Stage 7
+## Stage 5 - MCP Server
 
-- [ ] Navigation and interaction logic stays separate from pure extraction and layout concerns
-- [ ] Push and pop behavior follows the documented transition references
-- [ ] State-machine changes are bounded and testable
+- [ ] MCP server uses stdio cleanly with no non-protocol stdout logging.
+- [ ] Tools are exposed only when runtime capability exists.
+- [ ] Schemas are static and validated.
+- [ ] Domain failures return structured tool errors.
+- [ ] App semantic data cannot define or mutate MCP tool schemas.
 
-## Review output rule
+## Stage 6 - Motion Layer
 
-Every finding in `docs/agents/REVIEW.md` must include:
+- [ ] Reanimated APIs are used through thin wrappers.
+- [ ] Reduced motion is honored.
+- [ ] Defaults animate transform/opacity where possible.
+- [ ] Motion presets are documented as taste mappings, not exact SwiftUI parity.
+
+## Stage 7 - Expo UI Adapter
+
+- [ ] `@expo/ui` remains optional.
+- [ ] `Host` constraints are respected.
+- [ ] Unsupported platforms fall back or return structured unsupported diagnostics.
+- [ ] Adapter does not leak into core package imports.
+
+## Stage 8 - Agent Skill
+
+- [ ] Skill frontmatter has concrete trigger phrases.
+- [ ] `SKILL.md` is lean and uses progressive disclosure.
+- [ ] References and examples exist and are linked.
+- [ ] Skill warns that app-provided semantic text is untrusted data.
+
+## Stage 9 - Flow Runner And Patch Proposals
+
+- [ ] Flow schema is deterministic and serializable.
+- [ ] Flow steps use semantic IDs and structured assertions.
+- [ ] Patch proposals are separate from automatic patch application.
+- [ ] Sensitive data is redacted from flow records.
+
+## Stage 10 - Publish Readiness
+
+- [ ] Install docs match package metadata.
+- [ ] Compatibility matrix is current.
+- [ ] Troubleshooting covers managed and bare workflow lanes.
+- [ ] Release instructions avoid publishing stale old-parser artifacts.
+
+## Review Output Rule
+
+Findings in `docs/agents/REVIEW.md` must include:
 
 - issue class,
 - affected file,
 - why it matters,
-- the governing rule or reference,
-- and a concrete fix direction.
+- governing rule or reference,
+- concrete fix direction.

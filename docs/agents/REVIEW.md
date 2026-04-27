@@ -1,24 +1,35 @@
 # REVIEW REPORT
-Reviewer session date: 2026-04-18
-Reviewer refresh time: 2026-04-18T22:42:06.6889931+03:00
-Roadmap Phase: Phase 2 - Resolver
-Pipeline Stage: Stage 3 - Resolver traversal verification gate
-Task status: blocked
+Reviewer session date: 2026-04-27
+Roadmap Phase: Phase 0 - Repo Reset And Cleanup
+Product Stage: Stage 0 - Cleanup
+Task status: passed with noted limitations
 
 ## Findings
 
-1. `BLOCKED`
-   - Affected area: current automation environment child-process launch, observed via `cmd /c npm.cmd run diagnose:build-env` and `cmd /c npm.cmd run build`
-   - Why it matters: Stage 3 work still cannot satisfy the required current-run build verification because the direct child-process probe again fails with `EPERM` before esbuild starts
-   - Governing rule: `docs/agents/ORCHESTRATION.md` requires treating this as a blocked verification state in automation, not proof of a repo-local regression, until an outside-automation recheck is attempted
-   - Concrete fix direction: rerun the outside-automation `tsc` -> `diagnose:build-env` -> `build` trio in a child-process-enabled shell, or wait for the automation environment to change, before reseeding resolver source work
+No blocking findings for the cleanup pass.
 
-## Carry-forward notes
+## Verified
 
-- No source code was reviewed or changed in this run
-- Current-run verification:
-  - `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-  - `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and reported `summary.status: "environment_blocks_child_processes"`
-  - `cmd /c npm.cmd run build` failed before esbuild started with `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
-- Current-run diagnostics also report that both expected WASM assets exist, so `missing_wasm_assets` is not the right classification for this run
-- The runtime prompt set remains intentionally empty while verification is blocked; no `ACTIVE_*.md` files should be recreated until the gate clears
+- Old parser, resolver, VS Code extension, tree-sitter, WASM, Canvas renderer, old tests, and old
+  prompt-template surfaces were removed from active context.
+- Old root-level SwiftUI preview research and planning markdown files under `docs/` were removed
+  after their useful ideas were compressed into the new reference docs.
+- New compact reference docs preserve reusable design ideas without reviving old implementation
+  contracts.
+- Repo-local agent definitions now route to Expo Agent UI product stages instead of parser stages.
+- `docs/reference/INDEX.md` no longer points agents to old layer-based references.
+- `AGENTS.md`, `README.md`, `PHASE_STATE.md`, `HANDOFF.md`, and runtime prompt status describe the
+  cleanup as complete.
+
+## Verification Commands
+
+- `npm run typecheck --workspaces --if-present`
+- `npm run build --workspaces --if-present`
+- `npm test --workspaces --if-present`
+
+## Limitations And Follow-Ups
+
+- Remote old branches under `origin/dev/*` were not deleted.
+- npm still reports moderate audit findings from the dependency graph; remediation is a separate
+  dependency task.
+- Stage 2 component primitives remain the active next implementation task.

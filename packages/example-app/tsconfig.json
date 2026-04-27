@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx"]
+}

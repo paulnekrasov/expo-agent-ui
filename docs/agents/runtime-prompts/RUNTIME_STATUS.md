@@ -1,52 +1,57 @@
 # Runtime Prompt Status
 
-Updated: 2026-04-18T22:42:06.6889931+03:00
+Updated: 2026-04-27
 
 ## Status
 
-No active `ACTIVE_*.md` runtime prompt set is currently safe to keep.
+Runtime prompts are in status-only mode after the Expo Agent UI rebuild pivot.
 
-The bounded Stage 3 task is still blocked at the verification gate, so prompt rotation remains in status-only mode rather than regenerating implementer or reviewer prompts.
+The old Stage 3 recursive resolver traversal task is obsolete. Do not recreate runtime prompts
+for parser, resolver, layout, renderer, VS Code WebView, or SwiftUI preview work unless the
+developer explicitly creates a bounded archive/cleanup task.
 
-## Current run outcome
+## Active Task
 
-- `node .\node_modules\typescript\lib\tsc.js --noEmit` passed
-- `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and emitted current-run JSON with:
-  - `summary.status: "environment_blocks_child_processes"`
-  - `directProbe.ok: false`
-  - `build.ok: false`
-  - failure root: `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- `cmd /c npm.cmd run build` failed before esbuild started with:
-  - `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
-  - `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
-- Diagnostics also report both WASM assets as present in this run
+The active bounded task is:
 
-## Active runtime prompts
+- Roadmap Phase: Phase 2 - Component Primitives
+- Product Stage: Stage 2 - Component Primitives
+- Task file: `docs/agents/TASK.md`
+
+## Active Runtime Prompts
 
 None.
 
-Do not recreate `ACTIVE_COORDINATOR_PROMPT.md`, `ACTIVE_IMPLEMENTER_PROMPT.md`, `ACTIVE_REVIEW_PROMPT.md`, or `ACTIVE_FIX_PROMPT.md` until the direct child-process probe succeeds again.
+Generate new `ACTIVE_*.md` runtime prompts only if a scheduled or autonomous run is going to
+execute the active Stage 2 component primitives task.
 
-## What the next automation run should do first
+## Prompt Generation Inputs
 
-1. Read `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and this file
-2. Re-run the current-run evidence trio if the automation environment may have changed:
-   - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-   - `cmd /c npm.cmd run diagnose:build-env`
-   - `cmd /c npm.cmd run build`
-3. Only if the direct child-process probe passes, reseed the bounded Stage 3 resolver traversal task and regenerate the active runtime prompts
+Use these files in order:
 
-## Outside-automation recheck
+1. `docs/PROJECT_BRIEF.md`
+2. `docs/reference/INDEX.md`
+3. `docs/agents/ORCHESTRATION.md`
+4. `docs/agents/PHASE_STATE.md`
+5. `docs/agents/HANDOFF.md`
+6. `docs/agents/ROADMAP_CHECKLIST.md`
+7. `docs/agents/TASK.md`
+8. `docs/agents/REVIEW.md`
+9. `docs/agents/REVIEW_CHECKLIST.md`
+10. `docs/reference/react-native/accessibility-semantics.md`
 
-Run these exact commands in an interactive local shell outside scheduled automation:
+## Scheduled Runner Guidance
 
-- `node .\node_modules\typescript\lib\tsc.js --noEmit`
-- `cmd /c npm.cmd run diagnose:build-env`
-- `cmd /c npm.cmd run build`
+If automation runs with a child-process-blocked environment, record the exact failure and finish
+with `NEEDS_CONTEXT`. Do not classify that as a package-foundation source regression.
+
+If verification is available, Stage 2 component primitives should use the commands specified in
+`docs/agents/TASK.md`, or explain why package scripts are not available yet.
 
 ## Notes
 
-- Exact diagnostics status: `environment_blocks_child_processes`
-- Exact failing signature: `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- Source work must not resume until the outside-automation recheck is completed successfully or the automation environment changes and the direct child-process probe passes
-- Do not classify the current state as a repo-local post-spawn build failure unless the direct probe passes and the build still fails afterward
+- Research outputs already exist under `docs/reference/**`.
+- The research coordinator report is
+  `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`.
+- Old parser assets have been cleaned from active context; do not recreate them unless a
+  historical archive task is explicitly active.

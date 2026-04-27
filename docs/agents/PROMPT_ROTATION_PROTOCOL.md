@@ -1,37 +1,28 @@
-# Prompt Rotation Protocol
+# Prompt Rotation Protocol - Expo Agent UI
 
 This file defines how scheduled or autonomous agent runs should manage prompt files.
 
-The goal is to let the automation refresh the active prompt set without damaging the stable prompt library.
+The goal is to refresh active prompts without damaging the stable prompt library or research
+outputs.
 
-## The two prompt classes
+## Prompt Classes
 
-### Stable prompt library
+### Stable Prompt Library
 
-These are reusable reference prompts and guides.
+Reusable prompt files and guides live under `docs/agents/` and should not be deleted during
+routine automation.
 
 Examples:
 
-- `docs/agents/STAGE_2_EXECUTION_PROMPT.md`
-- `docs/agents/STAGE_2_MASTER_LOOP_PROMPT.md`
-- `docs/agents/PHASE_1_COMPLETION_MASTER_LOOP_PROMPT.md`
-- `docs/agents/MULTI_AGENT_LAUNCH_GUIDE.md`
+- `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md`
+- `docs/agents/CONTEXT_ENGINEERING_SYSTEM_TEMPLATE.md`
+- `docs/agents/research-prompts/expo-agent-ui/**`
 - `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
-- `docs/agents/DEBUGGING_PROMPT_TEMPLATE.md`
-- `docs/agents/PARSER_EXTRACTOR_DEBUGGING_PROMPT_TEMPLATE.md`
-- `docs/agents/BUILD_TOOLING_WASM_DEBUGGING_PROMPT_TEMPLATE.md`
+- `docs/agents/MULTI_AGENT_LAUNCH_GUIDE.md`
 
-Rules:
+### Runtime Prompts
 
-- Keep them under `docs/agents/`.
-- Do not delete them during automation runs.
-- Update them only when the workflow design itself changes.
-
-### Runtime prompts
-
-These are disposable prompts for the currently active bounded task.
-
-They live only under:
+Disposable prompts for the current bounded task live only under:
 
 - `docs/agents/runtime-prompts/`
 
@@ -43,61 +34,46 @@ Allowed runtime files:
 - `ACTIVE_FIX_PROMPT.md`
 - `RUNTIME_STATUS.md`
 
-Rules:
+## Rotation Triggers
 
-- These files may be deleted and replaced by the automation.
-- They must always reflect the current bounded task, not a stale past task.
-- They must be regenerated when the active task changes meaningfully.
+Rotate runtime prompts when:
 
-## Rotation triggers
+- the active task in `TASK.md` changes,
+- the active roadmap phase or product stage changes,
+- the active task completes,
+- the reviewer marks the task blocked,
+- acceptance criteria change materially,
+- current prompts drift from `PROJECT_BRIEF.md`, `PHASE_STATE.md`, `TASK.md`, or `REVIEW.md`.
 
-Rotate the runtime prompt set when any of these is true:
+Do not rotate just because another scheduled run started.
 
-- the active task in `TASK.md` is complete,
-- the active phase or stage changed,
-- the reviewer marked the task `BLOCKED`,
-- the acceptance criteria changed materially,
-- the bounded task was split into a different slice,
-- the current prompts drifted from `TASK.md`, `PHASE_STATE.md`, or `REVIEW.md`.
+## Rotation Algorithm
 
-Do not rotate just because another scheduled run started. If the same task remains active, refresh in place unless there is real drift.
-
-## Rotation algorithm
-
-1. Read `PHASE_STATE.md`, `TASK.md`, `REVIEW.md`, and `HANDOFF.md`.
-2. Decide whether the current bounded task is still the live task.
-3. If the task changed or completed:
-   - delete obsolete `ACTIVE_*.md` runtime prompt files,
+1. Read `docs/PROJECT_BRIEF.md`.
+2. Read `docs/reference/INDEX.md`.
+3. Read `docs/agents/ORCHESTRATION.md`.
+4. Read `PHASE_STATE.md`, `TASK.md`, `REVIEW.md`, and `HANDOFF.md`.
+5. Decide whether the current bounded task is still live.
+6. If the task changed or completed:
+   - delete obsolete `ACTIVE_*.md` files under `docs/agents/runtime-prompts/`,
    - preserve `README.md`,
    - write a fresh `RUNTIME_STATUS.md`.
-4. Generate new `ACTIVE_*.md` runtime prompts for the next bounded task.
-5. Use context-prompt-engineering discipline:
-   - explicit role,
-   - explicit phase and stage,
-   - explicit objective,
-   - explicit file and scope boundaries,
-   - explicit verification,
-   - explicit completion status format.
-6. Record prompt rotation in `HANDOFF.md` and, when useful, `PHASE_STATE.md`.
+7. Generate new `ACTIVE_*.md` prompts only for the active bounded task.
 
-## Prompt generation inputs
+## Runtime Prompt Quality Bar
 
-Runtime prompts should be derived from:
+Each active runtime prompt must include:
 
-1. `docs/reference/INDEX.md`
-2. `docs/agents/ORCHESTRATION.md`
-3. `docs/agents/PHASE_STATE.md`
-4. `docs/agents/HANDOFF.md`
-5. `docs/agents/ROADMAP_CHECKLIST.md`
-6. `docs/agents/TASK.md`
-7. `docs/agents/REVIEW.md`
-8. `docs/agents/REVIEW_CHECKLIST.md`
-9. `docs/CLAUDE.md`
-10. stage-specific reference docs from the index
+- roadmap phase,
+- product stage,
+- objective,
+- exit condition,
+- file allowlist,
+- required docs to read,
+- verification commands,
+- required final status token.
 
-Only inject the minimum stage-specific material needed for the next bounded task.
-
-## Deletion safety rule
+## Deletion Safety Rule
 
 Only delete prompt files under:
 
@@ -105,45 +81,15 @@ Only delete prompt files under:
 
 Never delete:
 
-- stable prompt library files under `docs/agents/`,
+- stable prompt library files,
+- research prompt files,
+- research reports under `docs/reference/**`,
 - agent definitions under `.agents/agents/`,
-- reference docs,
-- roadmap or live state files.
+- roadmap or live state files,
+- old parser assets outside a dedicated historical archive task.
 
-## When there is no next task
+## Current Pivot Rule
 
-If the automation cannot seed a new bounded task safely:
-
-- delete obsolete `ACTIVE_*.md` runtime prompt files,
-- update `RUNTIME_STATUS.md` to explain why there is no active prompt set,
-- mark the state in `HANDOFF.md` and `PHASE_STATE.md`,
-- do not leave stale prompts in place.
-
-If the reason is an automation-only build-verification blocker, `RUNTIME_STATUS.md` must also include:
-
-- the exact diagnostics status
-- the exact failing `EPERM` signature when present
-- the exact outside-automation recheck commands:
-  - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-  - `cmd /c npm.cmd run diagnose:build-env`
-  - `cmd /c npm.cmd run build`
-- the rule that source work must not resume until that outside-automation recheck is completed or the environment changes
-
-## Runtime prompt quality bar
-
-Each active runtime prompt must include:
-
-- Roadmap Phase
-- Pipeline Stage
-- current objective
-- exit condition
-- file or scope boundary
-- required docs to read
-- verification commands
-- required final status token
-
-## Review responsibility
-
-The coordinator owns prompt rotation.
-
-Implementers, reviewers, and fixers may suggest prompt drift in `HANDOFF.md` or `REVIEW.md`, but they should not delete or rotate runtime prompts unless the active automation task explicitly assigns that work.
+The old SwiftUI parser Stage 3 resolver task is obsolete. Runtime prompt rotation must not
+recreate prompts for old parser/resolver work unless the developer explicitly asks for an
+archive or cleanup task.

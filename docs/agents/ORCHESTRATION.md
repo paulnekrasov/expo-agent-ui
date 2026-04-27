@@ -1,77 +1,67 @@
-# Agent Orchestration Protocol
+# Agent Orchestration Protocol - Expo Agent UI
 
-This file defines how agents coordinate work in this repository.
+This file defines how agents coordinate work in this repository after the Expo Agent UI
+rebuild pivot.
 
-It is deliberately separate from `docs/swiftui_planning_full.md`.
+## Canonical Terms
 
-- `docs/swiftui_planning_full.md` stays the broad research and strategy source.
-- `docs/reference/INDEX.md` stays the router into the reference library.
-- `docs/CLAUDE.md` stays the long-lived project brief and architectural rulebook.
-- `docs/agents/*` stores mutable execution state.
-
-## Canonical terms
-
-- `Roadmap Phase`: delivery progress across the project.
-- `Pipeline Stage`: the runtime pipeline boundary in the implementation.
-- `Research Layer`: the documentation or research domain.
-
-Every task should state all three when they matter.
+- `Roadmap Phase`: delivery progress across the rebuild.
+- `Product Stage`: the current implementation slice.
+- `Research Area`: the documentation or technical domain that informs the task.
 
 Example:
 
-- `Roadmap Phase: Phase 1 - Parser Foundation`
-- `Pipeline Stage: Stage 2 - Extractor`
-- `Research Layer: Layer 1 and Layer 2`
+- `Roadmap Phase: Phase 1 - Package Foundation`
+- `Product Stage: Stage 1 - Package Foundation`
+- `Research Area: Expo package foundation`
 
-## Source-of-truth order
+## Source-Of-Truth Order
 
-1. `docs/reference/INDEX.md`
-2. `docs/CLAUDE.md`
-3. `docs/swiftui_planning_full.md`
-4. `docs/agents/ROADMAP_CHECKLIST.md`
-5. `docs/agents/PHASE_STATE.md`
-6. `docs/agents/TASK.md`
-7. `docs/agents/REVIEW_CHECKLIST.md`
-8. `docs/agents/REVIEW.md`
-9. `docs/agents/HANDOFF.md`
-10. `docs/agents/FILE_TEMPLATES.md`
+1. `docs/PROJECT_BRIEF.md`
+2. `docs/reference/INDEX.md`
+3. `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md`
+4. `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`
+5. `docs/agents/ROADMAP_CHECKLIST.md`
+6. `docs/agents/PHASE_STATE.md`
+7. `docs/agents/TASK.md`
+8. `docs/agents/REVIEW_CHECKLIST.md`
+9. `docs/agents/REVIEW.md`
+10. `docs/agents/HANDOFF.md`
+11. `docs/agents/FILE_TEMPLATES.md`
 
-If these files appear to disagree:
+If files appear to disagree:
 
-- treat `INDEX.md` as the router,
-- treat `CLAUDE.md` as the architectural brief,
+- treat `PROJECT_BRIEF.md` as the product rulebook,
+- treat `INDEX.md` as the reference router,
+- treat `RESEARCH_STATUS.md` as the current research state,
 - treat `ROADMAP_CHECKLIST.md` and `PHASE_STATE.md` as the live execution layer,
-- treat `swiftui_planning_full.md` as long-form context that may need distillation before action.
+- treat old SwiftUI parser guidance as obsolete unless a cleanup/archive task says otherwise.
 
-## File roles
+## File Roles
 
 ### `ROADMAP_CHECKLIST.md`
 
-Distilled execution roadmap.
-
-Use it to choose the next bounded task without rereading the entire long-form planning file.
+Distilled execution roadmap for the Expo Agent UI rebuild.
 
 ### `PHASE_STATE.md`
 
-Live state of the repo.
-
-It should answer:
+Live repo state. It should answer:
 
 - which roadmap phase is active,
-- which pipeline stage is active,
+- which product stage is active,
 - what was completed recently,
 - what is in progress,
 - what is blocked,
-- what the next agent should pick up first.
+- what the next agent should do first.
 
 ### `TASK.md`
 
-Single active task specification.
+Single active bounded task.
 
 Rules:
 
 - one bounded task at a time,
-- exactly one pipeline stage per task,
+- exactly one product stage per implementation task,
 - explicit acceptance criteria,
 - explicit file allowlist,
 - explicit out-of-scope section.
@@ -86,102 +76,66 @@ Use these finding classes only:
 - `ACTIVE_STAGE_GAP`
 - `FUTURE_STAGE_GAP`
 - `RESEARCH_GAP`
+- `SECURITY_GAP`
 - `BLOCKED`
 
-Do not label future-stage work as a bug.
-
-Reviewers must also use `docs/agents/REVIEW_CHECKLIST.md` and only apply the checklist sections that match the active pipeline stage.
+Do not label future-stage work as a current bug.
 
 ### `HANDOFF.md`
 
-Short agent-to-agent note.
-
-It should capture:
-
-- what changed,
-- what was learned,
-- what not to redo,
-- what the next role should do first.
+Short operational note for the next agent.
 
 ### `FILE_TEMPLATES.md`
 
-Canonical templates for the mutable workflow files.
-
-Use it to keep terminology and section order consistent across sessions.
+Canonical templates for mutable workflow files. Keep terminology aligned with this protocol.
 
 ### `PROMPT_ROTATION_PROTOCOL.md`
 
-Rules for managing prompt files during scheduled or autonomous runs.
+Rules for stable prompt library files and disposable runtime prompts. Still applies, but prompt
+content must target Expo Agent UI stages.
 
-Use it to distinguish:
+## Default Loop
 
-- stable prompt library files that must remain,
-- disposable runtime prompt files that may be deleted and replaced.
+1. Orchestrator reads brief, router, research status, live state, and roadmap.
+2. Orchestrator writes or refreshes one bounded `TASK.md`.
+3. Implementer completes only the bounded task and updates `HANDOFF.md`.
+4. Reviewer uses `REVIEW_CHECKLIST.md` and writes `REVIEW.md`.
+5. Fixer resolves only `BUG`, `ACTIVE_STAGE_GAP`, and accepted `SECURITY_GAP` items.
+6. Reviewer re-checks once.
+7. Orchestrator updates `PHASE_STATE.md`.
 
-## Default loop
-
-Use this bounded loop unless the developer explicitly asks for something else:
-
-1. `Orchestrator` reads the router, live state, and roadmap.
-2. `Orchestrator` writes or refreshes `TASK.md`.
-3. `Implementer` completes the bounded task and updates `HANDOFF.md`.
-4. `Reviewer` uses `REVIEW_CHECKLIST.md` and writes `REVIEW.md`.
-5. `Fixer` resolves only `BUG` and `ACTIVE_STAGE_GAP` items.
-6. `Reviewer` re-checks once.
-7. `Orchestrator` updates `PHASE_STATE.md`.
-
-## Loop guardrails
+## Loop Guardrails
 
 - One writer at a time for source files.
-- Read-only research or review can happen in parallel.
-- Maximum of two fix cycles per task before escalating to the developer or splitting the task.
-- Never combine parser, layout, and renderer implementation in one task.
-- Never use `swiftui_planning_full.md` as a session log.
-- Never update `CLAUDE.md` with transient task state that belongs in `docs/agents/*`.
-- Never delete stable prompt library files during routine automation runs.
-- Only rotate disposable prompt files under `docs/agents/runtime-prompts/`.
+- Read-only research and review can happen in parallel.
+- Maximum of two fix cycles per task before splitting or escalating.
+- Never combine unrelated product stages in one implementation task.
+- Never use chat history as durable state.
+- Never recreate old parser assets except in a dedicated historical archive task.
+- Never treat low-priority future research as an MVP blocker.
+- Preserve research concerns as implementation gates when relevant.
 
-## Build verification split for automation-only blockers
+## Verification Rules
 
-If build verification fails in an automation run with direct child-process denial such as
-`spawnSync ... EPERM` or diagnostics status `environment_blocks_child_processes`, treat
-automation diagnostics and repo build verification as separate lanes.
+- Documentation-only tasks must be verified by reading changed files and checking that routing
+  no longer points at obsolete work.
+- Package tasks must run the stage-defined package verification commands.
+- Semantic runtime tasks must include focused tests for registry behavior, accessibility mapping,
+  redaction, and action dispatch.
+- Bridge/MCP tasks must include security-gate tests before being marked complete.
+- If an environment-level failure blocks verification, record the exact command and error in
+  `HANDOFF.md` and `REVIEW.md`.
 
-Automation lane owns:
-
-- `node .\node_modules\typescript\lib\tsc.js --noEmit`
-- `cmd /c npm.cmd run diagnose:build-env`
-- current-run state updates that record the blocked automation environment accurately
-
-Outside-automation lane owns:
-
-- `node .\node_modules\typescript\lib\tsc.js --noEmit`
-- `cmd /c npm.cmd run diagnose:build-env`
-- `cmd /c npm.cmd run build`
-
-Run the outside-automation lane in an interactive local shell outside scheduled automation.
-
-Do not classify the repo build as an external blocker from automation evidence alone.
-Until the outside-automation recheck is attempted, the correct disposition is a blocked
-verification state, not final proof that the repo build itself is externally blocked.
-
-## Startup contract
+## Startup Contract
 
 At the start of any coding or review session:
 
-1. Read `docs/reference/INDEX.md`.
-2. Read this file.
-3. Read `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/ROADMAP_CHECKLIST.md`.
-4. Read `docs/agents/TASK.md` if it is populated.
-5. Read `docs/agents/REVIEW_CHECKLIST.md` if the session is a review or fix pass.
-6. Read `docs/agents/PROMPT_ROTATION_PROTOCOL.md` if the session is scheduled or will manage runtime prompts.
-7. Map the request to `Roadmap Phase`, `Pipeline Stage`, and `Research Layer`.
-8. Open only the stage-specific reference docs required for the active task.
-
-## Planning-file relationship
-
-Use the files this way:
-
-- Keep `docs/swiftui_planning_full.md` as the complete strategic and research source.
-- Keep `docs/agents/ROADMAP_CHECKLIST.md` as the condensed execution plan.
-- If the large planning file gains new important guidance, distill it into the roadmap checklist rather than turning the checklist into another essay.
+1. Read `docs/PROJECT_BRIEF.md`.
+2. Read `docs/reference/INDEX.md`.
+3. Read this file.
+4. Read `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and
+   `docs/agents/ROADMAP_CHECKLIST.md`.
+5. Read `docs/agents/TASK.md` if populated.
+6. Read `docs/agents/REVIEW_CHECKLIST.md` for review/fix work.
+7. Map the request to Roadmap Phase, Product Stage, and Research Area.
+8. Open only the reference docs needed for the active task.

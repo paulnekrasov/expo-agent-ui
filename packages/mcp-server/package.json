@@ -1,0 +1,23 @@
+{
+  "name": "@agent-ui/mcp-server",
+  "version": "0.0.0",
+  "description": "Local MCP server package shell for Expo Agent UI.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "agent-ui-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "test": "node -e \"console.log('@agent-ui/mcp-server tests deferred until MCP tools exist')\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  }
+}

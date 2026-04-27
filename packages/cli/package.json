@@ -1,0 +1,23 @@
+{
+  "name": "@agent-ui/cli",
+  "version": "0.0.0",
+  "description": "Command-line package shell for Expo Agent UI.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "agent-ui": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "test": "node -e \"console.log('@agent-ui/cli tests deferred until commands exist')\""
+  },
+  "dependencies": {
+    "@agent-ui/mcp-server": "0.0.0"
+  }
+}

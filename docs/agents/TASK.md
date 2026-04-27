@@ -1,70 +1,91 @@
 # TASK SPECIFICATION
 Created by: stage-orchestrator
-Date: 2026-04-18
-Last refreshed: 2026-04-18T22:42:06.6889931+03:00
-Roadmap Phase: Phase 2 - Resolver
-Pipeline Stage: Stage 3 - Resolver traversal verification gate
-Research Layer: Build diagnostics in the current automation environment
+Date: 2026-04-27
+Roadmap Phase: Phase 2 - Component Primitives
+Product Stage: Stage 2 - Component Primitives
+Research Area: SwiftUI-inspired React Native primitives, accessibility semantics
 
 ## Objective
 
-Re-run the Stage 3 verification gate in the scheduled automation environment and keep resolver source work blocked until current-run evidence shows child-process launch is available again.
+Implement the first React Native-first component primitive slice for Expo Agent UI without
+building the full semantic runtime or agent bridge.
 
-## Final status
+## Status
 
-BLOCKED
+ACTIVE_READY
 
-## Current-run evidence
+## Acceptance Criteria
 
-- No source code was edited in this run
-- `node .\node_modules\typescript\lib\tsc.js --noEmit` passed in the current run
-- `cmd /c npm.cmd run diagnose:build-env` passed at `2026-04-18T19:41:22.955Z` and emitted JSON with:
-  - `summary.status: "environment_blocks_child_processes"`
-  - `directProbe.ok: false`
-  - `build.ok: false`
-  - both failures rooted in `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- `cmd /c npm.cmd run build` failed again in the current run before esbuild started with:
-  - `Build verification blocked before esbuild started: child-process execution is denied in the current environment.`
-  - `Direct probe: spawnSync C:\Program Files\nodejs\node.exe -> EPERM`
-- The diagnostics JSON confirms both WASM assets exist, so missing assets are not the blocker in this run
-- No active `docs/agents/runtime-prompts/ACTIVE_*.md` files are safe to regenerate while this gate remains red
-- This remains a blocked verification state for the automation environment, not proof of a repo-local post-spawn build regression
+- [ ] Keep the package foundation from Stage 1 intact.
+- [ ] Add core primitive exports in `packages/core/src` for:
+  - `AgentUIProvider`
+  - `Screen`
+  - `VStack`
+  - `HStack`
+  - `ZStack`
+  - `Spacer`
+  - `Text`
+  - `Button`
+- [ ] Define shared primitive prop types for stable `id`, `intent`, accessibility label, disabled
+  state, and test ID mapping.
+- [ ] Implement primitives as thin React Native wrappers, not a custom renderer.
+- [ ] Do not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, or native modules in core.
+- [ ] Keep semantic registration as a typed no-op/deferred boundary; full registry work belongs to
+  Stage 3.
+- [ ] Add focused tests or type-level verification for primitive prop mapping if the test harness is
+  ready; otherwise document the verification limitation.
+- [ ] Update the example app only enough to render one simple primitive screen if dependencies are
+  installed or intentionally installed for this task.
 
-## Acceptance criteria
+## File Allowlist
 
-- [x] Re-run `node .\node_modules\typescript\lib\tsc.js --noEmit`
-- [x] Re-run `cmd /c npm.cmd run diagnose:build-env`
-- [x] Capture the diagnostics JSON from the current run
-- [x] Re-run `cmd /c npm.cmd run build`
-- [x] Reconcile the live state and runtime status with current-run evidence only
-- [x] Leave the runtime prompt set retired until the direct child-process probe succeeds again
-
-## Files touched
-
+- `packages/core/**`
+- `packages/example-app/**`
+- `package.json`
+- `package-lock.json`
+- `tsconfig.base.json`
 - `docs/agents/TASK.md`
-- `docs/agents/REVIEW.md`
-- `docs/agents/PHASE_STATE.md`
-- `docs/agents/HANDOFF.md`
-- `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
-- `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md`
-
-## Reference docs to read before starting
-
-- `docs/agents/PROMPT_ROTATION_PROTOCOL.md`
 - `docs/agents/PHASE_STATE.md`
 - `docs/agents/HANDOFF.md`
 - `docs/agents/REVIEW.md`
+- `docs/agents/ROADMAP_CHECKLIST.md`
 
-## Known traps
+## Reference Docs To Read Before Starting
 
-- Do not claim a repo-local build regression unless the direct child-process probe passes and the build still fails afterward
-- Do not rely on earlier green-build notes when current-run command output disagrees
-- Do not resume Stage 3 source edits in this automation environment until the child-process probe succeeds again or the outside-automation recheck is completed successfully
-- Do not recreate `ACTIVE_*.md` runtime prompts while the bounded task is blocked at the verification gate
+- `docs/PROJECT_BRIEF.md`
+- `docs/reference/INDEX.md`
+- `docs/reference/react-native/accessibility-semantics.md`
+- `docs/reference/expo/cross-platform-adapters.md`
+- `docs/reference/expo/expo-ui-swift-ui.md`
+- `docs/reference/expo/package-foundation.md`
 
-## Out of scope
+## Known Traps
 
-- Resolver source edits
-- Build-system fixes
-- Documentation changes outside the live state files
-- Any Stage 4+ work
+- Do not implement the Stage 3 semantic registry in this task.
+- Do not make `@expo/ui` mandatory.
+- Do not add MCP tools or bridge transport.
+- Do not recreate old SwiftUI parser, VS Code extension, tree-sitter, WASM, or Canvas renderer assets.
+- Do not convert the package into a framework with its own navigation or animation engine.
+- If React/React Native dependencies are missing from `node_modules`, either install the refreshed
+  workspace dependencies intentionally or state the exact verification limitation.
+
+## Out Of Scope
+
+- Semantic tree inspection
+- Runtime action dispatch
+- Agent bridge
+- MCP tools
+- Reanimated motion presets
+- Expo UI SwiftUI adapter
+- Old parser historical archive work
+
+## Verification
+
+Preferred verification after implementation:
+
+- `npm run typecheck --workspaces --if-present`
+- `npm run build --workspaces --if-present`
+- `npm test --workspaces --if-present`
+
+If the example app cannot typecheck because Expo dependencies are not installed, verify the core
+package directly and document the limitation.

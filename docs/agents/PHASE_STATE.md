@@ -1,57 +1,77 @@
 # PHASE STATE
-Updated: 2026-04-18T22:42:06.6889931+03:00
-Active Phase: Phase 2 - Resolver
-Active Stage: Stage 3 - Resolver traversal verification gate
+Updated: 2026-04-27
+Active Phase: Phase 2 - Component Primitives
+Active Stage: Stage 2 - Component Primitives
 Active File: docs/agents/TASK.md
 
-## Completed this session
+## Completed This Session
 
-- [x] Re-ran `node .\node_modules\typescript\lib\tsc.js --noEmit` in the current automation environment and passed
-- [x] Re-ran `cmd /c npm.cmd run diagnose:build-env` and captured the current-run JSON output from `2026-04-18T19:41:22.955Z`
-- [x] Re-ran `cmd /c npm.cmd run build` and reproduced the same classified child-process denial before esbuild started
-- [x] Reconfirmed that the active Stage 3 task remains a verification gate, not a source-writing task
-- [x] Refreshed `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/HANDOFF.md`, and `docs/agents/runtime-prompts/RUNTIME_STATUS.md` with the current-run evidence
+- [x] Continued the Expo Agent UI rebuild on branch `codex/expo-agent-ui-rebuild`.
+- [x] Used `$context-prompt-engineering` to guide markdown rewrites for role, task, constraint,
+  output, progressive-disclosure, and verification clarity.
+- [x] Completed the dedicated cleanup/archive pass authorized by the user.
+- [x] Removed retired old-project assets:
+  - top-level `src/`
+  - top-level `tests/`
+  - old `scripts/`
+  - old `out/`
+  - `tree-sitter-swift`
+  - `tree-sitter-swift.wasm`
+  - `.gitmodules`
+  - `.vscodeignore`
+  - `esbuild.js`
+  - `esbuild.config.js`
+  - old repo-local `skills/`
+  - old layer-based parser, Swift syntax, VS Code, Canvas renderer, and planning references
+  - old root-level SwiftUI preview research and planning markdown files under `docs/`
+  - stale parser/WASM/debugging prompt templates
+- [x] Preserved useful design DNA in compact new references:
+  - `docs/reference/design/swiftui-layout-dna.md`
+  - `docs/reference/design/ios-tokens.md`
+  - `docs/reference/design/control-chrome.md`
+  - `docs/reference/motion/swiftui-motion-mapping.md`
+  - `docs/reference/native/symbols-and-icons.md`
+- [x] Rewrote repo-local agent catalog and role prompts around Expo Agent UI product stages.
+- [x] Updated active docs so they say old parser assets are cleaned from active context, not waiting
+  for future deletion.
 
-## Baseline repo status
+## Baseline Repo Status
 
-- [x] Stage 1 parser runtime is implemented
-- [x] Stage 2 core extraction is implemented for stacks, text, button, image, spacer, navigation, list-family containers, `ScrollView`, `GeometryReader`, `Form`, `Toggle`, `TextField`, `SecureField`, `LazyVGrid`, `LazyHGrid`, `overlay`, `fixedSize`, `offset`, `position`, `listStyle`, `listRowSeparator`, `listRowInsets`, `navigationDestination`, and `.toolbar`
-- [x] Built-in `Label` extraction exists for Stage 2 consumers that need a concrete label view
-- [x] Per-extractor test files exist for navigation, lists, scroll, forms, stacks, core content, and modifier regression coverage
-- [x] File-backed expected IR fixtures exist for the currently supported major Stage 2 view families plus navigation, lists, forms, scroll, modifiers, and grids
-- [x] Stage 3 resolver module structure is implemented under `src/resolver/`
-- [x] Focused Stage 3 resolver smoke tests exist from the prior run
-- [x] TypeScript `--noEmit` passes in the current automation environment as of 2026-04-18
-- [ ] Full repo build verification is not currently passing in this automation environment; `cmd /c npm.cmd run build` is blocked before esbuild starts by `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-- [ ] Stage 3 recursive traversal across current `ViewNode` shapes is not yet implemented
-- [ ] Stage 3 state and binding stub injection is not yet implemented
-- [ ] Stage 3 modifier flattening semantics are not yet implemented
-- [ ] Layout, renderer, device, and navigation runtime modules are not yet implemented
+- [x] Rebuild proposal exists at `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md`.
+- [x] Research prompt library exists at `docs/agents/research-prompts/expo-agent-ui/`.
+- [x] Research status exists at `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`.
+- [x] High-priority research reports exist for package foundation, Expo UI, Reanimated,
+  accessibility semantics, MCP transport, and security.
+- [x] npm workspace package foundation is implemented.
+- [x] Core package remains JS-only and has no native module implementation.
+- [x] Old SwiftUI parser, VS Code extension, tree-sitter, WASM, Canvas renderer, and old reference
+  surfaces have been removed from active context.
+- [ ] Component primitives are not yet implemented.
+- [ ] Semantic runtime is not yet implemented.
+- [ ] Agent bridge and MCP server are not yet implemented beyond package shells.
 
-## In progress
+## In Progress
 
-- [ ] Hold the bounded Stage 3 resolver traversal source-writing task until the current automation environment can launch child processes again or an outside-automation recheck is recorded
+- [ ] Current bounded task: implement the first Stage 2 component primitive slice.
 
 ## Blocked
 
-- Current automation run is blocked at the build verification gate:
-  - last verified run: `2026-04-18T19:41:22.955Z`
-  - `cmd /c npm.cmd run diagnose:build-env` reported `summary.status: "environment_blocks_child_processes"`
-  - `directProbe.ok: false`
-  - `build.ok: false`
-  - shared failure root `spawnSync C:\Program Files\nodejs\node.exe EPERM`
-  - `cmd /c npm.cmd run build` failed before esbuild started with the same classified message
-  - this is a blocked automation verification state, not final proof of a repo-local post-spawn build regression
+- [ ] No current blocker for Stage 2 component primitives.
+- [ ] Full example app typechecking may require installing refreshed Expo workspace dependencies.
+- [ ] Physical-device bridge transport remains a future Stage 4 concern.
+- [ ] Native automation selector mapping remains a future post-v0 concern.
 
-## Next agent must start with
+## Next Agent Must Start With
 
-1. Read `docs/agents/TASK.md`, `docs/agents/REVIEW.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, and `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
-2. Re-run the same current-run evidence trio if the automation environment may have changed:
-   - `node .\node_modules\typescript\lib\tsc.js --noEmit`
-   - `cmd /c npm.cmd run diagnose:build-env`
-   - `cmd /c npm.cmd run build`
-3. Only if the direct child-process probe passes again, reseed the bounded Stage 3 resolver traversal task and regenerate the runtime prompt set from the live state
+1. Read `docs/PROJECT_BRIEF.md`.
+2. Read `docs/reference/INDEX.md`.
+3. Read `docs/agents/ORCHESTRATION.md`.
+4. Read `docs/agents/TASK.md`.
+5. Read `docs/reference/react-native/accessibility-semantics.md`.
+6. Read `docs/reference/design/swiftui-layout-dna.md`.
+7. Verify the current dirty worktree before editing; preserve unrelated research files and
+   workspace metadata.
 
-## Suggested next target
+## Suggested Next Target
 
-- Re-check the child-process gate in a child-process-enabled environment, then resume the bounded Stage 3 resolver traversal task only after current-run evidence turns green
+- Implement the Stage 2 component primitive slice in `packages/core/src`.
