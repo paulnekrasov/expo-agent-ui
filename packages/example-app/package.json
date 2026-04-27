@@ -1,0 +1,21 @@
+{
+  "name": "@agent-ui/example-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Expo SDK 55 example app shell for Expo Agent UI.",
+  "scripts": {
+    "start": "expo start",
+    "typecheck": "node -e \"console.log('@agent-ui/example-app typecheck deferred until Expo dependencies are installed')\"",
+    "build": "node -e \"console.log('@agent-ui/example-app build deferred until Expo app implementation exists')\"",
+    "test": "node -e \"console.log('@agent-ui/example-app tests deferred until example screens exist')\""
+  },
+  "dependencies": {
+    "@agent-ui/core": "0.0.0",
+    "expo": "^55.0.0",
+    "react": "19.2.0",
+    "react-native": "0.83.x"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

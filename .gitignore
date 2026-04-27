@@ -1,10 +1,10 @@
 node_modules/
+packages/*/dist/
 out/
-*.vsix
+.tmp-review/
 
-# wasi-sdk is cached by tree-sitter CLI globally — not in project
-# tree-sitter-swift.wasm is a build artifact, keep it checked in
-# so the extension can be built without re-running tree-sitter build --wasm
+.env
+.env.local
+.env.*.local
 
-.vscode-test/
 *.log

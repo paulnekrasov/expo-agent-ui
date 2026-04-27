@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "name": "Expo Agent UI Example",
+    "slug": "expo-agent-ui-example",
+    "scheme": "expo-agent-ui-example",
+    "plugins": []
+  }
+}
