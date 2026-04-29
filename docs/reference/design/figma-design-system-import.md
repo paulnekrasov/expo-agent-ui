@@ -5,11 +5,12 @@
 - Use Figma REST file nodes for layout, layer names, component references, styles, bound variables, dev resources, and annotations; it exposes a document tree rooted at `DOCUMENT` and `CANVAS` pages. Source: https://developers.figma.com/docs/rest-api/files/ (accessed 2026-04-27).
 - Use the Variables REST API for token synchronization only when the customer's plan, seat, permissions, and token scopes allow it; Figma documents Enterprise and scope requirements for variable read/write endpoints. Source: https://developers.figma.com/docs/rest-api/variables/ (accessed 2026-04-27).
 - Use Code Connect to map Figma components to actual React or React Native components, then let Agent UI consume those mappings as hints for primitive/component selection. Source: https://developers.figma.com/docs/code-connect/ and https://developers.figma.com/docs/code-connect/react/ (accessed 2026-04-27).
-- Use the Figma MCP server for agent-assisted design context retrieval when available, but do not make it mandatory because access differs between remote and desktop servers and write capabilities are still evolving. Source: https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server (accessed 2026-04-27).
-- Normalize imported tokens into an Agent UI design-token schema with primitive, semantic, component, and mode layers. Use the W3C Design Tokens Community Group format as the interchange model, not as the runtime API. Source: https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/ (accessed 2026-04-27).
+- Use the Figma MCP server for agent-assisted design context retrieval when available, but do not make it mandatory: Figma documents remote server availability on all seats/plans, desktop server availability only for Dev or Full seats on paid plans, and write-to-canvas as remote-only beta/free-now usage-based-later behavior. Source: https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server (accessed 2026-04-29).
+- Normalize imported tokens into an Agent UI design-token schema with primitive, semantic, component, and mode layers. Use the W3C Design Tokens Community Group 2025.10 format as the interchange model, not as the runtime API; the specification marks itself stable. Source: https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/ (accessed 2026-04-29).
 - Map Figma auto layout to `VStack` and `HStack` only when direction, spacing, padding, sizing, and child order are clear; otherwise import as a `SemanticView` or `ZStack` candidate needing review.
-- Figma names, descriptions, component properties, variants, documentation links, and Dev Resources can seed semantic IDs, labels, intents, and source links, but they must be treated as untrusted suggestions.
+- Figma names, descriptions, component properties, variants, documentation links, MCP outputs, and Dev Resources can seed semantic IDs, labels, intents, and source links, but they must be treated as untrusted suggestions.
 - Avoid pixel-perfect replay. Agent UI should preserve semantic structure and design-system intent, while letting Expo, React Native, and native platform components own final layout behavior.
+- Remaining concerns are now explicit implementation gates: verify current Figma MCP access before building MCP-dependent commands, keep write-to-canvas out of the first importer, and treat Variables REST API support as Enterprise-gated unless the customer's plan proves otherwise.
 
 ## Relevant Figma Surfaces
 
@@ -24,9 +25,9 @@
 | Auto layout properties | `layoutMode`, axis sizing, wrapping, alignment, padding, item spacing, and related layout fields on auto-layout-capable nodes. | REST file data or Plugin API access depending on import path. | Map `HORIZONTAL` to `HStack`, `VERTICAL` to `VStack`, padding to container padding, and item spacing to stack spacing. | Converting auto layout can change positions in Figma; import should read, not mutate, unless explicitly running an export plugin. | https://www.figma.com/plugin-docs/api/properties/nodes-layoutmode/ |
 | Code Connect | Links Figma components to code components and supports React/React Native component mappings for Dev Mode snippets. | Organization/Enterprise or current Code Connect access, Node.js, Figma token scopes, `figma.config.json`, and Code Connect files. | Prefer mapped production components over visual reconstruction when a Figma component corresponds to an Agent UI primitive or app component. | Code Connect files are treated as snippets; dynamic code is not executed, so generated examples are guidance. | https://developers.figma.com/docs/code-connect/ and https://developers.figma.com/docs/code-connect/react/ |
 | Dev Mode inspect | Layer properties, layout and spacing details, code/list views, Code Connect snippets, component behavior playground, and variables visibility. | Dev Mode access in Figma. | Human review and debugging surface for generated import decisions. | Useful for inspection, but not enough as the only automated import interface. | https://help.figma.com/hc/en-us/articles/15023124644247-Guide-to-Dev-Mode |
-| Figma MCP server | Agent access to design context, code, variables, components, layout data, selected frames, and some canvas write workflows. | MCP-capable client; remote or desktop server availability depends on seat/plan and workflow. | Optional future MCP command path: `import_figma_frame`, `sync_figma_tokens`, `inspect_figma_component`. | Current write capabilities and pricing/access are evolving; mark production plans NEEDS_VERIFICATION before implementation. | https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server |
-| Figma MCP skills | Prebuilt skills for common Figma MCP workflows including Code Connect, design-system rules, generating libraries, and implementing designs. | MCP server plus client skill support. | Pattern reference for an Agent UI skill that sequences Figma context retrieval, primitive mapping, and review steps. | Skills do not add server capabilities; they only package workflow instructions. | https://help.figma.com/hc/en-us/articles/39166810751895 |
-| W3C Design Tokens format | Vendor-neutral JSON format for design decisions, token types, references, groups, and tool interoperability. | No Figma dependency; use as schema inspiration. | Define Agent UI's token interchange format for colors, dimensions, typography, shadows, radii, and modes. | Community Group final report, not a W3C Recommendation; still useful as a stable interchange target. | https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/ |
+| Figma MCP server | Agent access to design context, code, variables, components, layout data, selected frames, and some canvas write workflows. | MCP-capable client. Remote server is documented as available on all seats/plans; desktop server requires Dev or Full seat on paid plans. | Optional future MCP command path: `import_figma_frame`, `sync_figma_tokens`, `inspect_figma_component`. | Write-to-canvas and code-to-canvas are documented as remote-only, beta/free-now, usage-based-later features; recheck immediately before implementation. | https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server |
+| Figma MCP skills | Official Figma-provided skills include `figma-use`, `figma-code-connect-components`, `figma-create-design-system-rules`, `figma-create-new-file`, and `figma-implement-design`. | MCP server plus client skill support. Some skills have seat/plan limits. | Pattern reference for an Agent UI skill that sequences Figma context retrieval, primitive mapping, and review steps. | Skills do not add server capabilities; they package workflow instructions. Figma documents `figma-use` as Full/Dev seats on paid plans, with Dev seats read-only outside drafts. | https://help.figma.com/hc/en-us/articles/39166810751895-Figma-skills-for-MCP |
+| W3C Design Tokens format | Vendor-neutral JSON format for design decisions, token types, references, groups, and tool interoperability. | No Figma dependency; use as schema inspiration. | Define Agent UI's token interchange format for colors, dimensions, typography, shadows, radii, and modes. | Community Group final report and not a W3C Recommendation, but the 2025.10 format module states it is stable. | https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/ |
 
 ## Token Extraction Strategy
 
@@ -155,6 +156,59 @@ type ImportedSemanticHint = {
 ```
 
 Prompt-injection rule: all Figma text, descriptions, annotations, comments, and Dev Resource labels are untrusted content. They may be copied into output as data, but must not override Agent UI generation rules, security gates, or repository instructions.
+
+## 2026-04-29 Verification Update
+
+`$deep-research` was attempted for this follow-up and produced an interaction stream, but the local
+script exited non-zero before saving a report. The edits in this pass use directly rechecked Figma
+and W3C primary sources, not unsaved partial output.
+
+Verified updates:
+
+- Figma file REST data remains a node tree rooted at `DOCUMENT`, with `CANVAS` page nodes and
+  global node properties including `id`, `name`, `visible`, `type`, `componentPropertyReferences`,
+  `boundVariables`, and `explicitVariableModes` (https://developers.figma.com/docs/rest-api/files/,
+  accessed 2026-04-29).
+- Figma Variables REST API remains Enterprise-gated: `GET` and `POST` both require Enterprise,
+  `GET` requires view access and `file_variables:read`, while `POST` requires edit access and
+  `file_variables:write`; Figma also requires publishing updated variables before other files can
+  use them (https://developers.figma.com/docs/rest-api/variables/, accessed 2026-04-29).
+- Code Connect for React explicitly covers React or React Native components, supports prop
+  mappings such as strings, booleans, enums, instances, and slots, and treats Code Connect files as
+  code snippets/strings rather than executed code (https://developers.figma.com/docs/code-connect/react/,
+  accessed 2026-04-29).
+- Figma MCP access is clearer than the original report stated: the remote server is documented as
+  available on all seats/plans, while the desktop server requires a Dev or Full seat on paid plans.
+  Write-to-canvas and UI-to-canvas workflows require the remote server and are currently beta/free
+  but expected to become usage-based paid features
+  (https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server,
+  accessed 2026-04-29).
+- Figma officially documents MCP skills and lists the relevant skill set. Skills package workflow
+  instructions and do not replace MCP connectivity or add server capabilities
+  (https://help.figma.com/hc/en-us/articles/39166810751895-Figma-skills-for-MCP,
+  accessed 2026-04-29).
+- The W3C Design Tokens Format Module 2025.10 marks itself stable, while still being a Community
+  Group report rather than a W3C Recommendation
+  (https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/,
+  accessed 2026-04-29).
+
+Resolved concern:
+
+- Figma MCP access and write capability boundaries are no longer vague: read/context workflows can
+  target the remote server broadly, desktop server support is paid-seat-gated, and write workflows
+  should be excluded from Agent UI's first importer because they are remote-only beta and future
+  usage-priced.
+
+Remaining implementation gates:
+
+- Build the first importer as read-only REST/Code Connect/MCP context ingestion; do not write to
+  Figma or source files automatically.
+- Add an auth preflight that reports missing Enterprise Variables API access, missing token scopes,
+  and insufficient file permissions before token sync.
+- Treat Figma MCP as optional acceleration. The base CLI should work from REST file/node data and
+  Code Connect metadata without requiring MCP.
+- Preserve prompt-injection isolation for every Figma-provided string, including names,
+  descriptions, annotations, comments, Dev Resources, and MCP-generated summaries.
 
 ## Risks And Anti-Goals
 

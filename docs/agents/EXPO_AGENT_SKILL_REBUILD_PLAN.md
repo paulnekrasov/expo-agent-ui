@@ -50,6 +50,8 @@ Expo Router, `@expo/ui`, or the Expo MCP ecosystem.
 - Do not build a new mobile framework.
 - Do not build a SwiftUI clone.
 - Do not require a Mac-only simulator automation flow for the core semantic layer.
+- Do not confuse EAS cloud iOS builds with an always-on local iOS Simulator. EAS can build the
+  artifact; interactive iOS preview still needs an iOS runtime.
 - Do not require a paid remote MCP service.
 - Do not replace Expo MCP. Interoperate with it where useful.
 - Do not make screenshots or coordinates the primary control API.
@@ -217,12 +219,25 @@ This means the project must ship instruction artifacts, not only code:
 
 - `skills/expo-agent-ui/SKILL.md`
 - references for component primitives, semantic IDs, actions, flow testing, patching rules
+- references for on-demand platform skill routing across Expo, React Native, composition,
+  accessibility, native design, Apple, Android, systematic debugging, and context-engineering skills
 - examples of good screen generation
 - validation scripts or templates
 - optional command prompts and local agent definitions
 
 The skill must use progressive disclosure. The main `SKILL.md` should be lean; detailed API
 tables and examples should live under `skills/expo-agent-ui/references/`.
+
+Platform ecosystem skills should be routed, not pasted wholesale into the skill. The Agent UI skill
+should load only the platform knowledge required by a specific scaffold, adapter, accessibility,
+polish, preview, or review task, then summarize the decision into hidden agent notes or concrete
+code changes. Repo-local copies of the platform skills live under
+`docs/reference/agent/platform-skills/` so agents can load a stable project-scoped snapshot before
+falling back to host-global skill installs.
+
+The MCP server can expose those repo-local skills as read-only resources, scoped prompts, and small
+lookup tools (`listPlatformSkills`, `getPlatformSkill`, `searchPlatformSkills`,
+`recommendPlatformSkills`). That is a Stage 5/8 context surface, not mobile runtime behavior.
 
 ### "Generate real screens using SwiftUI-inspired declarative primitives"
 
@@ -367,6 +382,7 @@ should survive as structured agent backend state:
 - phase/product-stage state
 - handoff notes and review logs
 - validation rules and review checklists
+- systematic debugging rules for failures and blocked verification
 - prompt resources and prompt rotation protocol
 - research status and implementation gates
 - flow specs and patch proposal policies
@@ -762,6 +778,8 @@ Why MCP:
 - Agents already understand this shape.
 - Expo's own MCP server proves that this is now a normal Expo-agent integration surface,
   but it requires a paid EAS plan and macOS simulators for iOS local capabilities.
+- Later visual-editor work should expose connected runtime sessions as resources so iOS SwiftUI
+  and Android Compose can be compared side by side without pretending they run in one simulator.
 
 This project's local MCP server should focus on free semantic control and structured
 introspection. It can interoperate with Expo MCP screenshots and simulator automation later.
@@ -788,6 +806,15 @@ MCP resources:
 - `agent-ui://active-task`
 - `agent-ui://validation-rules`
 - `agent-ui://handoff`
+- `agent-ui://platform-skills/index`
+- `agent-ui://platform-skills/routing`
+- `agent-ui://platform-skills/expo`
+- `agent-ui://platform-skills/react-native`
+- `agent-ui://platform-skills/native-accessibility`
+- `agent-ui://platform-skills/native-design`
+- `agent-ui://platform-skills/android`
+- `agent-ui://platform-skills/apple`
+- `agent-ui://platform-skills/context-prompt-engineering`
 
 MCP prompts:
 
@@ -798,6 +825,22 @@ MCP prompts:
 - `plan_task`
 - `review_stage`
 - `resume_handoff`
+- `choose_platform_skills`
+- `plan_native_scaffold`
+- `review_accessibility_semantics`
+- `prepare_visual_editor_notes`
+- `write_agent_task_notes`
+
+Skill-context MCP tools:
+
+- `listPlatformSkills`
+- `getPlatformSkill`
+- `searchPlatformSkills`
+- `recommendPlatformSkills`
+
+These tools are read-only and do not require an app bridge session. Runtime-control tools such as
+`tap` and `input` still require an active, paired, development-only app session with implemented
+capabilities.
 
 Verification:
 
@@ -856,6 +899,8 @@ Implementation:
 - Core components remain usable without Expo UI.
 - Adapter code should be tree-shakeable and optional.
 - Android should degrade to React Native primitives or future Jetpack Compose adapter.
+- EAS Build is a valid cloud build lane for iOS SwiftUI artifacts, but live interaction still
+  requires an iOS Simulator, iOS device, remote Mac, or cloud workflow capture.
 - User-owned custom SwiftUI views/modifiers are first-class interop surfaces. The adapter should
   preserve unknown custom modifier configs, allow semantic wrappers around custom native views,
   and avoid requiring users to rewrite existing Expo UI SwiftUI code.
@@ -869,6 +914,8 @@ Verification:
 - Example iOS screen using Expo UI `Host`.
 - Fallback screen without Expo UI.
 - Tests guard optional dependency behavior.
+- EAS simulator-build smoke lane once the adapter exists, verifying artifact creation separately
+  from live editor/runtime control.
 - Smoke tests for any custom native SwiftUI component or modifier before it becomes public API.
 
 ### Stage 8 - Agent Skill
@@ -903,6 +950,15 @@ Skill requirements:
 - validation script must catch duplicate IDs and missing intents on actionable nodes.
 - skill behavior must use the hidden context backend through progressive disclosure: load only the
   brief, task, references, validation rules, and handoff notes needed for the current job.
+- skill behavior must route to platform knowledge on demand: Expo for app/build decisions, React
+  Native for cross-platform UI/performance, composition patterns for reusable APIs, native
+  accessibility for semantic quality, native design engineering for polish, Apple for SwiftUI/iOS
+  adapter work, Android for Compose/Material adapter work, and context-prompt-engineering for
+  notes, prompts, handoffs, and validation plans.
+- skill behavior must prefer repo-local skill copies under
+  `docs/reference/agent/platform-skills/` so skill routing is reproducible across agent hosts.
+- scaffold guidance must distinguish cross-platform Expo, iOS-enhanced, and Android-enhanced
+  intents without promising unimplemented native adapters.
 - context backend content is for agents and developer tooling only; it must not be generated as
   visible mobile UI or exposed to app end users.
 
@@ -915,9 +971,10 @@ Potential trigger phrases:
 - "run an agent flow"
 - "use SwiftUI-inspired primitives in Expo"
 
-### Stage 9 - Flow Runner And Patch Proposals
+### Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison
 
-Objective: support repeatable agent workflows and structured patch planning.
+Objective: support repeatable agent workflows, structured patch planning, and later multi-session
+native preview comparison.
 
 Flow schema:
 
@@ -955,6 +1012,14 @@ Patch proposal schema:
 
 Do not implement automatic source patching until the proposal format is stable.
 
+Native preview comparison:
+
+- connect multiple runtime sessions,
+- compare iOS SwiftUI and Android Compose by stable semantic IDs,
+- show adapter capability and unsupported-platform diagnostics,
+- use EAS/cloud screenshots and recordings only as redacted evidence,
+- never promise one simulator can render both native platforms.
+
 ### Stage 10 - Publishing And Compatibility
 
 Objective: prepare for real usage.
@@ -968,6 +1033,8 @@ Deliverables:
 - local MCP configuration snippets
 - skill install instructions
 - troubleshooting guide
+- preview lane docs for React Native fallback, EAS-built iOS SwiftUI, local Android Compose, and
+  optional remote/cloud runtimes
 
 Compatibility matrix should track:
 
@@ -978,6 +1045,8 @@ Compatibility matrix should track:
 - iOS support level
 - Android fallback behavior
 - web fallback behavior
+- EAS iOS artifact build path versus live iOS runtime requirement
+- side-by-side native preview support level
 
 ## New Knowledge Needed
 
@@ -1012,6 +1081,7 @@ Compatibility matrix should track:
 - Figma/design-system import.
 - Cloud recording of flows.
 - Visual screenshot comparison.
+- Side-by-side native adapter visual editor over multiple connected runtime sessions.
 
 ## Knowledge To Delete From Active Context
 

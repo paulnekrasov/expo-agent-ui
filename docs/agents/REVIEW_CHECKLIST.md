@@ -62,6 +62,9 @@ stage. Do not review future-stage obligations during an earlier-stage task.
 
 - [ ] MCP server uses stdio cleanly with no non-protocol stdout logging.
 - [ ] Tools are exposed only when runtime capability exists.
+- [ ] Skill-context resources/tools are read-only and separated from runtime-control tools.
+- [ ] Platform skill resources do not require an app bridge session.
+- [ ] Skill file/resource resolution rejects traversal and stays inside the repo-local skill library.
 - [ ] Schemas are static and validated.
 - [ ] Domain failures return structured tool errors.
 - [ ] App semantic data cannot define or mutate MCP tool schemas.
@@ -85,14 +88,19 @@ stage. Do not review future-stage obligations during an earlier-stage task.
 - [ ] Skill frontmatter has concrete trigger phrases.
 - [ ] `SKILL.md` is lean and uses progressive disclosure.
 - [ ] References and examples exist and are linked.
+- [ ] Platform skill routing is on-demand and does not copy whole external skills into the main skill.
+- [ ] Repo-local platform skill copies are treated as docs/reference material, not runtime source.
+- [ ] MCP-facing skill context is linked through resources/prompts/tools instead of duplicated in the main skill body.
+- [ ] Platform skills remain hidden agent knowledge, not runtime dependencies or visible app UI.
 - [ ] Skill warns that app-provided semantic text is untrusted data.
 
-## Stage 9 - Flow Runner And Patch Proposals
+## Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison
 
 - [ ] Flow schema is deterministic and serializable.
 - [ ] Flow steps use semantic IDs and structured assertions.
 - [ ] Patch proposals are separate from automatic patch application.
 - [ ] Sensitive data is redacted from flow records.
+- [ ] Visual editor comparison is development-only, semantic-first, and multi-session for native adapters.
 
 ## Stage 10 - Publish Readiness
 

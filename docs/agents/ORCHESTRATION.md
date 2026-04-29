@@ -100,7 +100,8 @@ content must target Expo Agent UI stages.
 2. Orchestrator writes or refreshes one bounded `TASK.md`.
 3. Implementer completes only the bounded task and updates `HANDOFF.md`.
 4. Reviewer uses `REVIEW_CHECKLIST.md` and writes `REVIEW.md`.
-5. Fixer resolves only `BUG`, `ACTIVE_STAGE_GAP`, and accepted `SECURITY_GAP` items.
+5. Fixer resolves only `BUG`, `ACTIVE_STAGE_GAP`, and accepted `SECURITY_GAP` items, using the
+   repo-local systematic debugging adapter before changing code for failures.
 6. Reviewer re-checks once.
 7. Orchestrator updates `PHASE_STATE.md`.
 
@@ -139,3 +140,5 @@ At the start of any coding or review session:
 6. Read `docs/agents/REVIEW_CHECKLIST.md` for review/fix work.
 7. Map the request to Roadmap Phase, Product Stage, and Research Area.
 8. Open only the reference docs needed for the active task.
+9. For bugs, failed verification, runner failures, bridge/MCP failures, or unexpected behavior,
+   read `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before proposing fixes.

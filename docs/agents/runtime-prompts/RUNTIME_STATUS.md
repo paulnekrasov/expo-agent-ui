@@ -1,6 +1,6 @@
 # Runtime Prompt Status
 
-Updated: 2026-04-27
+Updated: 2026-04-30
 
 ## Status
 
@@ -25,6 +25,10 @@ None.
 Generate new `ACTIVE_*.md` runtime prompts only if a scheduled or autonomous run is going to
 execute the active Stage 2 component primitives task.
 
+The stable scheduled automation prompt has been refactored for the full Expo Agent UI lifecycle at
+`docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`. It keeps the legacy automation memory path
+`C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` intentionally.
+
 ## Prompt Generation Inputs
 
 Use these files in order:
@@ -39,11 +43,18 @@ Use these files in order:
 8. `docs/agents/REVIEW.md`
 9. `docs/agents/REVIEW_CHECKLIST.md`
 10. `docs/reference/react-native/accessibility-semantics.md`
+11. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a
+    bug, failing command, blocked verification, runner environment failure, bridge/MCP failure, or
+    flaky async behavior
 
 ## Scheduled Runner Guidance
 
 If automation runs with a child-process-blocked environment, record the exact failure and finish
 with `NEEDS_CONTEXT`. Do not classify that as a package-foundation source regression.
+
+Do not classify `rg.exe` access denial alone as a runner blocker if PowerShell search and npm
+verification still work. Use the systematic debugging adapter to distinguish current-run
+environment blockers from source failures.
 
 If verification is available, Stage 2 component primitives should use the commands specified in
 `docs/agents/TASK.md`, or explain why package scripts are not available yet.

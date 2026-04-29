@@ -12,6 +12,9 @@
   semantic wrappers at the JavaScript boundary.
 - The published `@expo/ui@55.0.12` package has no root `"."` export. Agent UI should import only explicit subpaths such as `@expo/ui/swift-ui`, `@expo/ui/swift-ui/modifiers`, `@expo/ui/jetpack-compose`, and `@expo/ui/datetimepicker`.
 - `Host` is the required boundary for rendering SwiftUI views from React Native. It bridges UIKit/React Native layout to SwiftUI through `UIHostingController`.
+- EAS Build can compile iOS SwiftUI artifacts on Expo macOS cloud infrastructure, including
+  simulator-targeted builds, but live interaction still requires an iOS runtime such as an iOS
+  Simulator, iOS device, remote Mac session, or cloud workflow capture.
 - `RNHostView` is the reverse bridge for React Native children inside SwiftUI containers such as `BottomSheet`, `Popover`, and stack views.
 - Custom SwiftUI components are exposed through Expo native view modules and required from
   JavaScript with `requireNativeView`.
@@ -180,6 +183,9 @@ Fallback behavior:
 - Android: use React Native fallback in v0. Jetpack Compose is separate research and implementation work.
 - Web: use React Native Web/DOM-compatible fallback.
 - Missing `@expo/ui`: use fallback and emit a clear development warning from the adapter entrypoint or component boundary.
+- EAS-built iOS artifact: valid way to produce the native SwiftUI build from non-macOS
+  machines. It does not remove the need for an iOS runtime to preview or control the app
+  interactively.
 
 Tree-shaking expectations:
 
@@ -219,6 +225,9 @@ Testing strategy:
 - Add Metro/package-resolution tests proving root imports work without `@expo/ui` installed.
 - Add iOS development-build smoke tests for `Host`, `RNHostView`, `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, `BottomSheet`, and one native list/form scope.
 - Add focused simulator tests for hosted text input focus, secure value redaction, slider width, sheet dismissal, and semantic event emission.
+- Add EAS simulator-build verification for the example SwiftUI adapter lane once Stage 7 exists:
+  `ios.simulator: true` should produce an installable simulator artifact, while live editor
+  comparison remains a separate runtime/session concern.
 - Add native smoke tests before publishing any custom SwiftUI component or modifier from the
   adapter.
 
@@ -252,6 +261,9 @@ No unresolved research blocker remains for the adapter decision. These items bel
 | Expo UI SDK overview | https://docs.expo.dev/versions/latest/sdk/ui/ | 2026-04-27 | Package purpose, install path, bundled `~55.0.12`, available platform families, DateTimePicker replacement namespace. |
 | Expo UI SwiftUI SDK reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/ | 2026-04-27 | SwiftUI beta status, iOS/tvOS platform labels, Expo Go limitation, `Host` requirement, install command. |
 | Building SwiftUI apps with Expo UI | https://docs.expo.dev/guides/expo-ui-swift-ui/ | 2026-04-27 | SwiftUI integration model, SDK 54+ note, `UIHostingController` model, modifier import model, guide-level macOS label. |
+| EAS Build | https://docs.expo.dev/build/introduction/ | 2026-04-27 | Hosted Android/iOS binary builds and Expo macOS cloud infrastructure for iOS builds. |
+| Build for iOS Simulators | https://docs.expo.dev/build-reference/simulators | 2026-04-27 | `ios.simulator: true`, simulator artifact installation, and development-server use for dev builds. |
+| Create iOS Simulator development build | https://docs.expo.dev/tutorial/eas/ios-development-build-for-simulators/ | 2026-04-27 | Cloud iOS simulator build profile and install/run flow. |
 | Host reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/host/ | 2026-04-27 | `Host` props, sizing modes, `matchContents`, `onLayoutContent`, safe-area behavior, viewport measurement. |
 | RNHostView reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/rnhostview/ | 2026-04-27 | React Native inside SwiftUI bridge, `matchContents` behavior, Yoga layout synchronization. |
 | SwiftUI modifiers reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/modifiers/ | 2026-04-27 | Modifier namespace, typed modifier families, accessibility modifiers, layout/style/input/list modifiers. |
@@ -266,7 +278,7 @@ No unresolved research blocker remains for the adapter decision. These items bel
 
 Stage 7 should implement a narrow, optional SwiftUI adapter. Keep the core package React Native-first and semantic-first. Add an explicit `@agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
 
-The v0 SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android, web, Expo Go, and missing-peer cases should fall back to core React Native components with development warnings. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
+The v0 SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android, web, Expo Go, and missing-peer cases should fall back to core React Native components with development warnings. EAS should be supported as the preferred cloud build lane for iOS SwiftUI artifacts, but interactive side-by-side native preview should be handled by later multi-session editor work. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
 
 Custom SwiftUI components and modifiers are now a valid Stage 7 interop and expansion path for iOS
 fidelity. Existing user-owned custom SwiftUI should be preserved and semantically wrapped. Agent

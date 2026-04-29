@@ -2,20 +2,28 @@
 
 ## Executive Summary
 - Keep Agent UI v0 local-first and semantic-first; cloud execution and visual diff should be post-v0 adapters, not required runtime dependencies (Expo Agent UI rebuild plan; access date 2026-04-27).
-- Expo EAS Workflows now has pre-packaged Maestro and Maestro Cloud jobs, so the most Expo-native future cloud lane is exporting Agent UI semantic flows to Maestro YAML and running them through EAS when a team already has a Maestro Cloud plan (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/; access date 2026-04-27).
-- Maestro is the strongest fit for semantic flow export because it supports React Native, Expo Go/development builds/EAS workflows, accessibility/testID selectors, screenshots, recording, and `assertScreenshot` visual checks (https://docs.maestro.dev/platform-support/react-native; https://docs.maestro.dev/reference/commands-available/assertscreenshot; https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow; access date 2026-04-27).
+- Expo EAS Workflows has pre-packaged `maestro` and `maestro-cloud` jobs, so the most Expo-native future cloud lane is exporting Agent UI semantic flows to Maestro YAML and running them through EAS when a team already has the required EAS and Maestro Cloud setup (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/; access date 2026-04-29).
+- Maestro is the strongest fit for semantic flow export because it supports React Native, Expo Go/development builds/EAS workflows, stable `testID` selectors, screenshots, recording, and `assertScreenshot` visual checks (https://docs.maestro.dev/get-started/supported-platform/react-native; https://docs.maestro.dev/reference/commands-available/assertscreenshot; https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow; access date 2026-04-29).
 - Appium remains the broadest interoperability target for commercial device clouds; Agent UI should export Appium-compatible selectors from semantic IDs but should not adopt Appium as the core control model (https://appium.io/docs/en/2.16/; https://www.browserstack.com/docs/app-automate/appium; https://docs.saucelabs.com/mobile-apps/automated-testing/appium/index.html; access date 2026-04-27).
 - Visual comparison should validate rendered appearance after semantic assertions pass; it should catch layout, clipping, theming, typography, and image regressions, not prove business flow correctness (https://storybook.js.org/docs/writing-tests/visual-testing/; https://www.chromatic.com/docs/faq/chromatic-mobile-testing; access date 2026-04-27).
+- EAS Build can compile iOS SwiftUI artifacts on Expo macOS cloud infrastructure, but live
+  interactive preview still requires an iOS runtime. EAS cloud builds should be modeled as build
+  artifact production, not as an always-on local simulator embedded in Agent UI
+  (https://docs.expo.dev/build/introduction/; https://docs.expo.dev/build-reference/simulators;
+  access date 2026-04-27).
+- Side-by-side native adapter comparison should connect two runtime sessions, for example iOS
+  SwiftUI on an iOS simulator/device/remote Mac and Android Compose on an Android
+  emulator/device/cloud worker, then compare semantic trees and optional redacted screenshots.
 - Screenshot baselines must be keyed by app build/update, platform, device model, OS, screen size, locale, color scheme, font scale, reduced-motion setting, and flow step to avoid false comparisons (Expo EAS Workflows and Maestro device-locale/device-model/device-os parameters: https://docs.expo.dev/eas/workflows/pre-packaged-jobs/; access date 2026-04-27).
-- Sensitive inputs, tokens, PII-like labels, screenshots, logs, and event traces need redaction metadata at recording time; do not rely on later cloud-side scrubbing (Expo environment variable warning about secret exposure: https://docs.expo.dev/eas/environment-variables/faq/; access date 2026-04-27).
+- Sensitive inputs, tokens, PII-like labels, screenshots, logs, and event traces need redaction metadata at recording time; do not rely on later cloud-side scrubbing. Maestro's recording docs say the legacy `maestro record` path sends raw screen capture and Flow output to mobile.dev servers unless `--local` is used, so Agent UI exports should prefer local recording for sensitive flows (https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow; access date 2026-04-29).
 - Chromatic is useful for web/Storybook and React Native Web approximations, but its own FAQ says it does not currently support native iOS or Android mobile testing; treat it as a design-system/web adapter, not mobile-cloud validation (https://www.chromatic.com/docs/faq/chromatic-mobile-testing; access date 2026-04-27).
 - React Native Storybook plus Sherlo is a plausible future component-level visual lane for native RN stories, separate from full app flows (https://storybookjs.github.io/react-native/docs/intro/testing; https://docs.sherlo.io/; access date 2026-04-27).
 
 ## Tool Landscape
 | Tool | Flow recording | Replay | Screenshot capture | Visual diff | Expo support | Device requirements | Paid/free constraint | Source URL |
 |---|---|---|---|---|---|---|---|---|
-| Expo EAS Workflows + Maestro jobs | No authoring recorder documented in EAS; orchestrates existing flows | Yes, through `maestro` / `maestro-cloud` workflow jobs | EAS Maestro job can run tests; screen recording support appears in workflow job examples and Maestro artifacts NEEDS_VERIFICATION for exact parameter surface | Via Maestro `assertScreenshot` when flows include it | Direct Expo workflow integration for builds and Maestro Cloud | EAS-hosted Android/iOS build and test infrastructure; Maestro Cloud job accepts build ID, device locale/model/OS params | EAS account; Maestro Cloud job requires Maestro Cloud account and plan | https://docs.expo.dev/eas/workflows/pre-packaged-jobs/ |
-| Maestro CLI / Studio / Cloud | Studio can create flows visually; `record` command creates MP4 recordings of test runs | Yes, local CLI and Maestro Cloud | `takeScreenshot`, `assertScreenshot`, and recording commands are documented | `assertScreenshot` compares against reference screenshots, with default 95% threshold and optional crop selector | Official React Native docs say Expo Go, development builds, and EAS workflows are supported | Android emulators/physical devices locally; iOS simulators locally; Cloud requires Android APK or iOS simulator `.app` bundle | CLI/Studio can be free locally; Maestro Cloud requires Cloud plan | https://docs.maestro.dev/platform-support/react-native; https://docs.maestro.dev/maestro-cloud/run-tests-on-maestro-cloud; https://docs.maestro.dev/reference/commands-available/assertscreenshot |
+| Expo EAS Workflows + Maestro jobs | No authoring recorder documented in EAS; orchestrates existing flows | Yes, through `maestro` / `maestro-cloud` workflow jobs | EAS Maestro examples document `record_screen: true`, `MAESTRO_TESTS_DIR` for `takeScreenshot` / `startRecording` assets, and a "Maestro Test Results" artifact | Via Maestro `assertScreenshot` when flows include it | Direct Expo workflow integration for builds and Maestro Cloud | EAS-hosted Android/iOS build and test infrastructure; Maestro Cloud job accepts build ID, device locale/model/OS params | EAS account; Maestro Cloud job requires Maestro Cloud account/plan and API key or `MAESTRO_CLOUD_API_KEY` | https://docs.expo.dev/eas/workflows/pre-packaged-jobs/ |
+| Maestro CLI / Studio / Cloud | Studio can create flows visually; `record --local` creates MP4 recordings locally; legacy remote recording sends raw screen capture and Flow output to mobile.dev servers | Yes, local CLI and Maestro Cloud | `takeScreenshot`, `assertScreenshot`, `startRecording`, `stopRecording`, and `record` are documented | `assertScreenshot` compares against reference screenshots, with default 95% threshold and optional `cropOn` selector | Official React Native docs say Expo Go, development builds, and EAS workflows are supported; Expo Go uses `openLink` rather than custom `appId` launch | Android emulators/physical devices locally; iOS simulators locally; Cloud requires build artifacts | CLI/Studio can be free locally; Maestro Cloud requires Cloud plan | https://docs.maestro.dev/get-started/supported-platform/react-native; https://docs.maestro.dev/maestro-cloud/run-tests-on-maestro-cloud; https://docs.maestro.dev/reference/commands-available/assertscreenshot |
 | Detox | No built-in no-code recorder in current docs reviewed | Yes, React Native E2E tests in CI/local runner | Artifacts include logs, screenshots, screen recordings, performance, and iOS view hierarchy snapshots | Not a primary visual diff product; screenshots can feed external diff tooling | Expo guide exists in older Detox docs; modern Expo support should be revalidated per SDK/version NEEDS_VERIFICATION | Simulators/emulators; iOS test paths generally require macOS/Xcode | Open source; CI/device infrastructure cost is external | https://wix.github.io/Detox/docs/config/artifacts/; https://wix.github.io/Detox/docs/19.x/guide/expo |
 | Appium | Third-party recorders exist, but official core is WebDriver automation, not semantic recording | Yes, cross-platform UI automation through drivers/plugins | Standard screenshot commands and cloud-provider screenshots | Images plugin exposes image comparison APIs; visual service integrations also exist | Works against built Expo app binaries like any native/hybrid app, but no Expo-specific official integration found in Appium docs | Local or cloud iOS/Android devices, simulators, emulators depending driver/provider | Open source; device labs/cloud providers are separate costs | https://appium.io/docs/en/2.16/; https://appium.io/docs/en/2.5/commands/images-plugin/ |
 | BrowserStack App Automate | Test Companion can generate mobile tests from app exploration; traditional App Automate replays framework scripts | Yes, Appium/Espresso/XCUITest/Detox/Maestro framework lanes | Captures screenshots, video, logs, network logs, UI hierarchy depending lane | Use App Percy for visual testing, or Appium image/plugin approaches | Expo app binaries can be uploaded as Android/iOS apps; no Expo-specific runtime integration needed | Real Android/iOS cloud devices | Commercial cloud; exact plan constraints NEEDS_VERIFICATION | https://www.browserstack.com/docs/app-automate/appium; https://www.browserstack.com/docs/test-companion/mobile-testing |
@@ -41,6 +49,54 @@ Export rules:
 - Prefer semantic ID and accessibility/testID selectors; visible text is acceptable for exploratory export but brittle for localization, as Maestro's React Native docs also warn by recommending `testID` for stable targeting (https://docs.maestro.dev/platform-support/react-native; access date 2026-04-27).
 - Add tool capability metadata to each export: `supportsCloud`, `supportsScreenshots`, `supportsVisualDiff`, `requiresBinary`, `requiresSimulator`, `requiresPaidPlan`, and `unsupportedReasons`.
 - Treat coordinate actions and image matching as fallback-only exports. Appium image comparison and image elements exist, but they rely on screenshots/reference images and should not replace semantic selectors (https://appium.io/docs/en/2.5/commands/images-plugin/; access date 2026-04-27).
+
+## Native Adapter Preview Strategy
+
+Native adapter preview is a multi-runtime problem. SwiftUI and Jetpack Compose are real native
+rendering surfaces, but they are platform-bound. A visual editor can compare them only by
+connecting to separate running sessions:
+
+- iOS SwiftUI session: iOS Simulator, iOS device, remote Mac, or cloud iOS workflow capture.
+- Android Compose session: Android Emulator, Android device, or cloud Android worker.
+- Shared editor state: semantic tree, adapter capabilities, layout diagnostics, action log,
+  selected semantic node, and optional screenshot/video artifacts.
+
+EAS reduces the iOS build barrier. EAS Build produces iOS binaries on Expo macOS cloud
+infrastructure, and iOS simulator builds can be created with `ios.simulator: true` and installed
+through EAS CLI or Expo Orbit (https://docs.expo.dev/build/introduction/ and
+https://docs.expo.dev/build-reference/simulators, access date 2026-04-27). This does not create a
+persistent local iOS Simulator for Windows/Linux users. Live interaction still needs a simulator,
+device, remote Mac, or a cloud workflow that can run and capture the app.
+
+EAS Workflows provides macOS workers for iOS jobs including simulators and Linux
+nested-virtualization workers for Android Emulators (https://docs.expo.dev/eas/workflows/syntax/,
+access date 2026-04-27). This is a strong post-v0 lane for automated comparison artifacts:
+semantic flow results, screenshots, videos, logs, and build metadata. It should not be treated as
+the Stage 4 local bridge or Stage 5 MCP server.
+
+Recommended editor contract:
+
+```ts
+type NativePreviewSession = {
+  sessionId: string;
+  platform: "ios" | "android" | "web";
+  adapter: "react-native" | "ios-swift-ui" | "android-compose" | "web-dom";
+  runtime: "local" | "device" | "remote-mac" | "eas-workflow" | "cloud-device";
+  buildId?: string;
+  updateId?: string;
+  device?: {
+    model?: string;
+    osVersion?: string;
+    screen?: { width: number; height: number; scale?: number };
+  };
+  capabilities: string[];
+  unsupportedReasons?: string[];
+};
+```
+
+The visual editor should never imply that a single simulator can render both native adapters. It
+should make the session split visible and explain unsupported combinations with structured
+diagnostics.
 
 ## Recording Schema
 Future recordings should be append-only evidence bundles, not opaque videos. A recording should include enough metadata to replay locally, export to cloud tools, compare visuals, debug failures, and redact sensitive data before upload.
@@ -176,9 +232,68 @@ Suggested evolution:
 - v0.x: `agent-ui export maestro` that maps semantic IDs to `testID` selectors and can run locally with Maestro CLI.
 - v1: EAS Workflows integration that can run exported Maestro flows against EAS builds or Maestro Cloud for teams that opt in (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/; access date 2026-04-27).
 - v1.x: visual snapshot manifests with `cropToSemanticId`, `ignoreSemanticIds`, threshold, and review policy.
+- v1.x: multi-session visual editor comparison for local/remote iOS SwiftUI and Android Compose
+  runtimes after the bridge exposes session metadata and adapter capabilities.
 - v2: provider adapters for App Percy, Applitools, BrowserStack App Automate, Sauce Labs, and Sherlo after privacy and artifact contracts are stable.
 
 This architecture keeps cloud services replaceable. It also prevents Agent UI from becoming a wrapper around screenshots, Appium, or any paid provider.
+
+## 2026-04-29 Verification Update
+
+`$deep-research` was attempted for this follow-up and produced an interaction stream, but the local
+script exited non-zero before saving a report. The edits in this pass use directly rechecked
+official/primary sources, not unsaved partial output.
+
+Verified updates:
+
+- EAS Workflows pre-packaged jobs document both `maestro` and `maestro-cloud` job types. The
+  `maestro-cloud` job requires `build_id`, `maestro_project_id`, `flows`, and either
+  `maestro_api_key` or `MAESTRO_CLOUD_API_KEY`; it also supports device locale/model/OS parameters
+  and exposes result outputs such as URL, total flow count, and successful/failed counts
+  (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/, accessed 2026-04-29).
+- EAS Maestro job examples document `record_screen: true`, the `MAESTRO_TESTS_DIR` environment
+  variable for `takeScreenshot` / `startRecording` assets, and a "Maestro Test Results" artifact.
+  This resolves the previous `NEEDS_VERIFICATION` around EAS-managed screen recording and
+  screenshot artifact handling (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/,
+  accessed 2026-04-29).
+- Maestro's React Native docs recommend `testID` for stable targeting and state that Maestro maps
+  it to a unique `id`; they also document Expo Go, development build, and EAS workflow lanes
+  (https://docs.maestro.dev/get-started/supported-platform/react-native, accessed 2026-04-29).
+- Maestro `assertScreenshot` supports `path`, `cropOn`, and `thresholdPercentage`, with a documented
+  default threshold of `95.0`; this supports Agent UI's recommendation to crop by semantic region
+  and require explicit threshold policy
+  (https://docs.maestro.dev/reference/commands-available/assertscreenshot, accessed 2026-04-29).
+- Maestro recording docs now recommend `maestro record --local`; the legacy remote path sends raw
+  screen capture and Flow output to mobile.dev servers. Agent UI should therefore default any
+  exported recording workflow to local recording unless the user explicitly opts into remote/cloud
+  upload (https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow, accessed
+  2026-04-29).
+- Chromatic still states that it does not currently support iOS or Android mobile testing, so it
+  remains a web/Storybook viewport tool for Agent UI rather than a native mobile validation path
+  (https://www.chromatic.com/docs/faq/chromatic-mobile-testing/, accessed 2026-04-29).
+- React Native Storybook docs say there is not currently built-in visual testing for React Native
+  Storybook, but recommend Maestro/Detox/other tools for automating Storybook screenshots and list
+  Sherlo as an external React Native Storybook visual testing/review tool
+  (https://storybookjs.github.io/react-native/docs/intro/testing/, accessed 2026-04-29).
+
+Resolved concerns:
+
+- EAS/Maestro artifact handling is now specific enough for a future adapter design:
+  `record_screen`, `MAESTRO_TESTS_DIR`, and EAS artifact output are documented.
+- Maestro privacy guidance is concrete: local recording is the default recommendation for sensitive
+  flows because remote rendering sends raw capture data to external servers.
+- Chromatic's scope is no longer ambiguous: it is not a native iOS/Android mobile test runner.
+
+Remaining implementation gates:
+
+- Before implementing cloud export, create fixture flows that prove `testID` selectors from Agent
+  UI primitives compile to stable Maestro `id` selectors on Expo Go and development builds.
+- Before enabling cloud upload, implement redaction and an explicit `uploadAllowed` flag in the
+  recording schema.
+- Before adding provider adapters, recheck current plan, quota, artifact-retention, and privacy
+  terms for Maestro Cloud, BrowserStack/App Percy, Sauce Labs, Applitools, and Sherlo.
+- Keep EAS/Maestro export outside the core runtime package; the core remains local semantic flow
+  execution and redacted evidence capture.
 
 ## Deferred Work And Anti-Goals
 - Do not require Maestro Cloud, BrowserStack, Sauce Labs, App Percy, Applitools, Sherlo, or Chromatic for Agent UI v0.
@@ -191,9 +306,17 @@ This architecture keeps cloud services replaceable. It also prevents Agent UI fr
 - Do not promise native iOS/Android support for web-only visual tools such as Chromatic; Chromatic's own FAQ says native mobile testing is not currently supported (https://www.chromatic.com/docs/faq/chromatic-mobile-testing; access date 2026-04-27).
 - Do not implement visual AI matching before stable semantic IDs, flow schema, local replay, and redaction are mature.
 - Do not rely on coordinate-only replay except as an explicitly marked fallback.
+- Do not promise that EAS cloud builds provide a live local iOS Simulator on Windows/Linux.
+- Do not promise one simulator or emulator can render both iOS SwiftUI and Android Compose native
+  views.
+- Do not build side-by-side native preview before the bridge can identify multiple runtime
+  sessions and their adapter capability flags.
 
 ## Source Index
 - Expo EAS Workflows pre-packaged jobs, https://docs.expo.dev/eas/workflows/pre-packaged-jobs/, access date 2026-04-27. Supports claims about EAS `maestro` / `maestro-cloud` jobs, build IDs, device locale/model/OS parameters, Maestro Cloud account/plan requirement, and workflow outputs.
+- Expo EAS Build, https://docs.expo.dev/build/introduction/, access date 2026-04-27. Supports claims about hosted Android/iOS binary builds and Expo macOS cloud infrastructure for iOS builds.
+- Expo iOS Simulator builds, https://docs.expo.dev/build-reference/simulators, access date 2026-04-27. Supports claims about `ios.simulator: true`, EAS simulator artifacts, installation, and development server use.
+- EAS Workflows syntax, https://docs.expo.dev/eas/workflows/syntax/, access date 2026-04-27. Supports claims about macOS workers for iOS simulator jobs and Linux nested-virtualization workers for Android Emulator jobs.
 - Expo EAS environment variable FAQ, https://docs.expo.dev/eas/environment-variables/faq/, access date 2026-04-27. Supports privacy guidance that secrets can be exposed when environment variables are mishandled.
 - Maestro React Native platform support, https://docs.maestro.dev/platform-support/react-native, access date 2026-04-27. Supports claims about React Native support, Expo Go/development builds/EAS workflows, text selectors, and `testID` selectors.
 - Maestro Cloud overview, https://docs.maestro.dev/maestro-cloud, access date 2026-04-27. Supports claims about hosted parallel mobile test execution, CI integration, device isolation, and configurable environment dimensions.
@@ -221,6 +344,6 @@ This architecture keeps cloud services replaceable. It also prevents Agent UI fr
 - Sherlo product page, https://sherlo.io/, access date 2026-04-27. Supports claims about iOS/Android simulator cloud screenshots, review workflow, EAS Update note, and listed free/paid tiers.
 
 ## Final Recommendation
-Build Agent UI's post-v0 cloud/visual path around a canonical semantic flow and recording schema. Export to Maestro first because it is the best current fit for Expo, React Native, stable `testID` targeting, local replay, EAS workflow integration, cloud execution, screenshots, recordings, and screenshot assertions. Add Appium/WebdriverIO export later for BrowserStack/Sauce interoperability, then add provider-specific visual snapshot adapters for App Percy, Applitools, and Sherlo only after local semantic replay, artifact storage, and redaction are stable. Keep Chromatic limited to web/Storybook design-system coverage unless native mobile support changes.
+Build Agent UI's post-v0 cloud/visual path around a canonical semantic flow and recording schema. Export to Maestro first because it is the best current fit for Expo, React Native, stable `testID` targeting, local replay, EAS workflow integration, cloud execution, screenshots, recordings, and screenshot assertions. Add multi-session native preview comparison only after the bridge exposes session metadata and the SwiftUI/Compose adapters expose capability flags. Add Appium/WebdriverIO export later for BrowserStack/Sauce interoperability, then add provider-specific visual snapshot adapters for App Percy, Applitools, and Sherlo only after local semantic replay, artifact storage, and redaction are stable. Keep Chromatic limited to web/Storybook design-system coverage unless native mobile support changes.
 
 DONE_WITH_CONCERNS

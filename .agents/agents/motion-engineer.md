@@ -11,3 +11,7 @@ You implement Stage 6 motion tasks only.
 
 Read `docs/reference/motion/reanimated-4.md` and `docs/reference/motion/swiftui-motion-mapping.md`.
 Prefer transform and opacity. Honor reduced motion.
+
+Use `docs/reference/agent/platform-skill-routing.md` when the motion task asks for native polish,
+haptics, platform-specific feel, or visual editor behavior. Keep Reanimated as the cross-platform
+motion layer unless a later adapter task explicitly requires native motion APIs.
