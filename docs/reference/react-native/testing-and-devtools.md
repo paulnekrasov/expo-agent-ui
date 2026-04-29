@@ -10,7 +10,7 @@
 - Keep Maestro, Detox, and Appium optional interop targets, not v0 dependencies. They are valuable for compiled app/device validation, but the semantic runtime can be validated faster and earlier through pure registry tests and RNTL.
 - Design Agent UI flow JSON so it can later compile to Maestro YAML and Detox/Appium tests by preserving stable IDs, labels, text, state assertions, waits, and scroll intent.
 - Do not use screenshots or coordinates as the semantic test foundation. Maestro and Appium support coordinate/image strategies, but Agent UI should only use them as fallback interop paths.
-- Status: core research is complete, with one concern: exact native mapping for React Native `testID` differs by platform and tool, so each automation export must be verified against a compiled fixture before release.
+- Status: core research is complete. Maestro and Detox have explicit official `testID` support paths; Appium export remains gated on compiled fixture verification because Appium's official drivers expose iOS `name` / `accessibility id` and Android `resource-id` / `content-desc`, but do not provide one React Native-specific `testID` rule that covers both platforms.
 
 ## React Native DevTools Findings
 
@@ -35,7 +35,7 @@ Limitations:
 
 - React Native DevTools is for debugging React app concerns and is not a replacement for native IDE tooling. Source: React Native DevTools docs, https://reactnative.dev/docs/react-native-devtools, accessed 2026-04-27.
 - Relying on undocumented Chrome DevTools Protocol internals would make Agent UI brittle. Use Expo's documented plugin messaging API for v0.
-- NEEDS_VERIFICATION: exact message throughput and performance limits for sending large semantic trees through Expo DevTools Plugins are not documented. Use throttling, diffing, redaction, and subtree expansion by design.
+- Expo's DevTools Plugin docs document bidirectional message APIs (`useDevToolsPluginClient`, `sendMessage`, and `addMessageListener`) and debug-mode/no-op hook patterns, but they do not document hard throughput or payload-size limits. Use throttling, diffing, redaction, and subtree expansion by design. Source: Expo DevTools plugin docs, https://docs.expo.dev/debugging/create-devtools-plugins/, accessed 2026-04-29.
 
 ## React Native Testing Library Findings
 
@@ -174,6 +174,40 @@ V0 recommendation:
 - Defer Appium generation and server integration.
 - Maintain automation readiness by emitting stable `testID`, accessible labels, roles, and state/value props.
 
+## Selector Mapping Matrix
+
+| Tool / platform | Preferred Agent UI export selector | React Native prop source | What official docs support | Agent UI decision |
+|---|---|---|---|---|
+| RNTL / Node | `getByTestId(id)` for semantic ID checks; `getByRole({ name })` for user behavior | `testID`, accessibility props | RNTL queries support `getByTestId`, role/name/state/value queries, and host accessibility semantics. | Use both: `testID` proves machine identity; role/name/state/value proves user-facing semantics. |
+| Maestro / iOS | `id: <semanticId>` | React Native `testID` | Maestro's React Native docs say `testID` maps to a unique `id`; core selector docs say `id` maps to iOS `accessibilityIdentifier`. | Safe future export target after fixture smoke tests. Do not use visible text for stable Agent UI IDs. |
+| Maestro / Android | `id: <semanticId>` | React Native `testID` | Maestro's React Native docs say `testID` maps to a unique `id`; core selector docs say `id` maps to Android Resource ID. | Safe future export target after fixture smoke tests. Keep IDs resource-safe and unique. |
+| Detox / iOS | `element(by.id(id))` | React Native `testID` | Detox matcher docs say `by.id()` matches the accessibility identifier and, in React Native, corresponds to `testID`. | Safe future export target after fixture smoke tests. |
+| Detox / Android | `element(by.id(id))` | React Native `testID` | Detox matcher docs say `by.id()` corresponds to React Native `testID`; `by.label()` maps to `accessibilityLabel` / Android content description. | Safe future export target after fixture smoke tests. Prefer `by.id`; use `by.label` only for accessibility assertions. |
+| Appium XCUITest / iOS | Prefer `accessibility id` / `id` only after fixture proves it resolves `testID`; otherwise use iOS predicate on `name` as a fallback | Usually React Native `testID` for accessibility identifier, but Appium docs describe driver attributes, not RN prop mapping | XCUITest driver docs say `id`, `name`, and `accessibility id` are synonyms transformed into a search by the element `name` attribute. | NEEDS_VERIFICATION in a compiled RN fixture before generating Appium iOS scripts. |
+| Appium UiAutomator2 / Android | Prefer `id` only after fixture proves React Native `testID` is visible as `resource-id`; use `accessibilityId` only for human labels, not semantic IDs | `testID` for hoped-for resource id; `accessibilityLabel` for content description | UiAutomator2 docs say `id` maps to native `By.res` / resource name and `accessibilityId` maps to `By.desc` / content description; for React Native, `accessibilityId` reflects `accessibilityLabel`. | NEEDS_VERIFICATION in a compiled RN fixture. Do not copy semantic IDs into `accessibilityLabel` just to satisfy Appium because it pollutes assistive output. |
+| Appium / any platform | Avoid XPath and coordinate locators except diagnostics | N/A | UiAutomator2 and XCUITest docs rank direct id/accessibility strategies above XPath; Maestro also treats point selectors as coordinate fallback. | Keep screenshots, XPath, and coordinates outside semantic flow exports. |
+
+Agent UI component rule:
+
+- Set `testID` to the stable semantic `id` on actionable primitives.
+- Set `accessibilityLabel` to the localized human label, never to the semantic ID by default.
+- Use `nativeID` or `id` only for React Native native-class/linkage needs such as `aria-labelledby`, accessibility order, or custom native integration; do not treat them as the default automation contract.
+- Keep semantic IDs simple enough for native automation exports: stable, unique, no whitespace, no localization, and no secret values.
+
+## Compiled Fixture Verification Checklist
+
+Before Agent UI documents any generated Maestro, Detox, or Appium export as supported, build a minimal compiled fixture app and prove all of the following:
+
+- [ ] iOS and Android fixture screens render `Button`, `TextField`, `SecureField`, `Toggle`, `Slider`, `Scroll`, `List` row, and nested pressable text with stable `testID`, human `accessibilityLabel`, role/state/value props, and at least one duplicate/negative-control fixture.
+- [ ] Maestro can `assertVisible` and `tapOn` by `id` on both platforms using the semantic ID, and can still query visible text or accessibility label for human-facing assertions.
+- [ ] Detox can `element(by.id(id))` for all actionable fixtures on both platforms, and `by.label(label)` remains a label/accessibility assertion rather than the machine selector.
+- [ ] Appium XCUITest can locate the semantic ID without using user-facing labels, or the report keeps Appium iOS export marked `NEEDS_VERIFICATION`.
+- [ ] Appium UiAutomator2 can locate the semantic ID through `id` / resource-id without copying the ID into `accessibilityLabel`, or the report keeps Appium Android export marked `NEEDS_VERIFICATION`.
+- [ ] Secure fields never expose entered values in semantic snapshots, automation exports, DevTools payloads, failed assertions, or logs.
+- [ ] Nested accessibility containers behave correctly: actionable inner nodes remain targetable, and parent containers do not swallow touch/visibility in Maestro or Detox.
+- [ ] Virtualized/list rows expose stable IDs only for mounted or intentionally scrolled-to rows; exports do not assume every data item is mounted.
+- [ ] Failure fixtures produce structured messages that distinguish `ID_NOT_FOUND`, `DUPLICATE_ID`, `NOT_ACCESSIBLE`, and `PLATFORM_SELECTOR_UNSUPPORTED`.
+
 ## Flow Validation Strategy
 
 Agent UI should validate semantic flows in memory before any device automation exists. The core idea is to exercise the same contract the MCP server will expose, while using RNTL only to drive React Native-visible user interactions.
@@ -202,6 +236,20 @@ Known boundaries:
 
 - RNTL does not execute native code and does not assert against the native view hierarchy. Source: RNTL testing environment, https://callstack.github.io/react-native-testing-library/docs/advanced/testing-env, accessed 2026-04-27.
 - Native adapter behavior, platform-specific accessibility tree quirks, text input edge cases, and automation selector mapping still need compiled app checks later.
+
+## DevTools Plugin Payload Strategy
+
+Expo DevTools Plugins are suitable for a read-only v0 semantic inspector, but the public docs do not specify payload-size, message-rate, or backpressure limits. Therefore Agent UI should design the plugin protocol as a diagnostic stream, not as the authoritative control transport.
+
+Recommended payload contract:
+
+- Send a compact `semantic-summary:update` message on registry changes: tree revision, screen ID, node counts by role, duplicate ID count, missing label count, redaction count, and selected/current node IDs.
+- Send full trees only on explicit request from the plugin UI, and support `rootId`, `maxDepth`, `includeHidden`, and `includeBounds` options.
+- Prefer patches or subtree snapshots over whole-tree snapshots after the initial load.
+- Redact before sending to DevTools. The DevTools plugin should never receive data that the MCP bridge would redact.
+- Throttle frequent updates and coalesce repeated registry events into a single message per animation frame or configurable interval.
+- Keep command messages from the DevTools UI non-mutating in v0: select node, expand subtree, request diagnostics, and copy redacted JSON. Do not route `tap`, `input`, or destructive actions through DevTools.
+- Treat plugin disconnects as diagnostics-only loss. The semantic runtime and MCP bridge must not depend on the DevTools plugin being open.
 
 ## Deferred Integrations
 
@@ -239,6 +287,13 @@ Known boundaries:
 | Appium UiAutomator2 driver docs | https://github.com/appium/appium-uiautomator2-driver | 2026-04-27 | Android locator strategies, `accessibilityId` mapping, React Native `accessibilityLabel` note. |
 | Appium UiAutomator2 quickstart | https://appium.io/docs/en/3.3/quickstart/uiauto2-driver/ | 2026-04-27 | Appium server/driver setup and Android versus iOS/macOS requirement note. |
 | Callstack Rozenite announcement | https://www.callstack.com/blog/introducing-rozenite-a-plugin-framework-for-react-native-devtools | 2026-04-27 | Rozenite as a community React Native DevTools plugin framework and later optional integration. |
+| React Native View props | https://reactnative.dev/docs/view | 2026-04-29 | `testID` is for locating views in end-to-end tests; `id` and `nativeID` are native-class lookup props; all disable layout-only view removal. |
+| Maestro core selectors | https://docs.maestro.dev/reference/selectors/core-selectors | 2026-04-29 | `id` maps to Android Resource ID and iOS `accessibilityIdentifier`; `text` includes Android `contentDescription` and iOS `accessibilityLabel`; point selectors are coordinate fallback. |
+| Maestro React Native support | https://docs.maestro.dev/get-started/supported-platform/react-native | 2026-04-29 | React Native `testID` maps to Maestro `id`; visible text is easy but brittle; Expo Go launch differs from standalone/EAS builds. |
+| Detox matchers | https://wix.github.io/Detox/docs/api/matchers/ | 2026-04-29 | `by.id` maps to React Native `testID`; `by.label` maps to `accessibilityLabel` / Android content description; unique IDs are recommended over indexes. |
+| Appium XCUITest locator strategies | https://appium.github.io/appium-xcuitest-driver/9.10/reference/locator-strategies/ | 2026-04-29 | XCUITest `id`, `name`, and `accessibility id` locator strategies are synonyms transformed into search by the element `name` attribute. |
+| Appium UiAutomator2 driver docs | https://github.com/appium/appium-uiautomator2-driver | 2026-04-29 | Android `id` maps to native `By.res` resource name; `accessibilityId` maps to `By.desc` content description; in React Native, `accessibilityId` reflects `accessibilityLabel`. |
+| Expo DevTools plugin docs | https://docs.expo.dev/debugging/create-devtools-plugins/ | 2026-04-29 | Plugins run in a browser, connect to the Expo app, use `useDevToolsPluginClient`, `sendMessage`, and `addMessageListener`, and should export no-op functions outside debug mode. |
 
 ## Final Recommendation
 
@@ -249,5 +304,7 @@ For Stage 3 through Stage 5, Agent UI should make semantic correctness a headles
 - Stage 5 MCP Server: test JSON-RPC schemas, stdio transport, structured errors, redaction, and mocked app bridge behavior in Node.
 
 Use Expo DevTools Plugins for v0 live semantic inspection. Keep React Native DevTools core extension work, Rozenite, Maestro, Detox, and Appium as optional integrations after the semantic runtime and flow schema are stable. The engineering rule is: first prove semantic flows without a simulator; then export the same stable IDs and flow steps to native automation tools as opt-in verification.
+
+The native automation concern is now bounded: Maestro and Detox can be targeted through `testID`/`id` after fixture smoke tests, while Appium export remains post-v0 until compiled fixtures prove a cross-platform semantic ID locator that does not misuse `accessibilityLabel`.
 
 DONE_WITH_CONCERNS

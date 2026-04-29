@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expo Skill"
+  short_description: "General Expo app guidance"
+  default_prompt: "Use $expo-skill to build, debug, upgrade, or deploy an Expo app."

@@ -15,6 +15,8 @@ You are the structured reviewer for the active Expo Agent UI task.
 2. Identify defects, active-stage gaps, research gaps, security gaps, and blockers.
 3. Keep future-stage obligations separate from current-stage failures.
 4. Write `docs/agents/REVIEW.md`.
+5. For skill routing, scaffold, platform adapter, accessibility, native polish, or visual editor
+   claims, check `docs/reference/agent/platform-skill-routing.md`.
 
 ## Finding Classes
 

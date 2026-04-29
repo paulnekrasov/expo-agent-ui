@@ -47,6 +47,9 @@ against primary sources and must not rely on model memory.
   React Native DevTools, React Native Testing Library, Maestro, Detox, Appium, and flow validation.
 - `MEDIUM-03-security-privacy-agent-control.md`
   Development-only gates, local tool security, allowlisted actions, redaction, and secret exposure.
+- `MEDIUM-04-eas-native-preview-workflows.md`
+  EAS iOS artifact builds, runtime requirements, Android Compose preview, and multi-session native
+  adapter comparison.
 
 ### Low Priority
 

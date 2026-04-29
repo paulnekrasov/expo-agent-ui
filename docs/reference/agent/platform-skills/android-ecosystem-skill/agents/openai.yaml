@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android Ecosystem"
+  short_description: "Senior Android engineering guidance"
+  default_prompt: "Use $android-ecosystem-skill to review this Android architecture, Compose UI, or release workflow."

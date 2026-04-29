@@ -91,6 +91,11 @@ Status: Not started
 - [ ] Pin MCP SDK v1.x unless re-verified otherwise
 - [ ] Register only implemented tools
 - [ ] Add read-only resources for sessions, tree, screens, flows, diagnostics
+- [ ] Add read-only resources for repo-local platform skills
+- [ ] Add skill-context prompts for scaffold, accessibility review, visual editor notes, and task notes
+- [ ] Add read-only skill lookup tools: `listPlatformSkills`, `getPlatformSkill`,
+  `searchPlatformSkills`, `recommendPlatformSkills`
+- [ ] Keep skill-context tools separate from runtime-control tools and app-session requirements
 - [ ] Keep stdout protocol-clean
 - [ ] Add MCP schema tests
 
@@ -114,29 +119,40 @@ Status: Not started
 - [ ] Wrap `Host` behavior safely
 - [ ] Add fallback behavior for unsupported platforms
 - [ ] Keep `@expo/ui` optional peer
+- [ ] Document EAS iOS artifact build lane separately from live iOS runtime requirements
+- [ ] Keep Android Compose as a separate optional/future adapter path with capability flags
 - [ ] Add adapter tests
 
 ## Phase 8 - Agent Skill
 
 Product Stage: Stage 8 - Agent Skill
-Status: Not started
+Status: Not started; platform skill reference prework complete
 
 - [ ] Create `skills/expo-agent-ui/SKILL.md`
 - [ ] Add component reference
 - [ ] Add semantic ID reference
 - [ ] Add MCP/tool reference
+- [x] Add platform skill MCP surface specification
+- [x] Add on-demand platform skill routing reference
+- [x] Add repo-local platform skill copy index
+- [x] Add repo-local systematic debugging adapter for cross-stage failures and blocked verification
+- [x] Add scaffold mode notes for cross-platform, iOS-enhanced, and Android-enhanced apps
+- [x] Refactor scheduled automation loop prompt for the full Expo Agent UI lifecycle
 - [ ] Add flow examples
 - [ ] Add validation script
 
-## Phase 9 - Flow Runner And Patch Proposals
+## Phase 9 - Flow Runner, Patch Proposals, And Native Preview Comparison
 
-Product Stage: Stage 9 - Flow Runner And Patch Proposals
+Product Stage: Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison
 Status: Not started
 
 - [ ] Define flow schema
 - [ ] Implement local flow runner
 - [ ] Add assertions and wait conditions
 - [ ] Define patch proposal schema
+- [ ] Define multi-session runtime metadata for future visual editor comparison
+- [ ] Define side-by-side iOS SwiftUI / Android Compose comparison constraints
+- [ ] Keep the visual editor development-only, semantic-first, and redaction-gated
 - [ ] Keep automatic source patching deferred
 
 ## Phase 10 - Publish Readiness

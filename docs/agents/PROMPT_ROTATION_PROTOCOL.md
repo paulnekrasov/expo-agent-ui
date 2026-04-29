@@ -60,6 +60,11 @@ Do not rotate just because another scheduled run started.
    - write a fresh `RUNTIME_STATUS.md`.
 7. Generate new `ACTIVE_*.md` prompts only for the active bounded task.
 
+Use `docs/reference/agent/platform-skills/context-prompt-engineering/SKILL.md` when rewriting
+stable workflow prompts or runtime prompts. Use
+`docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the rotation is caused by
+a bug, failing command, blocked verification, or runner environment failure.
+
 ## Runtime Prompt Quality Bar
 
 Each active runtime prompt must include:
@@ -71,6 +76,7 @@ Each active runtime prompt must include:
 - file allowlist,
 - required docs to read,
 - verification commands,
+- debugging skill to load before fixing failures,
 - required final status token.
 
 ## Deletion Safety Rule

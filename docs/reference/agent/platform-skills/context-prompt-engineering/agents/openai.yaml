@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prompt & Context Engineering"
+  short_description: "Design and harden prompts, skills, and context"
+  default_prompt: "Use $context-prompt-engineering to improve this prompt, system message, or SKILL.md for reliability and safety."

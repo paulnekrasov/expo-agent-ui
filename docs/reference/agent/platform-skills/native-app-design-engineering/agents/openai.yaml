@@ -1,0 +1,4 @@
+interface:
+  display_name: "Native App Design Engineering"
+  short_description: "Native mobile motion and polish guide"
+  default_prompt: "Use $native-app-design-engineering to refine native SwiftUI or Jetpack Compose interactions, motion, haptics, and visual polish."

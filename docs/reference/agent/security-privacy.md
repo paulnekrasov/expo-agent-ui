@@ -5,6 +5,7 @@
 - Agent UI control tools must be development-only by default. Expo documents that `npx expo start` runs development mode by default, while published updates and standalone apps run production mode; production mode sets Metro's `__DEV__` to `false` (Expo development/production modes, access date 2026-04-27).
 - The runtime should fail closed unless `__DEV__ === true` and Expo `Constants.executionEnvironment` is not `ExecutionEnvironment.Standalone`; Expo defines `Standalone` as a production/release build and `StoreClient` as Expo Go or a development build with `expo-dev-client` (Expo Constants, access date 2026-04-27).
 - The v0 bridge should be local-only, token-paired, and capability-scoped. Bind the local tool server to loopback by default, reject unauthenticated clients, and require a new short-lived pairing token per CLI session.
+- Physical-device bridge support must not be implicit. V0 should support simulator/emulator loopback and Android `adb reverse` as preferred development modes; LAN or tunnel modes require explicit opt-in, warnings, pairing, TTL, redaction, and audit logging.
 - WebSocket and HTTP bridges must treat browser-originated requests as hostile unless explicitly allowlisted. OWASP says WebSockets do not have built-in authentication and browsers include cookies in WebSocket handshakes, creating CSWSH risk; every handshake needs explicit `Origin` validation (OWASP WebSocket Security Cheat Sheet, access date 2026-04-27).
 - Semantic snapshots must redact secrets before they leave the app runtime. React Native `TextInput.secureTextEntry` obscures sensitive text such as passwords; Agent UI must mirror that behavior in semantic metadata (React Native TextInput, access date 2026-04-27).
 - Route params, logs, errors, labels, and user-entered text are data, not instructions. OWASP LLM01:2025 defines indirect prompt injection as model input from external sources that changes model behavior; app-provided semantic text is an external source from the agent's perspective (OWASP LLM01, access date 2026-04-27).
@@ -91,8 +92,24 @@ Localhost vs LAN binding:
 
 - Default server bind address: `127.0.0.1`.
 - Default client posture: local simulator/emulator first.
-- Physical device support is harder because the app cannot reach the developer machine through loopback. Preferred options are platform tunnels such as `adb reverse` for Android emulator/device or explicit LAN mode with pairing token and warnings. NEEDS_VERIFICATION: the exact iOS physical-device tunnel story should be researched during Stage 4 implementation.
+- Android Emulator can reach the developer machine loopback through `10.0.2.2`; Android's emulator docs define that address as a special alias to host loopback. Source: Android Emulator network address space, https://developer.android.com/studio/run/emulator-networking-address, accessed 2026-04-29.
+- Android connected devices can use `adb reverse` to expose a device-local TCP port back to a host-local TCP port; the ADB man page documents `reverse --list`, `reverse REMOTE LOCAL`, `--remove`, and `--remove-all`. Source: ADB man page, https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md, accessed 2026-04-29.
+- Expo CLI serves projects over LAN by default, supports localhost-only with `npx expo start --localhost`, and supports public tunnel URLs with `npx expo start --tunnel`. Expo also warns that tunnel URLs are public and slower, with entropy as mitigation. Source: Expo CLI docs, https://docs.expo.dev/more/expo-cli/, accessed 2026-04-29.
+- iOS physical-device LAN bridge behavior is affected by local network privacy. Apple says apps that access the local network need `NSLocalNetworkUsageDescription`, and Bonjour browsing/registration needs `NSBonjourServices`; the first local network operation prompts the user and stores an allow/deny decision. Source: Apple TN3179, https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy, accessed 2026-04-29.
+- Physical device support is harder because the app cannot assume host loopback. Preferred v0 options are Android `adb reverse` when an ADB transport is available, or explicit LAN/tunnel modes with pairing token and warnings. iOS physical devices need implementation-time proof of the chosen LAN, Bonjour, or tunnel path before the docs promise first-class support.
 - LAN mode must never be implicit. Require an explicit flag, show the bound host/port, print warnings, and keep token/auth/origin checks enabled.
+
+Transport mode matrix:
+
+| Mode | App connection target | Server bind | Security posture | V0 recommendation |
+|---|---|---|---|---|
+| Local Node tests | In-process mock bridge | None or loopback-only | Safe headless test lane; no network exposure. | Required for unit/integration tests. |
+| iOS Simulator on macOS | Implementation-selected localhost or host URL consistent with Expo/Metro behavior | `127.0.0.1` unless Expo/Metro requires another host | Simulator-only; still require `__DEV__` and pairing token if the bridge socket is live. | Support after Stage 4 smoke test; do not generalize to physical iOS. |
+| Android Emulator | Prefer `10.0.2.2:<port>` for host loopback, or `adb reverse` when configured | `127.0.0.1` | Safer than LAN because the server can remain loopback-bound. | Required v0 emulator lane. |
+| Android physical over USB/ADB | `localhost:<remotePort>` on device via `adb reverse tcp:<remotePort> tcp:<localPort>` | `127.0.0.1` | Preferred physical Android lane because the host server stays loopback-bound and the channel is tied to an ADB transport. | Optional v0 if CLI can configure/remove reverse safely; otherwise Stage 4 follow-up. |
+| Expo LAN / host-derived URL | Developer machine LAN IP and bridge port | Explicit LAN bind, not default | Exposes service on local network; requires unsafe flag, token, TTL, origin checks where applicable, and audit logs. | Not default. Use only with `--unsafe-lan`-style opt-in. |
+| Expo tunnel / public proxy | Public tunnel URL | Tunnel provider endpoint plus local forward | Broader exposure than LAN; Expo notes public tunnel URLs are reachable from any networked device. | Avoid for semantic control v0 unless a separate authenticated tunnel design is reviewed. |
+| iOS physical over LAN | Developer machine LAN host/port, possibly Bonjour-discovered | Explicit LAN bind | Requires Apple local network permission, Info.plist usage string, possible Bonjour service list, user approval, token pairing, and warnings. | Post-v0 or explicit unsafe LAN preview until verified. |
 
 CORS/origin checks:
 
@@ -112,6 +129,14 @@ Audit logging:
 - Log: bridge start/stop, bind address, app session id, device/platform, connection accepted/rejected, origin, auth result, tool name, node id, action result code, duration, and confirmation decisions.
 - Do not log: pairing tokens, Authorization headers, secure input values, redacted values before redaction, complete semantic-tree payloads, full route params, or raw server errors that may contain secrets.
 - React Native security guidance warns that sensitive info can be unintentionally exposed through persisted state or monitoring services; Agent UI logs should use the same caution (React Native Security, access date 2026-04-27).
+
+Physical-device gate:
+
+- The CLI must classify transport mode before the app connects: `headless`, `simulator-loopback`, `android-emulator`, `android-adb-reverse`, `lan`, or `tunnel`.
+- `lan` and `tunnel` modes require an explicit unsafe flag, visible terminal warning, short TTL, pairing token, redaction enabled, and an audit-log entry naming the bind address and remote address.
+- Android `adb reverse` setup must be device-scoped and removable. On shutdown, the CLI should remove the reverse mapping it created.
+- iOS physical-device support must not rely on silent local-network access. If LAN or Bonjour is used, the docs and config plugin must include `NSLocalNetworkUsageDescription`; Bonjour discovery also needs `NSBonjourServices`.
+- If the app cannot prove the bridge session is development-only, token-authenticated, and redaction-enabled, it must refuse tool execution even if the socket connects.
 
 ## Semantic Redaction Policy
 
@@ -235,6 +260,11 @@ Required handling:
 - [ ] Expo Go, dev client, and bare debug modes are documented separately.
 - [ ] Local server binds to `127.0.0.1` by default.
 - [ ] LAN binding requires an explicit unsafe flag, visible warning, and pairing token.
+- [ ] Transport mode is classified before connection: headless, simulator-loopback, Android emulator, Android ADB reverse, LAN, or tunnel.
+- [ ] Android emulator support uses `10.0.2.2` or ADB reverse without exposing the host bridge on LAN.
+- [ ] Android physical-device support prefers `adb reverse` and removes the reverse mapping on shutdown.
+- [ ] iOS physical-device LAN support is disabled until Info.plist local-network usage text, user permission behavior, and host discovery are verified.
+- [ ] Tunnel mode is disabled for semantic control unless a separate authenticated tunnel design is reviewed.
 - [ ] Every bridge session requires a high-entropy, short-lived pairing token.
 - [ ] Tokens are never logged and are not placed in URL query strings where headers or authenticated handshakes are available.
 - [ ] WebSocket upgrade validates `Origin` against an explicit allowlist.
@@ -266,6 +296,10 @@ Required handling:
 | OWASP Cheat Sheet Series: LLM Prompt Injection Prevention | https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html | 2026-04-27 | Prompt injection arises from mixing natural-language instructions and data; mitigations include structured prompts, clear separation, HITL controls, least privilege, and monitoring. |
 | Model Context Protocol: Security Best Practices | https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices | 2026-04-27 | Token passthrough anti-pattern, session hijacking risks, verifying inbound requests, secure non-deterministic session IDs, and not using sessions as authentication. |
 | Model Context Protocol: Authorization | https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization | 2026-04-27 | Authorization header usage, no access tokens in query strings, token validation, 401/403/400 error handling, token expiration/rotation, HTTPS for authorization endpoints, and localhost/HTTPS redirect URI constraints. |
+| Android Emulator network address space | https://developer.android.com/studio/run/emulator-networking-address | 2026-04-29 | Android Emulator uses `10.0.2.2` as a special alias to the host loopback interface and real devices have different network behavior. |
+| Android Debug Bridge man page | https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md | 2026-04-29 | `adb reverse` lists, creates, and removes reverse socket connections from device to host. |
+| Expo CLI documentation | https://docs.expo.dev/more/expo-cli/ | 2026-04-29 | `npx expo start` serves over LAN by default, supports `--localhost`, supports `--tunnel`, and documents public tunnel drawbacks. |
+| Apple TN3179: Understanding local network privacy | https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy | 2026-04-29 | iOS local network access prompts the user, requires `NSLocalNetworkUsageDescription`, and Bonjour browsing/registration requires `NSBonjourServices`. |
 | Existing project report: MCP Transport Architecture | docs/reference/agent/mcp-transport-architecture.md | 2026-04-27 | Local stdio MCP plus app-to-local-server WebSocket is the current high-priority bridge recommendation; security defaults remained open for this report. |
 | Rebuild plan: Expo Agent UI | docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md | 2026-04-27 | Product constraints: development-only agent control, local/free semantic bridge, no cloud requirement for v0, and redaction before MCP exposure. |
 
@@ -275,6 +309,6 @@ Stage 4 should implement a development-only local bridge with a fail-closed runt
 
 Stage 5 should wrap that bridge in a local stdio MCP server with static tool schemas, no token passthrough, no app-defined tools, structured errors, privacy-preserving audit logs, and agent instructions that treat all app-provided semantic text as untrusted data. Use OAuth-style MCP authorization only if the MCP server becomes HTTP-accessible or shared beyond the local developer process.
 
-Status: proceed with Stage 4/5 design only if the v0 checklist is accepted as release-blocking. The main unresolved concern is physical-device transport: simulator loopback is straightforward, but iOS/Android device-to-host setup needs a verified secure tunnel or explicit unsafe LAN mode before implementation.
+Status: proceed with Stage 4/5 design only if the v0 checklist is accepted as release-blocking. The physical-device concern is now bounded: Android emulator and Android ADB reverse are acceptable implementation lanes that keep the bridge loopback-bound; LAN and tunnel modes remain explicit unsafe modes; iOS physical-device bridge support remains an implementation-time verification gate because of local-network permission and host-discovery behavior.
 
 DONE_WITH_CONCERNS

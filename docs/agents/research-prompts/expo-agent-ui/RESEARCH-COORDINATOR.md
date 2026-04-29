@@ -32,6 +32,7 @@ Research sequence:
    - `MEDIUM-01-navigation-adapters.md`
    - `MEDIUM-02-testing-devtools-automation.md`
    - `MEDIUM-03-security-privacy-agent-control.md`
+   - `MEDIUM-04-eas-native-preview-workflows.md`
 4. Review medium-priority outputs for contradictions, missing citations, and blockers.
 5. Run low-priority prompts only after high and medium are captured:
    - `LOW-01-cross-platform-adapters.md`
@@ -116,4 +117,3 @@ DONE_WITH_CONCERNS
 NEEDS_CONTEXT
 BLOCKED
 ```
-

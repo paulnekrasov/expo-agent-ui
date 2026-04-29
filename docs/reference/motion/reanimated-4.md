@@ -1,237 +1,228 @@
 # Reanimated Motion Layer Research
 
 ## Executive Summary
-- Build Agent UI motion on Reanimated 4 primitives, not a custom animation engine.
-- Target Expo's bundled `react-native-reanimated` first: current Expo latest documents bundled version `4.2.1` and install via `npx expo install react-native-reanimated react-native-worklets`.
-- Keep package peer ranges flexible enough for upstream `react-native-reanimated@4.3.0`, but do not assume Expo latest has adopted it until Expo package metadata says so.
-- Treat `react-native-worklets` as a required Reanimated 4 dependency. Expo managed apps get Babel plugin configuration from `babel-preset-expo`; bare/community CLI apps must configure the Worklets plugin explicitly and keep it last.
-- Default to `useSharedValue`, `useAnimatedStyle`, `withSpring`, `withTiming`, layout transitions, and entering/exiting animations.
-- Use `react-native-gesture-handler` for gesture-driven motion. Wrap the app with `GestureHandlerRootView`, and use `Gesture`/`GestureDetector` or the newer hook APIs according to the installed RNGH major.
-- Honor reduced motion everywhere. Use Reanimated `ReduceMotion.System` by default and expose an Agent UI override.
-- Prefer `opacity` and `transform` for default transitions. Use layout transitions only for small, bounded layout changes.
-- Emit semantic animation events from JS-owned wrappers and Reanimated callbacks; do not promise per-frame telemetry.
-- Defer shared element transitions, advanced physics parity with SwiftUI, and automated motion debugging until after v0.
+- Agent UI should build motion on Reanimated 4, not a custom animation engine.
+- Expo latest documents `react-native-reanimated` bundled version `4.2.1` and install command `npx expo install react-native-reanimated react-native-worklets`.
+- Expo latest documents `react-native-gesture-handler` bundled version `~2.30.0` and install command `npx expo install react-native-gesture-handler`.
+- npm currently reports `react-native-reanimated@4.3.0`, `react-native-worklets@0.8.1`, and `react-native-gesture-handler@2.31.1`. These npm latest values are compatibility facts, not the Expo-managed baseline.
+- Reanimated 4 requires React Native New Architecture/Fabric. Old Architecture support should not be part of Agent UI v0; document Reanimated 3 as a non-v0 compatibility lane if needed.
+- Expo-managed setup and bare/community setup differ. Expo uses `babel-preset-expo` for the Worklets plugin path; React Native Community CLI must add `react-native-worklets/plugin` manually and keep it last.
+- Treat `react-native-worklets` as a required companion dependency for Reanimated 4.
+- Default presets should use Reanimated `withSpring`, `withTiming`, entering/exiting builders, and layout transitions with `ReduceMotion.System`.
+- Gesture-driven motion should use React Native Gesture Handler only for true gestures; normal semantic buttons should keep React Native press semantics.
+- No unresolved research blocker remains. Remaining concerns are implementation compatibility lanes, device testing, and tuning.
 
 ## Version And Install Matrix
 
 | Package | Current version / range | Required install step | Expo managed behavior | Bare workflow behavior | Source URL |
 |---|---|---|---|---|---|
-| `react-native-reanimated` | Expo latest bundled: `4.2.1`; npm latest checked locally: `4.3.0` with peer `react-native: 0.81 - 0.85` and `react-native-worklets: 0.8.x` | `npx expo install react-native-reanimated react-native-worklets` in Expo; npm/yarn equivalent outside Expo | Included in Expo Go per Expo docs; no extra Babel config required with `babel-preset-expo` | Must satisfy React Native New Architecture/Fabric for Reanimated 4; rebuild native app | [Expo Reanimated SDK](https://docs.expo.dev/versions/latest/sdk/reanimated/), [Reanimated compatibility](https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/), npm package metadata checked 2026-04-27 |
-| `react-native-worklets` | npm latest checked locally: `0.8.1`; Reanimated compatibility docs map Reanimated `4.2.x` to Worklets `0.7.x`/`0.8.x`, `4.3.x` to `0.8.x` | Install alongside Reanimated | Expo docs require installing it with Reanimated; Babel plugin is auto-configured by Expo | Add `react-native-worklets/plugin` to `babel.config.js`, listed last, when using React Native Community CLI | [Expo Reanimated SDK](https://docs.expo.dev/versions/latest/sdk/reanimated/), [Reanimated getting started](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/), [Worklets Babel plugin](https://docs.swmansion.com/react-native-worklets/docs/worklets-babel-plugin/about/) |
-| `react-native-gesture-handler` | Expo latest bundled: `~2.30.0`; npm latest checked locally: `2.31.1` | `npx expo install react-native-gesture-handler` | Included in Expo Go; still needs app-root `GestureHandlerRootView` for gesture recognition | Install package, wrap roots/screens, run prebuild/pods for native builds | [Expo Gesture Handler SDK](https://docs.expo.dev/versions/latest/sdk/gesture-handler/), [RNGH installation](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/installation/) |
-| Metro / Babel config | Expo managed: use Expo defaults; custom/bare: verify Babel and bundler config | No Agent UI-specific Metro config for v0; ensure Worklets Babel plugin path is correct where Expo does not supply it | Expo says no additional Reanimated configuration is required after install because `babel-preset-expo` configures the plugin | Community CLI must list `react-native-worklets/plugin` last; custom web bundlers may need extra Babel setup | [Expo Reanimated SDK](https://docs.expo.dev/versions/latest/sdk/reanimated/), [Reanimated getting started](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/) |
-| `@babel/plugin-proposal-export-namespace-from` | Only relevant to some web setups outside Expo | Add to Babel config for Reanimated web when not using Expo defaults | Expo is the recommended web path in upstream docs | Needed in non-Expo web builds before the Worklets plugin | [Reanimated getting started](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/), [Reanimated web support](https://docs.swmansion.com/react-native-reanimated/docs/guides/web-support/) |
+| `react-native-reanimated` | Expo bundled: `4.2.1`. npm latest: `4.3.0`. npm peer range for `4.3.0`: React Native `0.81 - 0.85`, Worklets `0.8.x`. | Expo: `npx expo install react-native-reanimated react-native-worklets`. | Expo docs say Reanimated is included in Expo Go and no additional Babel configuration is required because `babel-preset-expo` configures the plugin. | Reanimated 4 requires New Architecture/Fabric. Native dependency changes require rebuild/prebuild/pods as applicable. | https://docs.expo.dev/versions/latest/sdk/reanimated/ |
+| `react-native-worklets` | npm latest: `0.8.1`. Reanimated compatibility docs map Reanimated `4.2.x` to Worklets `0.7.x` or `0.8.x`, and Reanimated `4.3.x` to Worklets `0.8.x`. | Install alongside Reanimated. | Expo install command includes Worklets; Expo starter templates include the Worklets Babel plugin path through Expo defaults. | React Native Community CLI must add `react-native-worklets/plugin` to Babel config and list it last. | https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/ |
+| `react-native-gesture-handler` | Expo bundled: `~2.30.0`. npm latest: `2.31.1`; npm `next`: `3.0.0-beta.3`. | `npx expo install react-native-gesture-handler`. | Included in Expo Go. App roots that use gesture handlers should be wrapped in `GestureHandlerRootView`. | Install package, wrap root, rebuild native app when native dependencies change. | https://docs.expo.dev/versions/latest/sdk/gesture-handler/ |
+| `@babel/plugin-proposal-export-namespace-from` | Web-only companion for non-Expo web builds. | Add before `react-native-worklets/plugin` only for React Native Web setups that need it. | Expo is the recommended Reanimated web path; no Agent UI-specific Metro change is needed for v0. | Non-Expo web builds may need explicit Babel configuration. | https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/ |
+| `@agent-ui/expo` motion layer | New project package, no published version yet. | Depend on Reanimated through peer/Expo install guidance, not by vendoring an animation engine. | Document Expo-managed install first and test against Expo SDK 55 package versions. | Document bare setup separately and fail diagnostics when Worklets/Babel/New Architecture requirements are not met. | docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md |
 
 ## Core API Findings
 
 ### `useSharedValue`
 
-- Purpose: create the shared mutable values that drive Reanimated animations.
-- Minimal example shape: `const width = useSharedValue(100); width.value = withSpring(nextWidth);`.
-- Constraints: always read/write through `.value`; the animated value category must match the destination category.
-- Agent UI use case: internal state for opacity, scale, translation, gesture offsets, and progress values.
-- Source URL: [Your First Animation](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/your-first-animation/) accessed 2026-04-27.
+- Purpose: create mutable shared values used by Reanimated animations on the UI thread.
+- Minimal example shape: a shared value is initialized, then assigned an animation object such as `withSpring(nextValue)`.
+- Constraints: shared values are read and written through `.value`; animated value categories must stay compatible.
+- Agent UI use case: opacity, scale, translation, gesture offset, progress, and internal transition phase.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/your-first-animation/
 
 ### `useAnimatedStyle`
 
-- Purpose: derive animated style objects from shared values and React state.
-- Minimal example shape: `useAnimatedStyle(() => ({ opacity: visible.value ? 1 : 0 }))`.
-- Constraints: pass returned styles only to `Animated` components; do not mutate shared values inside the callback; animated styles override static styles by last update, not array order.
-- Agent UI use case: SwiftUI-style view modifiers that map to transforms, opacity, and bounded style updates.
-- Source URL: [useAnimatedStyle](https://docs.swmansion.com/react-native-reanimated/docs/core/useAnimatedStyle/) accessed 2026-04-27.
+- Purpose: derive animated style objects from shared values.
+- Minimal example shape: return style fields such as opacity or transform from a callback and pass the result to an `Animated` component.
+- Constraints: use returned styles only with animated components; do not mutate shared values inside the style callback; animated styles override static styles by last update.
+- Agent UI use case: implement SwiftUI-style modifiers for performant opacity and transform animations.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/core/useAnimatedStyle/
 
 ### `withSpring`
 
-- Purpose: spring animation object for shared values and animated styles.
-- Minimal example shape: `sv.value = withSpring(toValue, { damping, stiffness, reduceMotion: ReduceMotion.System }, callback)`.
-- Constraints: physics config (`stiffness`/`damping`) and duration config (`duration`/`dampingRatio`) are mutually exclusive; callback runs on the UI thread and receives interruption state.
-- Agent UI use case: `motion.spring`, `motion.bouncy`, `motion.snappy`, gesture settle animations.
-- Source URL: [withSpring](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/) accessed 2026-04-27.
+- Purpose: create spring animation objects.
+- Minimal example shape: assign `withSpring(toValue, config, callback)` to a shared value.
+- Constraints: physics config (`stiffness`, `damping`) and duration config (`duration`, `dampingRatio`) are mutually exclusive families; the callback runs on the UI thread and receives `false` if cancelled; `reduceMotion` is available.
+- Agent UI use case: `motion.spring`, `motion.bouncy`, `motion.snappy`, gesture settle animations, and opt-in spring layout transitions.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/
 
 ### `withTiming`
 
-- Purpose: deterministic duration/easing animation.
-- Minimal example shape: `sv.value = withTiming(toValue, { duration: 300, easing: Easing.inOut(Easing.quad), reduceMotion: ReduceMotion.System }, callback)`.
-- Constraints: default duration is 300 ms; callback receives `false` if cancelled.
-- Agent UI use case: `motion.easeInOut`, opacity transitions, reduced-motion short fades when allowed.
-- Source URL: [withTiming](https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/) accessed 2026-04-27.
+- Purpose: create deterministic duration/easing animations.
+- Minimal example shape: assign `withTiming(toValue, { duration, easing, reduceMotion }, callback)` to a shared value.
+- Constraints: callback receives cancellation state; use for predictable fades and simple transforms rather than physics.
+- Agent UI use case: `motion.easeInOut`, opacity transitions, compact state changes, and reduced fallback fades where product policy allows them.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/
 
 ### `withSequence`
 
-- Purpose: run animation objects sequentially.
-- Minimal example shape: `sv.value = withSequence(ReduceMotion.System, withTiming(50), withTiming(0))`.
-- Constraints: pass reduced-motion behavior explicitly when used; avoid defaulting v0 UI to playful multi-step effects.
-- Agent UI use case: rare feedback pulses and validation shakes, not primary navigation or form motion.
-- Source URL: [withSequence](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSequence/) accessed 2026-04-27.
+- Purpose: run animation objects one after another.
+- Minimal example shape: sequence two or more timing/spring animation objects, optionally passing reduced-motion behavior.
+- Constraints: avoid defaulting core UI to multi-step effects; explicit reduced-motion behavior is needed.
+- Agent UI use case: rare validation feedback or small interaction accents, not primary screen transitions.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/animations/withSequence/
 
 ### `withDelay`
 
-- Purpose: delay an animation start.
-- Minimal example shape: `sv.value = withDelay(120, withTiming(1), ReduceMotion.System)`.
-- Constraints: delayed animation still needs reduced-motion handling; delays can make semantic state appear stale.
-- Agent UI use case: staggered decorative entrance only when disabled by reduced motion and not needed for tool reliability.
-- Source URL: [withDelay](https://docs.swmansion.com/react-native-reanimated/docs/animations/withDelay/) accessed 2026-04-27.
+- Purpose: delay the start of an animation.
+- Minimal example shape: wrap a timing or spring animation with a delay value and reduced-motion behavior.
+- Constraints: delayed animations can make semantic state look stale; do not use delayed motion for agent-critical feedback.
+- Agent UI use case: optional decorative staggering after semantic state is already committed.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/animations/withDelay/
 
 ### `useDerivedValue`
 
-- Purpose: create readonly reactive shared values from other shared values or state.
-- Minimal example shape: `const derived = useDerivedValue(() => progress.value * 50);`.
-- Constraints: returned value is readonly for normal use; dependencies are mainly relevant for web without Babel plugin.
-- Agent UI use case: computed progress, clamped gesture state, and derived semantic animation phase.
-- Source URL: [useDerivedValue](https://docs.swmansion.com/react-native-reanimated/docs/core/useDerivedValue/) accessed 2026-04-27.
+- Purpose: derive readonly shared values from other shared values or React state.
+- Minimal example shape: compute derived progress or clamped values from an existing shared value.
+- Constraints: derived values should be treated as readonly for normal use; web dependency arrays matter mainly without the Babel plugin.
+- Agent UI use case: computed gesture phase, clamped progress, and coarse semantic motion state.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/core/useDerivedValue/
 
-### `runOnJS` / JS scheduling
+### `runOnJS` and JS scheduling
 
-- Purpose: call JS-thread functions from UI-thread worklets, usually for state updates or completion events.
-- Minimal example shape: `runOnJS(onComplete)(finished)`.
-- Constraints: Worklets docs mark `runOnJS` deprecated in favor of newer scheduling APIs, while Reanimated/RNGH integration still commonly references JS-thread callbacks. Keep this behind an internal adapter.
-- Agent UI use case: emit `animation_completed` or `gesture_committed` events from callbacks into the semantic registry.
-- Source URL: [React Native Worklets runOnJS](https://docs.swmansion.com/react-native-worklets/docs/threading/runOnJS/) accessed 2026-04-27.
+- Purpose: call JavaScript-thread callbacks from UI-thread worklets.
+- Minimal example shape: schedule a JS callback from a Reanimated completion or gesture handler.
+- Constraints: keep this behind an internal adapter because Worklets docs are moving toward newer scheduling APIs; never emit high-frequency per-frame semantic events.
+- Agent UI use case: send `animation_completed`, `animation_interrupted`, or `gesture_committed` events into the semantic registry.
+- Source URL: https://docs.swmansion.com/react-native-worklets/docs/threading/runOnJS/
 
 ### Layout transitions
 
-- Purpose: animate size and position changes caused by layout updates.
-- Minimal example shape: `<Animated.View layout={LinearTransition} />`.
-- Constraints: `LinearTransition`, `SequencedTransition`, `FadingTransition`, `JumpingTransition`, `CurvedTransition`, and `EntryExitTransition` expose duration, delay, `reduceMotion`, and callback modifiers; springified transitions cannot use easing modifiers.
-- Agent UI use case: `layoutTransition.smooth` for local stack/list item repositioning.
-- Source URL: [Layout transitions](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/) accessed 2026-04-27.
+- Purpose: animate size and position changes caused by React layout updates.
+- Minimal example shape: attach a layout transition builder such as `LinearTransition` to an `Animated` component.
+- Constraints: builders expose modifiers such as duration, delay, callback, and `reduceMotion`; springified transitions should not combine incompatible easing modifiers; list layout animation has single-column constraints.
+- Agent UI use case: `layoutTransition.smooth` for small, local stack/list/form changes.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/
 
 ### Entering and exiting animations
 
-- Purpose: animate elements when added to or removed from the view hierarchy.
-- Minimal example shape: `<Animated.View entering={FadeIn} exiting={FadeOut} />`.
-- Constraints: predefined animations expose modifiers such as duration, delay, reduce motion, initial values, and completion callbacks.
+- Purpose: animate components as they mount and unmount.
+- Minimal example shape: attach entering and exiting builders such as fade, slide, or zoom presets to an `Animated` component.
+- Constraints: do not use mount/unmount animation as the source of truth for semantic visibility; React state and semantic registry updates should lead.
 - Agent UI use case: `transition.opacity`, `transition.slide`, and `transition.scale`.
-- Source URL: [Entering/Exiting animations](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/) accessed 2026-04-27.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/
 
 ### Reduced motion APIs
 
-- Purpose: detect and honor the system reduced-motion preference.
-- Minimal example shape: `const reduceMotion = useReducedMotion();` or animation config `{ reduceMotion: ReduceMotion.System }`.
-- Constraints: `useReducedMotion` reads synchronously but does not rerender when the system setting changes; Reanimated defaults animations to `ReduceMotion.System`.
-- Agent UI use case: global Agent UI motion policy with per-animation system/default handling.
-- Source URL: [useReducedMotion](https://docs.swmansion.com/react-native-reanimated/docs/device/useReducedMotion/), [Reanimated accessibility](https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility/) accessed 2026-04-27.
+- Purpose: honor device reduced-motion accessibility settings.
+- Minimal example shape: set animation config `reduceMotion` to `ReduceMotion.System`, or read policy with `useReducedMotion`.
+- Constraints: Reanimated docs state animations default to `ReduceMotion.System`; `useReducedMotion` is synchronous and does not rerender on system setting changes.
+- Agent UI use case: central motion policy exposed to the semantic tree as enabled, reduced, or disabled.
+- Source URL: https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility/
 
 ## SwiftUI-Style Preset Mapping
 
 | Agent UI preset | Reanimated primitive | Recommended config | Reduced motion behavior | Caveats | Source URL |
 |---|---|---|---|---|---|
-| `motion.spring()` | `withSpring` | Duration spring: `{ duration: 420, dampingRatio: 1, reduceMotion: ReduceMotion.System }` for predictable SwiftUI-like default | System: snap to final value or use minimal opacity fade where appropriate | Not exact SwiftUI parity; expose override config | [withSpring](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/) |
-| `motion.bouncy()` | `withSpring` | Physics spring: `{ damping: 14, stiffness: 180, mass: 1, overshootClamping: false, reduceMotion: ReduceMotion.System }` | Disable bounce; snap/fade | Use sparingly for small controls, not navigation-critical flow | [withSpring](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/) |
-| `motion.snappy()` | `withSpring` or `withTiming` | Prefer duration spring `{ duration: 260, dampingRatio: 0.9, reduceMotion: ReduceMotion.System }` | Snap or reduce to <=100 ms opacity | Needs tuning against actual device feel | [withSpring](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/) |
-| `motion.easeInOut({ duration })` | `withTiming` | `{ duration: duration ?? 300, easing: Easing.inOut(Easing.quad), reduceMotion: ReduceMotion.System }` | Snap/fade; no long easing | Good for opacity and small transform transitions | [withTiming](https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/) |
-| `transition.opacity` | `FadeIn`/`FadeOut` or `withTiming(opacity)` | 150-250 ms timing; use entering/exiting for mount/unmount, shared value for persistent nodes | Usually allow very short fade only if product policy permits; otherwise snap | Must coordinate semantic visibility events with mount state | [Entering/Exiting animations](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/) |
-| `transition.slide` | `SlideIn*`/`SlideOut*` or translate transform with `withTiming`/`withSpring` | Translate on X/Y plus opacity, 250-350 ms | Remove translation; optional opacity only | Avoid conflicting with navigation library transitions | [Entering/Exiting animations](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/) |
-| `transition.scale` | `ZoomIn`/`ZoomOut` or transform scale | Scale 0.96 to 1 with opacity, 180-260 ms | Disable scale; optional opacity | Do not use large zooms as default accessibility-safe motion | [Entering/Exiting animations](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/) |
-| `layoutTransition.smooth` | `LinearTransition` or `FadingTransition`; springify only when bounded | `LinearTransition.duration(250).reduceMotion(ReduceMotion.System)` or `LinearTransition.springify().dampingRatio(1)` | Disable layout motion; final layout only | Layout transitions animate size/position, so limit to small local changes | [Layout transitions](https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/) |
+| `motion.spring()` | `withSpring` | Duration spring with critical damping, for example duration around 420 ms and `dampingRatio: 1`. | Use `ReduceMotion.System`; when reduced, reach final value immediately. | Taste mapping only, not exact SwiftUI parity. Allow overrides. | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/ |
+| `motion.bouncy()` | `withSpring` | Physics spring with lower damping and overshoot allowed for small controls. | Disable bounce under reduced motion; snap or short fade. | Use sparingly; not for navigation-critical flows. | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/ |
+| `motion.snappy()` | `withSpring` or `withTiming` | Short duration spring, for example 220-280 ms with modest underdamping, or timing for predictable UI. | Snap or reduce to a very short opacity-only change. | Requires device tuning. Do not market as SwiftUI-equivalent. | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/ |
+| `motion.easeInOut({ duration })` | `withTiming` | Timing with provided duration or default around 250-300 ms and an in-out easing curve. | Snap or use product-approved short fade. | Best for opacity and small transforms. | https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/ |
+| `transition.opacity` | Entering/exiting fade builders or shared-value opacity | 150-250 ms timing. | Usually snap; optional very short fade if policy allows. | Coordinate semantic visibility with mount state. | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/ |
+| `transition.slide` | Entering/exiting slide builders or transform translation | Translate on one axis with optional opacity, around 250-350 ms. | Remove translation; optional opacity only. | Avoid conflicting with navigation library transitions. | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/ |
+| `transition.scale` | Entering/exiting zoom builders or transform scale | Scale from near-final values such as 0.96 to 1, with optional opacity. | Disable scale under reduced motion. | Avoid large zooms as a default accessibility-safe effect. | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/ |
+| `layoutTransition.smooth` | `LinearTransition` or `FadingTransition`; optional springified variant | Default to duration around 250 ms and `ReduceMotion.System`. | Disable layout motion; commit final layout. | Keep to small, bounded local changes. | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/ |
 
 ## Layout Transition Strategy
 
-Use Reanimated layout transitions when the layout change is local, bounded, and predictable: expanding a small disclosure row, reordering a short stack, inserting/removing one form section, or moving a compact card within the same screen. Use `LinearTransition` for the v0 default, `FadingTransition` for safer cross-size changes, and expose springified variants only as opt-in.
+Use Reanimated layout transitions only for bounded local changes: expanding a small section, inserting or removing a compact row, reordering a short stack, or moving a card within the same screen. `LinearTransition` should be the v0 default because it is predictable. `FadingTransition` can be safer for size changes that would otherwise look jumpy. Springified layout transitions should be opt-in.
 
-Avoid layout transitions for whole-screen navigation, virtualized list churn, deeply nested forms, keyboard-driven relayout, and large scroll containers. Reanimated supports many layout/style properties, but layout animation can still create visual and semantic ambiguity when many nodes move at once. For `Animated.FlatList`, `itemLayoutAnimation` works only with single-column lists and cannot be used with `numColumns > 1`.
+Avoid layout transitions for full-screen navigation, keyboard-driven relayout, large virtualized lists, complex grid changes, and deep form rewrites. For lists, Reanimated's `itemLayoutAnimation` path has constraints, including single-column list caveats. Agent UI should keep list and form transitions conservative until example-app testing proves them.
 
-Entering/exiting strategy should be separate from layout strategy. Map Agent UI transition presets onto Reanimated entering/exiting builders for mount/unmount and shared-value styles for components that remain mounted. Agent UI should set semantic visibility and busy state from React state first, then emit animation events from callbacks.
+Entering and exiting animations should be mapped separately from layout transitions. Mount/unmount presets should use Reanimated entering/exiting builders, while persistent components should use shared values and animated styles. Semantic tree updates should come from React state first; animation callbacks only report lifecycle events.
 
 Semantic event hooks should be coarse:
-- `animation_started`: emitted by the JS wrapper before assigning the animation.
-- `animation_completed`: emitted from completion callbacks when `finished === true`.
-- `animation_interrupted`: emitted when completion callback reports cancellation/interruption.
-- `transition_committed`: emitted when React state has changed and final semantic tree is available.
 
-Do not emit per-frame semantic updates in v0.
+- `animation_started`: emitted by wrapper code before assigning the animation.
+- `animation_completed`: emitted when a completion callback reports success.
+- `animation_interrupted`: emitted when callback state reports cancellation.
+- `gesture_committed`: emitted after a gesture end condition chooses an action.
+- `transition_committed`: emitted after React state and semantic tree revision are updated.
+
+Do not emit per-frame semantic telemetry in v0.
 
 ## Gesture Strategy
 
-Install `react-native-gesture-handler` when Agent UI exposes drag, swipe, fling, or custom tap gesture helpers. Expo latest bundles `~2.30.0` and installs it with `npx expo install react-native-gesture-handler`. The app must be wrapped in `GestureHandlerRootView` as close to the root as possible so gestures and relations work under the same root.
+Required packages: use React Native Gesture Handler for pan, drag, fling, pinch, rotation, and composed gestures. Use Reanimated shared values inside gesture callbacks for UI-thread motion. Keep `react-native-gesture-handler` as an optional peer/adapter dependency unless Stage 2 primitives require complex gestures by default.
 
-For v0:
-- Tap/press: use React Native `Pressable` for normal buttons and semantic actions; use RNGH tap gestures only for custom composed gesture surfaces.
-- Drag: use `Gesture.Pan()`/`GestureDetector` or the installed RNGH hook API with Reanimated shared values for offset and velocity.
-- Swipe: use `ReanimatedSwipeable` for row actions only when that component fits the UI contract.
-- Gesture composition: use `Race`, `Simultaneous`, and `Exclusive` for explicit interactions such as drag-vs-long-press.
+Tap and press support should start with React Native `Pressable` for normal Agent UI controls. That keeps accessibility and semantic actions simple. Use Gesture Handler tap only for custom gesture surfaces where Pressable is insufficient.
 
-Integration with semantic actions:
-- Gesture start can emit `gesture_started`.
-- Gesture update should stay on the UI thread and not spam the semantic layer.
-- Gesture end should classify the result on the UI thread and use a JS bridge callback to dispatch `semanticAction` or `gesture_cancelled`.
-- Agent tool taps should call semantic actions directly; they should not synthesize coordinates unless falling back to external simulator tooling.
+Drag and swipe support should use `Gesture.Pan`, `GestureDetector`, and Reanimated shared values. Row swipe actions can use Gesture Handler/Reanimated components only after the semantic action model for swipe-reveal and destructive actions is explicit.
+
+Gesture integration with semantics:
+
+- Gesture start may emit a coarse `gesture_started` event.
+- Gesture updates stay on the UI thread and should not flood the semantic registry.
+- Gesture end classifies the outcome and dispatches a semantic action or cancellation event.
+- Agent tool actions should call semantic dispatch directly, not synthesize gesture coordinates unless using external simulator fallback tooling.
 
 Edge cases:
-- Do not mix Reanimated and React Native Animated inside the same gesture detector.
-- Memoize gesture configurations where docs recommend it.
-- Wrap modal content with `GestureHandlerRootView` on Android if gestures are needed inside modals.
-- Keep web `touchAction`/`userSelect` behavior explicit for draggable surfaces.
+
+- Wrap the app root in `GestureHandlerRootView` as close to the root as possible.
+- Add a `GestureHandlerRootView` inside Android modals when gestures are needed there.
+- Keep gesture composition explicit with race/simultaneous/exclusive relationships.
+- Treat web pointer behavior, text selection, and touch action as separate testing surfaces.
 
 ## Platform Caveats
 
-iOS: Reanimated and Gesture Handler are supported in Expo Go according to Expo docs. Bare iOS builds need pods after native dependency changes. Reduced motion must map to the iOS accessibility setting through Reanimated `ReduceMotion.System` or React Native `AccessibilityInfo`.
+iOS: Expo docs mark Reanimated and Gesture Handler as included in Expo Go. Bare iOS or development-build native changes require pods/rebuild. Reduced motion maps through Reanimated system policy and can also be checked through React Native accessibility APIs if needed.
 
-Android: Gesture Handler needs no extra Android setup in normal cases, but gestures inside modals need their own `GestureHandlerRootView`. Reanimated performance on New Architecture has documented caveats around scrolling and animated components; test sticky headers and scroll-bound effects on real Android devices.
+Android: Reanimated 4 requires New Architecture/Fabric. Gesture Handler works in standard Expo setup, but Android modals need their own `GestureHandlerRootView` when using gestures inside modal content. Test scroll-bound animations on real Android devices.
 
-Web: Reanimated 4 documents web support for many APIs, but non-Expo web builds may need Babel configuration such as `@babel/plugin-proposal-export-namespace-from` and Worklets plugin ordering. Agent UI should degrade web motion to timing/opacity/transform first.
+Web: Reanimated 4 documents web support for many APIs, but non-Expo web setups may need Babel plugin configuration. Agent UI web motion should start with opacity and transform timing transitions.
 
-Expo Go: Expo docs mark both Reanimated and Gesture Handler included in Expo Go. Still use `expo install` ranges and avoid requiring custom native modules for v0 motion.
+Expo Go: Reanimated and Gesture Handler are included in Expo Go according to Expo package docs. Agent UI v0 motion should not require a custom native module.
 
-Development builds: When native dependency versions change, run prebuild and rebuild the app. Gesture Handler docs call out prebuild for Expo development builds.
+Development builds: When native dependency versions change, rebuild the native app. Upstream Reanimated docs call out Expo prebuild and Community CLI Babel/pod setup.
 
-New Architecture: Reanimated 4 works only with React Native New Architecture/Fabric. Agent UI should document Reanimated 3 as a non-v0 fallback for old-architecture apps rather than supporting both in the first motion layer.
+New Architecture: Reanimated 4 is New Architecture only. Agent UI should make this a compatibility requirement for the Reanimated 4 motion layer.
 
-Low power and reduced motion: Reanimated reduced-motion defaults are system-aware, but Agent UI should centralize a motion policy so agents and tests can see whether animations are enabled, reduced, or disabled.
+Low-power and reduced motion: Reduced motion is the hard accessibility constraint. Low-power mode is not a Reanimated API contract; if Agent UI later reads battery/energy state, it should reduce decorative motion only as a product policy.
 
-Debugging: Expo notes Reanimated is incompatible with Remote JS Debugging for JavaScriptCore and recommends Hermes with the JavaScript Inspector. Do not make motion debugging depend on Chrome remote debugging.
+Debugging: Expo documents a Remote JS Debugging incompatibility for Reanimated with JavaScriptCore and recommends Hermes/JavaScript Inspector. Do not make motion debugging depend on Chrome remote debugging.
 
 ## Deferred Work
 
-- Shared element transitions: Reanimated marks shared element transitions as experimental; defer until core screen semantics and navigation adapters are stable.
-- Exact SwiftUI spring parity: Reanimated and SwiftUI use different configuration models; v0 should provide taste mappings and named presets only.
-- Per-frame semantic telemetry: too noisy and expensive for agent control; use start/completion/interruption events.
-- Complex keyframe authoring: useful later for rich examples but not necessary for v0 primitives.
-- Layout animation for complex virtualized grids: Reanimated list layout animation has single-column constraints.
-- Cross-navigation transition ownership: defer until Expo Router and React Navigation adapter boundaries are defined.
-- Automatic motion performance diagnostics: start with docs, presets, and examples; add profiling later.
+- Shared element transitions: Reanimated marks shared element transitions as experimental, so defer until navigation adapters are stable.
+- Exact SwiftUI spring parity: v0 should expose taste mappings, not claim identical SwiftUI dynamics.
+- Per-frame semantic telemetry: too noisy and expensive for agent control.
+- Complex keyframe authoring: useful for examples later, not required for v0.
+- Virtualized grid layout transitions: defer until list/grid semantics and performance tests exist.
+- Navigation transition ownership: defer until Expo Router and React Navigation adapters are designed.
+- Automatic motion performance diagnostics: start with presets, docs, tests, and examples.
 
 ## Source Index
 
 | Title | URL | Access date | Supported claim |
 |---|---|---|---|
-| Expo `react-native-reanimated` SDK docs | https://docs.expo.dev/versions/latest/sdk/reanimated/ | 2026-04-27 | Expo bundled Reanimated `4.2.1`, Expo install command, Worklets package install, automatic Babel plugin via `babel-preset-expo`, Expo Go support, remote debugging caveat |
-| Reanimated getting started | https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/ | 2026-04-27 | Reanimated 4 requires New Architecture, Worklets dependency, prebuild/native rebuild guidance, Worklets Babel plugin for community CLI, web Babel caveat |
-| Reanimated compatibility table | https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/ | 2026-04-27 | RN/Reanimated/Worklets version compatibility and New Architecture requirement |
-| Reanimated Your First Animation | https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/your-first-animation/ | 2026-04-27 | Shared values, `.value`, Animated components, `withSpring` basics |
-| Reanimated `useAnimatedStyle` | https://docs.swmansion.com/react-native-reanimated/docs/core/useAnimatedStyle/ | 2026-04-27 | Animated style purpose, constraints, animated component requirement |
-| Reanimated `useDerivedValue` | https://docs.swmansion.com/react-native-reanimated/docs/core/useDerivedValue/ | 2026-04-27 | Derived shared values and readonly behavior |
-| Reanimated `withSpring` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/ | 2026-04-27 | Spring config shape, reduced motion option, callback behavior |
-| Reanimated `withTiming` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/ | 2026-04-27 | Timing config, easing, reduced motion, callback cancellation |
-| Reanimated `withSequence` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSequence/ | 2026-04-27 | Sequenced animations and reduced-motion argument |
-| Reanimated `withDelay` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withDelay/ | 2026-04-27 | Delayed animations and reduced-motion argument |
-| Reanimated layout transitions | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/ | 2026-04-27 | Layout transition builders, modifiers, callbacks, reduceMotion |
-| Reanimated entering/exiting animations | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/ | 2026-04-27 | Entering/exiting animation builders and modifiers |
-| Reanimated list layout animations | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/list-layout-animations/ | 2026-04-27 | `itemLayoutAnimation` and single-column FlatList caveat |
-| Reanimated accessibility | https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility/ | 2026-04-27 | `ReduceMotion.System`, `Always`, `Never`, default system behavior |
-| Reanimated `useReducedMotion` | https://docs.swmansion.com/react-native-reanimated/docs/device/useReducedMotion/ | 2026-04-27 | Synchronous reduced-motion query and rerender caveat |
-| Reanimated supported style properties | https://docs.swmansion.com/react-native-reanimated/docs/guides/supported-properties/ | 2026-04-27 | Animatable style property support varies by platform |
-| Reanimated performance guide | https://docs.swmansion.com/react-native-reanimated/docs/guides/performance/ | 2026-04-27 | New Architecture performance caveats and scroll jitter guidance |
-| React Native Worklets `runOnJS` | https://docs.swmansion.com/react-native-worklets/docs/threading/runOnJS/ | 2026-04-27 | JS-thread callback bridge, deprecation note, callback constraints |
-| React Native Worklets Babel plugin | https://docs.swmansion.com/react-native-worklets/docs/worklets-babel-plugin/about/ | 2026-04-27 | Workletization, autoworkletization, plugin limits |
-| Expo `react-native-gesture-handler` SDK docs | https://docs.expo.dev/versions/latest/sdk/gesture-handler/ | 2026-04-27 | Expo bundled RNGH `~2.30.0`, Expo install command, Expo Go support |
-| RNGH installation | https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/installation/ | 2026-04-27 | `GestureHandlerRootView`, Expo install, prebuild, modal caveat, Reanimated + Worklets recommendation |
-| RNGH Reanimated integration | https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/reanimated-interactions/ | 2026-04-27 | UI-thread gesture callbacks, shared values in gesture config, runOnJS option |
-| RNGH Gesture API | https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture/ | 2026-04-27 | `Gesture`, `GestureDetector`, tap/pan/long press/fling/pinch/rotation and composition APIs |
-| React Native `AccessibilityInfo` | https://reactnative.dev/docs/accessibilityinfo | 2026-04-27 | Native reduced-motion access outside Reanimated |
-| npm package metadata | `npm view react-native-reanimated`, `npm view react-native-worklets`, `npm view react-native-gesture-handler` | 2026-04-27 | Latest package versions and peer dependency ranges at generation time |
+| Expo `react-native-reanimated` SDK docs | https://docs.expo.dev/versions/latest/sdk/reanimated/ | 2026-04-29 | Expo bundled Reanimated `4.2.1`, Expo install command, Worklets install, Expo Go support, automatic Babel plugin through `babel-preset-expo`, Remote JS Debugging caveat. |
+| Expo `react-native-gesture-handler` SDK docs | https://docs.expo.dev/versions/latest/sdk/gesture-handler/ | 2026-04-29 | Expo bundled Gesture Handler `~2.30.0`, Expo install command, platform support, Expo Go inclusion. |
+| Reanimated getting started | https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/ | 2026-04-29 | Reanimated 4 New Architecture requirement, Worklets dependency, Expo prebuild guidance, Community CLI Worklets Babel plugin, plugin ordering, web Babel caveat. |
+| Reanimated compatibility table | https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/ | 2026-04-29 | Reanimated 4 New Architecture only, supported React Native ranges by Reanimated minor, Worklets compatibility by minor. |
+| Reanimated `useSharedValue` and first animation docs | https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/your-first-animation/ | 2026-04-29 | Shared values, assignment of animation objects, `.value` usage. |
+| Reanimated `useAnimatedStyle` | https://docs.swmansion.com/react-native-reanimated/docs/core/useAnimatedStyle/ | 2026-04-29 | Animated style purpose and constraints. |
+| Reanimated `useDerivedValue` | https://docs.swmansion.com/react-native-reanimated/docs/core/useDerivedValue/ | 2026-04-29 | Derived shared values and readonly behavior. |
+| Reanimated `withSpring` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/ | 2026-04-29 | Spring config families, reduced-motion option, callback behavior, supported animatable values. |
+| Reanimated `withTiming` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withTiming/ | 2026-04-29 | Timing config, easing, reduced-motion option, callback cancellation. |
+| Reanimated `withSequence` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withSequence/ | 2026-04-29 | Sequenced animations and reduced-motion argument. |
+| Reanimated `withDelay` | https://docs.swmansion.com/react-native-reanimated/docs/animations/withDelay/ | 2026-04-29 | Delayed animations and reduced-motion argument. |
+| Reanimated layout transitions | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/layout-transitions/ | 2026-04-29 | Layout transition builders, modifiers, callbacks, reduce-motion support. |
+| Reanimated entering/exiting animations | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/entering-exiting-animations/ | 2026-04-29 | Entering/exiting animation builders and modifiers. |
+| Reanimated list layout animations | https://docs.swmansion.com/react-native-reanimated/docs/layout-animations/list-layout-animations/ | 2026-04-29 | `itemLayoutAnimation` list caveats. |
+| Reanimated accessibility | https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility/ | 2026-04-29 | `ReduceMotion.System`, `Always`, `Never`, default system behavior, immediate final-value behavior under reduced motion. |
+| Reanimated `useReducedMotion` | https://docs.swmansion.com/react-native-reanimated/docs/device/useReducedMotion/ | 2026-04-29 | Synchronous reduced-motion query and rerender caveat. |
+| React Native Worklets `runOnJS` | https://docs.swmansion.com/react-native-worklets/docs/threading/runOnJS/ | 2026-04-29 | JS-thread scheduling from UI-thread worklets and deprecation note. |
+| React Native Gesture Handler installation | https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/installation/ | 2026-04-29 | `GestureHandlerRootView`, Expo install/prebuild guidance, modal caveat, Reanimated/Worklets recommendation. |
+| Gesture Handler Reanimated integration | https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/reanimated-interactions/ | 2026-04-29 | Reanimated shared values inside gesture callbacks and JS callback bridge considerations. |
+| Gesture Handler gesture API | https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture/ | 2026-04-29 | `Gesture`, `GestureDetector`, tap, pan, long press, fling, pinch, rotation, and composition APIs. |
+| npm metadata for Reanimated, Worklets, Gesture Handler, and Expo | `npm view react-native-reanimated`, `npm view react-native-worklets`, `npm view react-native-gesture-handler`, `npm view expo` | 2026-04-29 | npm latest versions, dist-tags, peer dependencies, and current Expo latest version `55.0.18`. |
 
 ## Final Recommendation
 
-Stage 6 should implement a thin `packages/core/src/motion` layer over Reanimated 4 with:
+Stage 6 should implement a thin `packages/core/src/motion` layer over Reanimated 4. The package should expose SwiftUI-style names as taste presets over Reanimated primitives: spring, bouncy, snappy, ease-in-out, opacity/slide/scale transitions, and a conservative smooth layout transition. Every helper should default to `ReduceMotion.System` and report coarse semantic events only at start, completion, interruption, and gesture commit points.
 
-- `motion.spring`, `motion.bouncy`, `motion.snappy`, and `motion.easeInOut` returning typed Reanimated animation configs or helper functions.
-- transition helpers for opacity, slide, and scale using entering/exiting builders for mount/unmount and shared-value styles for mounted components.
-- `layoutTransition.smooth` mapped to `LinearTransition.duration(250).reduceMotion(ReduceMotion.System)` by default, with opt-in spring variants.
-- a global Agent UI motion policy that reads `useReducedMotion`, defaults all animations to `ReduceMotion.System`, and exposes disabled/reduced/enabled state to the semantic tree.
-- coarse semantic events from wrapper code and Reanimated callbacks: started, completed, interrupted, and gesture committed.
-- Gesture Handler integration as an optional peer path for drag/swipe/complex gestures, while ordinary semantic buttons keep React Native press semantics.
+The implementation should document two compatibility lanes. Expo-managed apps install through `npx expo install react-native-reanimated react-native-worklets` and rely on Expo's Babel preset. Bare/community apps must satisfy Reanimated 4 New Architecture requirements, install compatible Worklets, configure `react-native-worklets/plugin` last, and rebuild native dependencies. These lanes are not blockers; they are setup and doctor-check requirements.
 
-The main concerns are version skew and documentation split: Expo latest currently bundles Reanimated `4.2.1`, while npm latest is `4.3.0`; Expo managed setup says no additional Babel configuration is required, while upstream non-managed setup still requires explicit Worklets plugin handling. Agent UI should document Expo-managed install first and keep bare/community CLI setup as a separate compatibility lane.
-
-DONE_WITH_CONCERNS
+DONE

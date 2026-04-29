@@ -22,6 +22,8 @@ You implement Stage 2 React Native-first primitives.
 - `docs/reference/design/swiftui-layout-dna.md`
 - `docs/reference/design/ios-tokens.md`
 - `docs/reference/design/control-chrome.md`
+- `docs/reference/agent/platform-skill-routing.md` when the primitive task includes scaffold,
+  accessibility polish, React Native performance, or component API composition decisions.
 
 ## Output
 

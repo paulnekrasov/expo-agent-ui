@@ -3,9 +3,23 @@
 ## Executive Summary
 - `@expo/ui` is the package name. Current official SDK docs and npm metadata agree on `~55.0.12` / `55.0.12` for Expo SDK 55.
 - `@expo/ui/swift-ui` is beta, iOS/tvOS-focused, unavailable in Expo Go, and intended for development builds. These are stable design constraints, not research blockers.
+- Project update, 2026-04-26: Expo UI's SwiftUI extension path now gives Agent UI a supported
+  way to create custom native SwiftUI components and custom modifiers while staying inside Expo.
+  This strengthens the optional iOS adapter path without changing the core React Native-first
+  scope.
+- If a host app already uses custom `@expo/ui/swift-ui` views or modifiers, Agent UI should adapt
+  around that code seamlessly: preserve the native surface, pass through custom modifiers, and add
+  semantic wrappers at the JavaScript boundary.
 - The published `@expo/ui@55.0.12` package has no root `"."` export. Agent UI should import only explicit subpaths such as `@expo/ui/swift-ui`, `@expo/ui/swift-ui/modifiers`, `@expo/ui/jetpack-compose`, and `@expo/ui/datetimepicker`.
 - `Host` is the required boundary for rendering SwiftUI views from React Native. It bridges UIKit/React Native layout to SwiftUI through `UIHostingController`.
+- EAS Build can compile iOS SwiftUI artifacts on Expo macOS cloud infrastructure, including
+  simulator-targeted builds, but live interaction still requires an iOS runtime such as an iOS
+  Simulator, iOS device, remote Mac session, or cloud workflow capture.
 - `RNHostView` is the reverse bridge for React Native children inside SwiftUI containers such as `BottomSheet`, `Popover`, and stack views.
+- Custom SwiftUI components are exposed through Expo native view modules and required from
+  JavaScript with `requireNativeView`.
+- Custom SwiftUI modifiers are registered with Expo UI's native modifier registry and exposed to
+  JavaScript through `createModifier`.
 - SwiftUI layout and React Native Yoga layout do not fully collapse into one model. `matchContents`, explicit `style`, `onLayoutContent`, and `useViewportSizeMeasurement` must be chosen per component.
 - Agent UI should keep `@expo/ui` optional and isolated behind `@agent-ui/expo/swift-ui` or an equivalent explicit adapter package/subpath.
 - Core Agent UI primitives should remain React Native-first. The SwiftUI adapter should delegate only high-value native controls in v0 and fall back to core primitives on Android, web, Expo Go, or missing peer dependency.
@@ -38,6 +52,55 @@ React Native -> `Host` -> SwiftUI -> `RNHostView` -> React Native
 Layout must be explicit. `Host` exposes `style`, `matchContents`, `onLayoutContent`, `ignoreSafeArea`, `layoutDirection`, `colorScheme`, and `useViewportSizeMeasurement`. `matchContents` can be useful for intrinsic controls, while full-screen or flexible controls should use explicit sizing or viewport measurement. `RNHostView` has a matching decision: use `matchContents` for intrinsic React Native children, omit it for `flex: 1` content that should fill the SwiftUI parent.
 
 Semantic registration should happen above the native boundary. The Agent UI wrapper should register `id`, role, label, state, actions, intent, and redaction policy in the JavaScript semantic registry before rendering the hosted native control. Native callbacks such as press, value change, presentation change, and submit should be proxied back into the semantic action/event system. Accessibility labels and values should also be mirrored through React Native props or SwiftUI accessibility modifiers so OS accessibility and agent semantics stay aligned.
+
+## Custom SwiftUI Views And Modifiers
+
+The April 26, 2026 project update makes the optional SwiftUI adapter more powerful: Agent UI can
+now treat native SwiftUI extension as a supported Expo path rather than an off-plan escape hatch.
+Official Expo docs show two relevant mechanisms:
+
+- custom SwiftUI components can be implemented as Expo native views and consumed from JavaScript
+  through `requireNativeView`;
+- custom modifiers can be implemented as SwiftUI `ViewModifier` records, registered with
+  `ViewModifierRegistry`, and represented in JavaScript through `createModifier`.
+
+This creates two different responsibilities:
+
+- **User-owned SwiftUI interop:** if an app already uses custom `@expo/ui/swift-ui` views,
+  modifier arrays, or local Expo UI extensions, Agent UI should wrap and annotate that surface
+  without forcing a rewrite.
+- **Agent UI-owned SwiftUI extension:** if Agent UI adds its own native iOS components or
+  modifiers, those additions must remain optional, fallback-backed, and adapter-scoped.
+
+This is an adapter capability, not a core-package requirement. The core `@agent-ui/expo` package
+must still work as a React Native-first, JavaScript-only runtime without `@expo/ui`, native
+modules, or development-build-only assumptions.
+
+Recommended Agent UI uses:
+
+- native iOS controls that are missing from built-in Expo UI but valuable for the product;
+- native styling modifiers such as `agentHighlight`, focus rings, semantic debug overlays, or
+  app-specific control chrome;
+- native presentation or interaction behavior that is materially better in SwiftUI than in a
+  React Native approximation;
+- custom app-specific SwiftUI wrappers exposed only through the explicit SwiftUI adapter path.
+
+Rules:
+
+- Treat user-owned custom SwiftUI code as a first-class interop surface.
+- Keep all Agent UI-owned custom native SwiftUI code behind the optional adapter boundary.
+- Preserve unknown custom modifier configs instead of filtering them out.
+- Provide semantic wrapper APIs around custom SwiftUI views so apps can register stable IDs,
+  labels, state, actions, intents, and privacy policy without replacing their native component.
+- Provide React Native fallback behavior for Android, web, Expo Go, and missing `@expo/ui`.
+- Mirror semantic labels, state, values, disabled state, and hints into SwiftUI accessibility
+  modifiers when the wrapper has enough information.
+- Keep the JavaScript semantic registry authoritative. Native SwiftUI should render and emit
+  callbacks; it should not become the hidden source of semantic truth.
+- Do not expose custom modifiers as public Agent UI API until they have development-build smoke
+  tests and managed/bare workflow notes.
+- Keep Reanimated as the cross-platform motion layer. Native SwiftUI animation/modifier support
+  can improve iOS fidelity, but it does not replace Reanimated for the main package.
 
 ## Component API Table
 
@@ -85,7 +148,8 @@ Semantic registration should happen above the native boundary. The Agent UI wrap
 | `presentationDetents` and related presentation modifiers | `@expo/ui/swift-ui/modifiers` | detent/presentation config | Sheets/popovers/presentations | Sheet/menu adapter mapping | Must pair with semantic presentation state and dismissal actions. | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/bottomsheet/ |
 | `scrollDismissesKeyboard`, `scrollDisabled`, `defaultScrollAnchor`, `defaultScrollAnchorForRole`, `scrollTargetBehavior`, `scrollTargetLayout`, `scrollContentBackground`, `listStyle`, `listRowBackground`, `listRowSeparator`, `listRowInsets`, `listSectionSpacing`, `listSectionMargins`, `headerProminence`, `badge`, `badgeProminence`, `moveDisabled`, `deleteDisabled` | `@expo/ui/swift-ui/modifiers` | list/scroll config values | Lists, forms, scroll views, rows | Native list/form adapter mapping | Useful for native list scopes, not needed in core React Native v0 primitives. | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/modifiers/ |
 | `glassEffect`, `glassEffectId`, `contentTransition`, animation helpers | `@expo/ui/swift-ui/modifiers` | OS-gated visual/animation config | Supported native views | Native visual polish only | Liquid Glass and newer visual effects require current Apple OS/Xcode support. Keep optional and version-gated. | https://docs.expo.dev/guides/expo-ui-swift-ui/ |
-| `createModifier`, `isModifier`, `filterModifiers` | `@expo/ui/swift-ui/modifiers` | low-level modifier construction/inspection | Adapter internals | Internal escape hatch | Do not expose as public Agent UI API in v0. | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/modifiers/ |
+| Custom modifiers such as `agentHighlight` | local SwiftUI adapter module plus `@expo/ui/swift-ui/modifiers` | app/package-defined parameter records | Any supported Expo UI component | Native iOS adapter extension | Must be registered natively, represented in JS with `createModifier`, fallback-backed, and smoke-tested before public exposure. | https://docs.expo.dev/guides/expo-ui-swift-ui/extending/ |
+| `createModifier`, `isModifier`, `filterModifiers` | `@expo/ui/swift-ui/modifiers` | low-level modifier construction/inspection | Adapter internals | Internal escape hatch | Use for adapter-owned native modifiers; do not expose as public Agent UI API in v0. | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/modifiers/ |
 
 ## Optional Dependency Decision
 
@@ -119,6 +183,9 @@ Fallback behavior:
 - Android: use React Native fallback in v0. Jetpack Compose is separate research and implementation work.
 - Web: use React Native Web/DOM-compatible fallback.
 - Missing `@expo/ui`: use fallback and emit a clear development warning from the adapter entrypoint or component boundary.
+- EAS-built iOS artifact: valid way to produce the native SwiftUI build from non-macOS
+  machines. It does not remove the need for an iOS runtime to preview or control the app
+  interactively.
 
 Tree-shaking expectations:
 
@@ -135,6 +202,21 @@ Semantic metadata wrapping:
 - Proxy native callbacks into semantic action results and event logs.
 - Treat `Host` bounds as a coordinate fallback only. Agent tools should target semantic IDs first.
 
+Custom SwiftUI interop and extension:
+
+- Use only from the explicit SwiftUI adapter package/subpath.
+- Support user-owned custom SwiftUI views and modifiers through pass-through and semantic wrappers.
+- Do not require existing Expo UI SwiftUI code to move into Agent UI primitives before it can be
+  inspected or controlled semantically.
+- Prefer built-in Expo UI SwiftUI components and modifiers first.
+- Add an Agent UI-owned custom SwiftUI component only when React Native, Reanimated, and built-in
+  Expo UI cannot provide the needed iOS fidelity or platform behavior.
+- Add an Agent UI-owned custom SwiftUI modifier only when it represents a reusable native concern
+  such as `agentHighlight`, focus visualization, semantic debug styling, or app-specific native
+  chrome.
+- Keep every Agent UI-owned custom extension paired with React Native fallback behavior and a
+  documented development-build requirement.
+
 Testing strategy:
 
 - Unit-test prop-to-adapter mapping without rendering native modules.
@@ -143,6 +225,11 @@ Testing strategy:
 - Add Metro/package-resolution tests proving root imports work without `@expo/ui` installed.
 - Add iOS development-build smoke tests for `Host`, `RNHostView`, `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, `BottomSheet`, and one native list/form scope.
 - Add focused simulator tests for hosted text input focus, secure value redaction, slider width, sheet dismissal, and semantic event emission.
+- Add EAS simulator-build verification for the example SwiftUI adapter lane once Stage 7 exists:
+  `ios.simulator: true` should produce an installable simulator artifact, while live editor
+  comparison remains a separate runtime/session concern.
+- Add native smoke tests before publishing any custom SwiftUI component or modifier from the
+  adapter.
 
 ## Unsupported Or Unknown Areas
 
@@ -161,6 +248,9 @@ Implementation unknowns to verify:
 - How much of `Form` and `List` should be hosted natively before layout, keyboard, and semantic complexity outweighs the benefit.
 - Whether typed exports that are less prominent in docs, such as `Chart`, `Grid`, and `GlassEffectContainer`, should be exposed after separate smoke tests.
 - Whether `matchContents` is sufficient for each intrinsic control. Flexible controls should default to explicit sizing until verified.
+- The exact managed and bare workflow setup for adapter-owned custom SwiftUI components and
+  custom modifiers.
+- Versioning policy for adapter-owned custom native SwiftUI APIs if Expo UI's beta surface changes.
 
 No unresolved research blocker remains for the adapter decision. These items belong in implementation tasks and compatibility tests.
 
@@ -171,9 +261,13 @@ No unresolved research blocker remains for the adapter decision. These items bel
 | Expo UI SDK overview | https://docs.expo.dev/versions/latest/sdk/ui/ | 2026-04-27 | Package purpose, install path, bundled `~55.0.12`, available platform families, DateTimePicker replacement namespace. |
 | Expo UI SwiftUI SDK reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/ | 2026-04-27 | SwiftUI beta status, iOS/tvOS platform labels, Expo Go limitation, `Host` requirement, install command. |
 | Building SwiftUI apps with Expo UI | https://docs.expo.dev/guides/expo-ui-swift-ui/ | 2026-04-27 | SwiftUI integration model, SDK 54+ note, `UIHostingController` model, modifier import model, guide-level macOS label. |
+| EAS Build | https://docs.expo.dev/build/introduction/ | 2026-04-27 | Hosted Android/iOS binary builds and Expo macOS cloud infrastructure for iOS builds. |
+| Build for iOS Simulators | https://docs.expo.dev/build-reference/simulators | 2026-04-27 | `ios.simulator: true`, simulator artifact installation, and development-server use for dev builds. |
+| Create iOS Simulator development build | https://docs.expo.dev/tutorial/eas/ios-development-build-for-simulators/ | 2026-04-27 | Cloud iOS simulator build profile and install/run flow. |
 | Host reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/host/ | 2026-04-27 | `Host` props, sizing modes, `matchContents`, `onLayoutContent`, safe-area behavior, viewport measurement. |
 | RNHostView reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/rnhostview/ | 2026-04-27 | React Native inside SwiftUI bridge, `matchContents` behavior, Yoga layout synchronization. |
 | SwiftUI modifiers reference | https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/modifiers/ | 2026-04-27 | Modifier namespace, typed modifier families, accessibility modifiers, layout/style/input/list modifiers. |
+| Extending with SwiftUI | https://docs.expo.dev/guides/expo-ui-swift-ui/extending/ | 2026-04-27 | Custom SwiftUI component path through Expo native views, custom modifier registration, JavaScript `createModifier` helper. |
 | Expo UI Jetpack Compose reference | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/ | 2026-04-27 | Android native UI namespace is separate from SwiftUI. |
 | Expo SDK 55 beta changelog | https://expo.dev/changelog/sdk-55-beta | 2026-04-27 | Expo UI beta status, SDK 55 API renames, package major-version scheme. |
 | npm metadata for `@expo/ui` | https://www.npmjs.com/package/@expo/ui | 2026-04-27 | Published package version `55.0.12`, package identity, registry source. |
@@ -184,6 +278,12 @@ No unresolved research blocker remains for the adapter decision. These items bel
 
 Stage 7 should implement a narrow, optional SwiftUI adapter. Keep the core package React Native-first and semantic-first. Add an explicit `@agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
 
-The v0 SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android, web, Expo Go, and missing-peer cases should fall back to core React Native components with development warnings. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
+The v0 SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android, web, Expo Go, and missing-peer cases should fall back to core React Native components with development warnings. EAS should be supported as the preferred cloud build lane for iOS SwiftUI artifacts, but interactive side-by-side native preview should be handled by later multi-session editor work. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
+
+Custom SwiftUI components and modifiers are now a valid Stage 7 interop and expansion path for iOS
+fidelity. Existing user-owned custom SwiftUI should be preserved and semantically wrapped. Agent
+UI-owned custom native additions should remain narrow and optional: use them to fill real native
+gaps or expose reusable agent-specific native modifiers; do not move the Stage 2 primitive layer
+or Stage 3 semantic runtime into native SwiftUI.
 
 DONE

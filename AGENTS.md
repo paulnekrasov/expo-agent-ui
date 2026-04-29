@@ -27,10 +27,16 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Research status: `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`
 - Expo package foundation: `docs/reference/expo/package-foundation.md`
 - Expo UI SwiftUI adapter: `docs/reference/expo/expo-ui-swift-ui.md`
+- EAS native preview and adapter comparison: `docs/reference/expo/eas-native-preview.md`
 - Reanimated motion layer: `docs/reference/motion/reanimated-4.md`
 - React Native semantic accessibility: `docs/reference/react-native/accessibility-semantics.md`
 - MCP and runtime transport: `docs/reference/agent/mcp-transport-architecture.md`
 - Agent security and privacy: `docs/reference/agent/security-privacy.md`
+- Platform skill routing: `docs/reference/agent/platform-skill-routing.md`
+- Repo-local platform skills: `docs/reference/agent/platform-skills/INDEX.md`
+- Platform skill MCP surface: `docs/reference/agent/platform-skill-mcp-surface.md`
+- Systematic debugging adapter: `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md`
+- Scheduled automation loop prompt: `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
 - Navigation adapters: `docs/reference/react-native/navigation-adapters.md`
 - Testing and devtools: `docs/reference/react-native/testing-and-devtools.md`
 - SwiftUI-inspired layout DNA: `docs/reference/design/swiftui-layout-dna.md`
@@ -48,9 +54,9 @@ agent tool bridge, MCP server, and reusable agent skill.
 | Stage 4 - Agent Tool Bridge | local app bridge, sessions, tool dispatch, event log |
 | Stage 5 - MCP Server | stdio MCP server, tools, resources, prompts |
 | Stage 6 - Motion Layer | Reanimated presets, transitions, gestures, reduced motion |
-| Stage 7 - Expo UI Adapter | optional `@expo/ui/swift-ui` adapter and fallbacks |
+| Stage 7 - Expo UI Adapter | optional `@expo/ui/swift-ui` adapter, future Compose adapter, and fallbacks |
 | Stage 8 - Agent Skill | `skills/expo-agent-ui` skill, references, examples |
-| Stage 9 - Flow Runner And Patch Proposals | repeatable flows and structured patch plans |
+| Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | repeatable flows, structured patch plans, and multi-session native preview comparison |
 | Stage 10 - Publish Readiness | README, compatibility, install docs, release path |
 
 ## Non-Negotiables
@@ -61,6 +67,13 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Do not make screenshots or coordinates the primary agent-control model.
 - Keep the core v0 runtime JS-only unless research proves a native bridge is required.
 - Keep `@expo/ui` optional behind adapter boundaries.
+- Treat native adapters as platform-bound. EAS can build iOS SwiftUI artifacts on cloud Macs, but
+  live iOS preview still needs an iOS runtime; Android Compose preview needs an Android runtime.
+- Do not promise one simulator can render both iOS SwiftUI and Android Jetpack Compose. Future
+  side-by-side native preview must connect multiple runtime sessions.
+- Treat platform skills as on-demand agent knowledge, not runtime dependencies or automatic scope
+  expansion. Prefer the repo-local copies under `docs/reference/agent/platform-skills/`.
+- Skill-context MCP resources/tools must be read-only and separate from app runtime-control tools.
 - Gate agent control behind development-only safety checks.
 - Redact sensitive semantic values before they leave the app runtime.
 - Use stable semantic IDs for actionable nodes.
@@ -101,6 +114,12 @@ Stage 3 (Semantic Runtime): add semantic node registry
 - `docs/agents/TASK.md` is the current bounded task.
 - `docs/agents/REVIEW_CHECKLIST.md` is the stage-scoped review checklist.
 - `docs/agents/REVIEW.md` is the living review log.
+- `docs/reference/agent/platform-skill-routing.md` is the durable router for optional platform,
+  accessibility, design, Expo, React Native, composition, and context-engineering skills.
+- `docs/reference/agent/platform-skills/INDEX.md` is the repo-local catalog of vendored skill
+  copies available to agents.
+- `docs/reference/agent/platform-skill-mcp-surface.md` defines how those skills can be exposed as
+  MCP resources, prompts, and read-only lookup tools.
 
 ## Current Rule
 
