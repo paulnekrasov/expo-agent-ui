@@ -4,32 +4,50 @@ Updated: 2026-04-30
 
 ## Status
 
-Runtime prompts are in status-only mode after the Expo Agent UI rebuild pivot.
+Runtime prompts are in status-only mode after completing the Stage 2 `Scroll`, `List`, `Section`,
+and `Form` primitive cluster.
 
 The old Stage 3 recursive resolver traversal task is obsolete. Do not recreate runtime prompts
 for parser, resolver, layout, renderer, VS Code WebView, or SwiftUI preview work unless the
 developer explicitly creates a bounded archive/cleanup task.
 
-## Active Task
-
-The active bounded task is:
+## Completed Task
 
 - Roadmap Phase: Phase 2 - Component Primitives
 - Product Stage: Stage 2 - Component Primitives
 - Task file: `docs/agents/TASK.md`
+- Status: `DONE_WITH_CONCERNS`
 
 ## Active Runtime Prompts
 
 None.
 
-Generate new `ACTIVE_*.md` runtime prompts only if a scheduled or autonomous run is going to
-execute the active Stage 2 component primitives task.
+No `ACTIVE_*.md` files are present. The current run completed the task in-process, so no disposable
+active prompts were generated. Generate new runtime prompts only after a new bounded Stage 2 task is
+created.
 
-The stable scheduled automation prompt has been refactored for the full Expo Agent UI lifecycle at
-`docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`. It keeps the legacy automation memory path
-`C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` intentionally.
+## Prompt Rotation Action
 
-## Prompt Generation Inputs
+- No active prompt files needed deletion.
+- `RUNTIME_STATUS.md` was refreshed because the active task changed and then completed.
+- The next run should create or refresh `docs/agents/TASK.md` from the next unchecked Stage 2
+  roadmap cluster before generating disposable active prompts.
+
+## Verification Evidence
+
+- Direct Node child-process probe exited `0`.
+- Preflight `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- Final `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `cmd /c npx.cmd expo-doctor` in `packages/example-app` passed all 18 checks after dependency
+  alignment.
+- `cmd /c npx.cmd tsc --noEmit -p packages/example-app/tsconfig.json` exited `0`.
+- `git diff --check` exited `0`.
+- Forbidden-import scan of `packages/core/src` found no `@expo/ui`, Expo Router,
+  React Navigation, MCP SDK, old parser, tree-sitter, WASM, VS Code, or Canvas renderer imports.
+
+## Next Prompt Generation Inputs
 
 Use these files in order:
 
@@ -43,26 +61,19 @@ Use these files in order:
 8. `docs/agents/REVIEW.md`
 9. `docs/agents/REVIEW_CHECKLIST.md`
 10. `docs/reference/react-native/accessibility-semantics.md`
-11. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a
+11. `docs/reference/design/control-chrome.md`
+12. `docs/reference/expo/expo-ui-swift-ui.md` if adapter boundaries are relevant
+13. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a
     bug, failing command, blocked verification, runner environment failure, bridge/MCP failure, or
     flaky async behavior
 
-## Scheduled Runner Guidance
-
-If automation runs with a child-process-blocked environment, record the exact failure and finish
-with `NEEDS_CONTEXT`. Do not classify that as a package-foundation source regression.
-
-Do not classify `rg.exe` access denial alone as a runner blocker if PowerShell search and npm
-verification still work. Use the systematic debugging adapter to distinguish current-run
-environment blockers from source failures.
-
-If verification is available, Stage 2 component primitives should use the commands specified in
-`docs/agents/TASK.md`, or explain why package scripts are not available yet.
-
 ## Notes
 
-- Research outputs already exist under `docs/reference/**`.
-- The research coordinator report is
-  `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`.
-- Old parser assets have been cleaned from active context; do not recreate them unless a
-  historical archive task is explicitly active.
+- Stage 2 remains in progress. The next task should cover `Toggle`, `Slider`, `Picker`, and
+  `Stepper`.
+- The authorized React typings pass is complete: workspace `@types/react` is installed, the local
+  shim was removed, and the example app typecheck script now runs real TypeScript.
+- The example app build/test scripts remain placeholders until an Expo build target configuration
+  and React Native test harness are added.
+- `Scroll`, `List`, `Section`, and `Form` are React Native-first wrappers with deferred semantic
+  metadata only. Real tree snapshots and action dispatch belong to Stage 3.

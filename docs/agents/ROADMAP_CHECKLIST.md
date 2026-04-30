@@ -42,17 +42,22 @@ Status: Complete
 ## Phase 2 - Component Primitives
 
 Product Stage: Stage 2 - Component Primitives
-Status: Next
+Status: In progress
 
-- [ ] Implement `AgentUIProvider`
-- [ ] Implement `Screen`
-- [ ] Implement `VStack`, `HStack`, `ZStack`, `Spacer`
-- [ ] Implement `Text`, `Image`, `Icon`, `Label`
-- [ ] Implement `Button`, `TextField`, `SecureField`
-- [ ] Implement `Scroll`, `List`, `Section`, `Form`
-- [ ] Add accessibility prop mapping
-- [ ] Add stable semantic ID validation warnings
-- [ ] Add first example settings screen
+- [x] Implement `AgentUIProvider`
+- [x] Implement `Screen`
+- [x] Implement `VStack`, `HStack`, `ZStack`, `Spacer`
+- [x] Implement `Text`
+- [x] Implement `Image`, `Icon`, `Label`
+- [x] Implement `Button`
+- [x] Implement `TextField`, `SecureField`
+- [x] Implement `Scroll`, `List`, `Section`, `Form`
+- [x] Add initial accessibility prop mapping for the first primitive slice
+- [x] Add initial stable semantic ID validation warning for `Button`
+- [ ] Extend accessibility prop mapping to remaining primitives
+- [ ] Extend stable semantic ID validation warnings to remaining actionable primitives
+- [x] Add first example settings screen
+- [x] Add first simple primitive example screen
 
 ## Phase 3 - Semantic Runtime
 

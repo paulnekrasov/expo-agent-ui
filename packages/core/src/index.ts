@@ -1,5 +1,64 @@
 export const agentUICorePackage = "@agent-ui/core" as const;
-export const agentUICoreStage = "package-foundation" as const;
+export const agentUICoreStage = "component-primitives" as const;
+
+export {
+  AgentUIProvider,
+  useAgentUIRuntime,
+  useDeferredSemanticPrimitive
+} from "./semantic";
+export type {
+  AgentUIContextValue,
+  AgentUIPrimitiveAction,
+  AgentUIPrimitivePrivacy,
+  AgentUIPrimitiveRole,
+  AgentUIProviderProps,
+  AgentUISemanticPrimitive,
+  AgentUISemanticPrimitiveValue,
+  AgentUISemanticRuntime,
+  AgentUISemanticUnregister
+} from "./semantic";
+export {
+  Button,
+  Form,
+  HStack,
+  Icon,
+  Image,
+  Label,
+  List,
+  Screen,
+  Scroll,
+  SecureField,
+  Spacer,
+  Section,
+  Text,
+  TextField,
+  VStack,
+  ZStack
+} from "./primitives";
+export type {
+  AgentUIButtonProps,
+  AgentUIFormProps,
+  AgentUIIconProps,
+  AgentUIImageProps,
+  AgentUILabelProps,
+  AgentUIListProps,
+  AgentUIScrollProps,
+  AgentUISecureFieldProps,
+  AgentUISectionProps,
+  AgentUITextProps,
+  AgentUITextFieldProps,
+  ScreenProps,
+  SpacerProps,
+  StackAlignment,
+  StackProps,
+  ZStackProps
+} from "./primitives";
+export { resolvePrimitiveTestID } from "./props";
+export type {
+  AgentUIActionablePrimitiveProps,
+  AgentUIPrimitiveProps,
+  AgentUIViewProps
+} from "./props";
 
 export type AgentUICapability =
   | "component-primitives"
@@ -20,9 +79,8 @@ export function getAgentUIPackageManifest(): AgentUIPackageManifest {
     packageName: agentUICorePackage,
     stage: agentUICoreStage,
     jsOnly: true,
-    implementedCapabilities: [],
+    implementedCapabilities: ["component-primitives"],
     deferredCapabilities: [
-      "component-primitives",
       "semantic-runtime",
       "agent-bridge",
       "motion-layer"

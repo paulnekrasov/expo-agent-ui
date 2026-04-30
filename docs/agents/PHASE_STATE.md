@@ -6,72 +6,33 @@ Active File: docs/agents/TASK.md
 
 ## Completed This Session
 
-- [x] Continued the Expo Agent UI rebuild on branch `codex/expo-agent-ui-rebuild`.
-- [x] Used `$context-prompt-engineering` to guide markdown rewrites for role, task, constraint,
-  output, progressive-disclosure, and verification clarity.
-- [x] Completed the dedicated cleanup/archive pass authorized by the user.
-- [x] Removed retired old-project assets:
-  - top-level `src/`
-  - top-level `tests/`
-  - old `scripts/`
-  - old `out/`
-  - `tree-sitter-swift`
-  - `tree-sitter-swift.wasm`
-  - `.gitmodules`
-  - `.vscodeignore`
-  - `esbuild.js`
-  - `esbuild.config.js`
-  - old repo-local `skills/`
-  - old layer-based parser, Swift syntax, VS Code, Canvas renderer, and planning references
-  - old root-level SwiftUI preview research and planning markdown files under `docs/`
-  - stale parser/WASM/debugging prompt templates
-- [x] Preserved useful design DNA in compact new references:
-  - `docs/reference/design/swiftui-layout-dna.md`
-  - `docs/reference/design/ios-tokens.md`
-  - `docs/reference/design/control-chrome.md`
-  - `docs/reference/motion/swiftui-motion-mapping.md`
-  - `docs/reference/native/symbols-and-icons.md`
-- [x] Rewrote repo-local agent catalog and role prompts around Expo Agent UI product stages.
-- [x] Updated active docs so they say old parser assets are cleaned from active context, not waiting
-  for future deletion.
-- [x] Added EAS/native preview project DNA:
-  - EAS cloud Macs can build iOS SwiftUI artifacts.
-  - Live iOS preview still needs an iOS runtime.
-  - Side-by-side iOS SwiftUI and Android Compose preview is a multi-session editor problem.
-  - Added `docs/reference/expo/eas-native-preview.md` and
-    `docs/agents/research-prompts/expo-agent-ui/MEDIUM-04-eas-native-preview-workflows.md`.
-- [x] Added platform skill routing DNA:
-  - Expo, React Native, composition, native accessibility, native app design engineering, Apple,
-    Android, and context-engineering skills are on-demand agent knowledge.
-  - Added `docs/reference/agent/platform-skill-routing.md`.
-  - Updated brief, reference index, roadmap, README, rebuild plan, and agent roles so skill routing
-    stays hidden, just-in-time, and outside the app runtime.
-- [x] Vendored repo-local platform skill copies under `docs/reference/agent/platform-skills/`:
-  - Android ecosystem
-  - Apple ecosystem
-  - native accessibility engineering
-  - native app design engineering
-  - Expo
-  - context prompt engineering
-  - Vercel React Native
-  - Vercel composition patterns
-- [x] Added platform skill MCP surface specification:
-  - New reference: `docs/reference/agent/platform-skill-mcp-surface.md`.
-  - Platform skills may be exposed through MCP as read-only resources, scoped prompts, and
-    deterministic lookup tools.
-  - Skill context remains separate from app runtime-control tools and must not enter
-    `packages/core` or the running mobile app.
-- [x] Refactored the scheduled automation loop prompt for the full Expo Agent UI lifecycle:
-  - Stable prompt: `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`.
-  - Preserves the legacy automation memory path
-    `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md`.
-  - Uses current workspace verification commands and avoids old parser scheduling instructions.
-- [x] Added a repo-local systematic debugging adapter:
-  - New skill entrypoint: `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md`.
-  - Integrated into platform skill routing, MCP skill surface, reference index, prompt rotation,
-    roadmap, and runtime prompt status.
-  - Uses the original global skill principles from
-    `C:\Users\Asus\.codex\skills\systematic-debugging\`.
+- [x] Ran the scheduled automation loop against the next bounded Stage 2 primitive cluster.
+- [x] Confirmed the runner gate was green:
+  - direct Node child-process probe exited `0`,
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- [x] Used the repo-local context-prompt-engineering reference for task/state/prompt status
+  updates.
+- [x] Implemented the next React Native primitive cluster in `packages/core/src`:
+  - `Scroll`
+  - `List`
+  - `Section`
+  - `Form`
+- [x] Extended typed semantic primitive metadata with scroll/list/section/form roles and a scroll
+  action while keeping registration deferred.
+- [x] Added development warnings for scroll/list/form/section structures missing stable IDs or
+  labels.
+- [x] Updated the example app to render a simple settings-style runtime connection screen.
+- [x] Reviewed the Stage 2 boundary and fixed one small API rough edge: string section
+  headers/footers now render inside React Native `Text`, while custom nodes pass through.
+- [x] Completed the authorized React typings dependency pass:
+  - added workspace `@types/react`,
+  - removed the temporary local React declaration shim,
+  - changed the example app `typecheck` script to run real TypeScript.
+- [x] Aligned the Expo SDK 55 example dependency set so Expo Doctor passes:
+  - `expo@55.0.18`,
+  - `react-native@0.83.6`,
+  - one deduplicated React Native version across the workspace.
+- [x] Verified the workspace with typecheck, build, test, and `git diff --check`.
 
 ## Baseline Repo Status
 
@@ -84,24 +45,48 @@ Active File: docs/agents/TASK.md
 - [x] Core package remains JS-only and has no native module implementation.
 - [x] Old SwiftUI parser, VS Code extension, tree-sitter, WASM, Canvas renderer, and old reference
   surfaces have been removed from active context.
-- [x] Scheduled automation and systematic debugging workflow docs now target Expo Agent UI instead
-  of the old VS Code extension/parser project.
-- [ ] Component primitives are not yet implemented.
+- [x] Stage 2 primitives implemented so far:
+  - `AgentUIProvider`
+  - `Screen`
+  - `VStack`
+  - `HStack`
+  - `ZStack`
+  - `Spacer`
+  - `Scroll`
+  - `List`
+  - `Section`
+  - `Form`
+  - `Text`
+  - `Button`
+  - `Image`
+  - `Icon`
+  - `Label`
+  - `TextField`
+  - `SecureField`
+- [ ] Later control primitives such as `Toggle`, `Slider`, `Picker`, and `Stepper` still need
+  bounded Stage 2 tasks.
 - [ ] Semantic runtime is not yet implemented.
 - [ ] Agent bridge and MCP server are not yet implemented beyond package shells.
 
-## In Progress
+## Current Task Status
 
-- [ ] Current bounded task: implement the first Stage 2 component primitive slice.
+- [x] `docs/agents/TASK.md` is complete as `DONE_WITH_CONCERNS`.
 
-## Blocked
+## Concerns
 
-- [ ] No current blocker for Stage 2 component primitives.
-- [ ] Full example app typechecking may require installing refreshed Expo workspace dependencies.
-- [ ] Physical-device bridge transport remains a future Stage 4 concern.
-- [ ] Native automation selector mapping remains a future post-v0 concern.
-- [ ] Multi-session native visual editor remains future Stage 9+ work after bridge sessions,
-  adapter capability flags, redaction, and local flow capture exist.
+- [x] `@types/react` dependency pass is complete and the temporary local React type shim was
+  removed.
+- [ ] Example app typecheck is real. Build/test scripts remain placeholders until an Expo build
+  target configuration and a React Native test harness are added.
+- [ ] `npm audit --omit=dev --audit-level=moderate` still reports moderate transitive Expo CLI /
+  config-tooling advisories; `npm audit fix --force` proposes an invalid downgrade to Expo 49, so
+  this needs a separate dependency/security review.
+- [ ] `Icon` intentionally remains a dependency-free text/glyph wrapper until a future task chooses
+  an optional icon package or adapter mapping.
+- [ ] `Scroll`, `List`, `Section`, and `Form` expose deferred semantic metadata only; full tree
+  snapshots, duplicate ID detection, and action dispatch remain Stage 3.
+- [ ] `rg.exe` cannot launch in the desktop runner, but PowerShell search fallback and npm
+  verification are available.
 
 ## Next Agent Must Start With
 
@@ -110,19 +95,12 @@ Active File: docs/agents/TASK.md
 3. Read `docs/agents/ORCHESTRATION.md`.
 4. Read `docs/agents/TASK.md`.
 5. Read `docs/reference/react-native/accessibility-semantics.md`.
-6. Read `docs/reference/design/swiftui-layout-dna.md`.
-7. Read `docs/reference/expo/eas-native-preview.md` before making native adapter preview or visual
-   editor claims.
-8. Read `docs/reference/agent/platform-skill-routing.md` before making scaffold, platform-skill,
-   native polish, accessibility, or visual editor routing claims.
-9. Read `docs/reference/agent/platform-skill-mcp-surface.md` before making MCP resource, prompt, or
-   skill-context tool claims.
-10. Read `docs/reference/agent/platform-skills/INDEX.md` before loading a vendored platform skill.
-11. Read `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before fixing bugs,
-    failed verification, runner environment failures, bridge/MCP failures, or flaky async behavior.
-12. Verify the current dirty worktree before editing; preserve unrelated research files and
-   workspace metadata.
+6. Read `docs/reference/design/control-chrome.md`.
+7. Read `docs/reference/expo/expo-ui-swift-ui.md` if adapter boundaries are relevant.
+8. Read `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before fixing bugs,
+   failed verification, runner environment failures, bridge/MCP failures, or flaky async behavior.
+9. Check `git status --short --branch`.
 
 ## Suggested Next Target
 
-- Implement the Stage 2 component primitive slice in `packages/core/src`.
+- Create the next bounded Stage 2 task for `Toggle`, `Slider`, `Picker`, and `Stepper`.
