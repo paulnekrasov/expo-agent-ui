@@ -42,7 +42,7 @@ Status: Complete
 ## Phase 2 - Component Primitives
 
 Product Stage: Stage 2 - Component Primitives
-Status: In progress
+Status: Complete with deferred semantic-runtime concerns
 
 - [x] Implement `AgentUIProvider`
 - [x] Implement `Screen`
@@ -52,10 +52,11 @@ Status: In progress
 - [x] Implement `Button`
 - [x] Implement `TextField`, `SecureField`
 - [x] Implement `Scroll`, `List`, `Section`, `Form`
+- [x] Implement `Toggle`, `Slider`, `Picker`, `Stepper`
 - [x] Add initial accessibility prop mapping for the first primitive slice
 - [x] Add initial stable semantic ID validation warning for `Button`
-- [ ] Extend accessibility prop mapping to remaining primitives
-- [ ] Extend stable semantic ID validation warnings to remaining actionable primitives
+- [x] Extend accessibility prop mapping to remaining primitives
+- [x] Extend stable semantic ID validation warnings to remaining actionable primitives
 - [x] Add first example settings screen
 - [x] Add first simple primitive example screen
 
@@ -140,7 +141,8 @@ Status: Not started; platform skill reference prework complete
 - [x] Add platform skill MCP surface specification
 - [x] Add on-demand platform skill routing reference
 - [x] Add repo-local platform skill copy index
-- [x] Add repo-local systematic debugging adapter for cross-stage failures and blocked verification
+- [x] Add repo-local systematic debugging adapter for cross-stage failures, blocked verification,
+  and TTD/TDD red-green fix evidence
 - [x] Add scaffold mode notes for cross-platform, iOS-enhanced, and Android-enhanced apps
 - [x] Refactor scheduled automation loop prompt for the full Expo Agent UI lifecycle
 - [ ] Add flow examples

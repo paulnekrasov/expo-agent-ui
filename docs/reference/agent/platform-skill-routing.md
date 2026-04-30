@@ -34,7 +34,7 @@ Do not let an external skill override these project rules:
 | `android-ecosystem-skill` | `platform-skills/android-ecosystem-skill/SKILL.md` | Android-only scaffold, Jetpack Compose adapter, Material 3, Gradle/AGP, Android release, Android performance | Guide optional Android adapter and Android app scaffolding decisions while keeping core Agent UI React Native-first. |
 | `apple-ecosystem-app-building` | `platform-skills/apple-ecosystem-app-building/SKILL.md` | iOS-only scaffold, SwiftUI adapter, Xcode, SwiftUI/UIKit, Apple release, iOS performance | Guide optional SwiftUI adapter and iOS app scaffolding decisions while preserving JavaScript semantic authority. |
 | `context-prompt-engineering` | `platform-skills/context-prompt-engineering/SKILL.md` | Skill writing, task notes, multi-agent workflows, prompt resources, handoffs, review notes | Produce concise hidden agent notes, acceptance criteria, validation prompts, and handoffs from selected knowledge. |
-| `systematic-debugging` | `platform-skills/systematic-debugging/SKILL.md` | Bugs, test/build failures, blocked verification, runner environment errors, bridge/MCP failures, flaky async behavior | Force root-cause-first investigation, minimal hypotheses, evidence-backed fixes, and explicit verification before any task is marked done. |
+| `systematic-debugging` | `platform-skills/systematic-debugging/SKILL.md` | Bugs, test/build failures, blocked verification, runner environment errors, bridge/MCP failures, flaky async behavior | Force root-cause-first investigation, minimal hypotheses, TTD/TDD red-green evidence, evidence-backed fixes, and explicit verification before any task is marked done. |
 
 ## Loading Policy
 
@@ -60,6 +60,10 @@ into runtime code.
 Use `systematic-debugging` before changing source in response to a failing command, review finding,
 blocked verification, or surprising behavior. The skill does not replace the active file allowlist;
 it decides how to investigate and verify the failure inside the current bounded task.
+
+After root-cause investigation, every debugging fix must use the project TTD/TDD red-green loop:
+record the failing test/probe/command before the fix, make the minimal fix, then rerun that same
+check green before broader verification.
 
 ## Scaffold Modes
 

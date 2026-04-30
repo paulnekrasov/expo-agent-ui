@@ -22,14 +22,6 @@
     "react-native-reanimated": "^4.0.0",
     "react-native-worklets": "^0.8.0"
   },
-  "overrides": {
-    "@expo/metro-config": {
-      "postcss": "8.5.12"
-    },
-    "xcode": {
-      "uuid": "14.0.0"
-    }
-  },
   "peerDependenciesMeta": {
     "react-native-reanimated": {
       "optional": true

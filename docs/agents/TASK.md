@@ -4,15 +4,16 @@ Date: 2026-04-30
 Last updated: 2026-04-30
 Roadmap Phase: Phase 2 - Component Primitives
 Product Stage: Stage 2 - Component Primitives
-Research Area: SwiftUI-inspired React Native primitives, accessibility semantics, list/form hierarchy
+Research Area: SwiftUI-inspired React Native controls, accessibility semantics, control chrome
 
 ## Objective
 
 Implement the next React Native-first component primitive cluster for Expo Agent UI:
-`Scroll`, `List`, `Section`, and `Form`.
+`Toggle`, `Slider`, `Picker`, and `Stepper`.
 
 Keep the work inside Stage 2. Do not build the Stage 3 semantic registry, agent bridge, MCP server,
-motion layer, Expo UI adapter, native modules, or old parser assets.
+motion layer, Expo UI adapter, native modules, optional icon/control dependencies, or old parser
+assets.
 
 ## Status
 
@@ -22,39 +23,44 @@ DONE_WITH_CONCERNS
 
 - [x] Keep the package foundation and earlier primitive slices intact.
 - [x] Add core primitive exports in `packages/core/src` for:
-  - `Scroll`
-  - `List`
-  - `Section`
-  - `Form`
-- [x] Implement primitives as thin React Native wrappers, not a custom renderer or virtualized list
-  framework.
+  - `Toggle`
+  - `Slider`
+  - `Picker`
+  - `Stepper`
+- [x] Implement controls with React Native primitives and built-ins only; do not add package
+  dependencies.
 - [x] Map stable `id` values to React Native `testID` by default.
-- [x] Emit appropriate accessibility labels, roles, state, and structure metadata where React
-  Native supports it.
-- [x] Preserve stable section and row hierarchy for list/form content without implementing Stage 3
-  tree snapshots.
-- [x] Add development warnings for scroll/list/form/section primitives that need stable IDs or
-  labels for agent-readable hierarchy.
-- [x] Do not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, or new
-  package dependencies in `@agent-ui/core`.
+- [x] Emit appropriate accessibility labels, roles, state, actions, and range/selection values.
+- [x] Add development warnings for actionable controls missing stable IDs or accessible labels.
 - [x] Keep semantic registration as a typed no-op/deferred boundary; full registry behavior belongs
   to Stage 3.
-- [x] Update the example app only enough to render one simple settings-style screen using the new
-  primitives.
+- [x] Do not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, or old
+  parser assets in `@agent-ui/core`.
+- [x] Update the example app only enough to render one simple control settings section using the
+  new primitives.
+- [x] Add focused React Native Testing Library coverage for stable IDs and accessibility metadata
+  on the new control cluster.
 
 ## Implementation Summary
 
-- Added `Scroll`, `List`, `Section`, and `Form` primitives to `packages/core/src/primitives.tsx`.
-- Extended deferred semantic primitive metadata with `scroll`, `list`, `section`, and `form` roles,
-  plus a `scroll` action for scrollable scopes.
-- Implemented `Scroll` as a thin `ScrollView` wrapper with `contentSpacing`, accessible label
-  passthrough, `id` to `testID` mapping, and a development warning for missing scroll IDs.
-- Implemented `List`, `Section`, and `Form` as thin `View` wrappers that preserve authored child
-  order and warn for missing stable IDs or labels.
-- Added section header/footer rendering that wraps string content in React Native `Text` while
-  allowing custom nodes to pass through.
-- Updated the example app to render a simple settings-style runtime connection screen using
-  `Scroll`, `List`, `Section`, and `Form`.
+- Added `Toggle`, `Slider`, `Picker`, and `Stepper` primitives to `packages/core/src/primitives.tsx`.
+- Extended deferred semantic primitive metadata with `toggle`, `slider`, `picker`, and `stepper`
+  roles, plus `toggle`, `increment`, `decrement`, `set_value`, and `select` actions.
+- Implemented `Toggle` as a React Native `Switch` wrapper with stable `id` to `testID` mapping,
+  explicit accessibility element status, checked state, and deferred checked metadata.
+- Implemented `Slider` as a dependency-free React Native fallback control with adjustable
+  accessibility actions, min/max/current value metadata, range clamping, and visible track/thumb
+  chrome.
+- Implemented `Picker` as a simple selectable option group using React Native `Pressable` rows with
+  radio accessibility state and stable option IDs.
+- Implemented `Stepper` as a compact fallback control with adjustable accessibility metadata,
+  increment/decrement actions, visible +/- press targets, and range clamping.
+- Added development warnings for missing stable IDs or accessible labels on the new actionable
+  controls, and for invalid/missing picker option IDs or labels.
+- Updated the example app settings form with a runtime toggle, automation confidence slider,
+  session mode picker, and retry count stepper.
+- Added React Native Testing Library assertions for control test IDs, roles, checked state,
+  range values, picker selection, and stepper increment behavior.
 
 ## File Allowlist Used
 
@@ -75,36 +81,42 @@ Current-run preflight:
 - `node -e "const r=require('child_process').spawnSync(process.execPath,['-e','process.exit(0)'],{encoding:'utf8'}); if(r.error){console.error(r.error.message); process.exit(2)} process.exit(r.status ?? 0)"` exited `0`.
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 
+Debugging red-green evidence:
+
+- Red: `cmd /c npm.cmd run typecheck --workspaces --if-present` failed because the example app
+  resolved `@agent-ui/core` through stale `dist` declarations that did not yet export `Toggle`,
+  `Slider`, `Picker`, or `Stepper`.
+- Green: `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated package output, and the
+  same workspace typecheck command then exited `0`.
+- Red: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` failed because RNTL
+  did not query the new `Switch` by role without an explicit accessibility element boundary.
+- Green: `Toggle` now passes `accessible`; the same focused example test then reached the next
+  assertion.
+- Red: the same focused test then failed because hidden stepper press targets were excluded from
+  `getByTestId`.
+- Green: visible stepper press targets are no longer marked accessibility-hidden; the same focused
+  example test exited `0`.
+
 Implementation verification:
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; the example app reported 2 suites and
+  5 tests passing.
 - `git diff --check` exited `0`.
-
-Review verification:
-
-- Focused Stage 2 review found no blocking findings.
-- A small active-stage API rough edge was fixed during review: string section headers/footers now
-  render inside `Text`, while custom header/footer nodes pass through unchanged.
-- Authorized dependency-management review fixed the React typings automation blocker:
-  - added workspace `@types/react`,
-  - removed the temporary local React declaration shim,
-  - changed the example app `typecheck` script to real `tsc`.
-- Expo Doctor initially found SDK dependency drift. The example app and core peer ranges were
-  aligned to `expo@55.0.18` and `react-native@0.83.6`; `expo-doctor` now passes all 18 checks.
-- Forbidden-import scan found no `@expo/ui`, Expo Router, React Navigation, MCP SDK, native module,
-  old parser, tree-sitter, WASM, VS Code, or Canvas renderer imports in `packages/core/src`.
+- A PowerShell forbidden-import scan of `packages/core/src` found no `@expo/ui`, Expo Router,
+  React Navigation, MCP SDK, old parser, tree-sitter, WASM, VS Code, or Canvas renderer imports.
 
 ## Concerns
 
-- The example app build/test scripts remain placeholders until Expo build target configuration and
-  a React Native test harness are added.
-- `npm audit --omit=dev --audit-level=moderate` reports moderate transitive Expo CLI/config
-  tooling advisories. The suggested forced fix downgrades Expo to 49 and must not be applied
-  without a separate dependency/security review.
-- `Scroll`, `List`, `Section`, and `Form` expose deferred semantic metadata only. Full tree
-  snapshots, parent-child inspection, duplicate ID detection, and action dispatch remain Stage 3.
+- `Slider`, `Picker`, and `Stepper` use dependency-free React Native fallback rendering because the
+  core package must not add optional control packages in Stage 2. Native hosted controls remain
+  Stage 7 adapter work.
+- The new controls expose deferred semantic metadata only. Full tree snapshots, duplicate ID
+  detection, and runtime action dispatch remain Stage 3 work.
+- `Icon` remains a dependency-free text/glyph wrapper until a future adapter or optional icon
+  package task chooses a concrete mapping.
 
 ## Out Of Scope Preserved
 
@@ -112,11 +124,10 @@ Review verification:
 - Runtime agent bridge
 - MCP tools
 - Reanimated motion presets
-- Expo UI SwiftUI adapter or native list/form hosting
-- Virtualized list data adapters
-- Adding runtime dependencies
+- Expo UI SwiftUI adapter or native hosted controls
+- Adding runtime dependencies or optional control packages
 - Old parser historical archive work
 
 ## Next Candidate Task
 
-Create the next bounded Stage 2 task for `Toggle`, `Slider`, `Picker`, and `Stepper`.
+Create the first bounded Stage 3 task for semantic node schema and registry mount/unmount behavior.

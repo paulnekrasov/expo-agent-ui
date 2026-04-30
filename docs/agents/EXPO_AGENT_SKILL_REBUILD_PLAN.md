@@ -220,7 +220,8 @@ This means the project must ship instruction artifacts, not only code:
 - `skills/expo-agent-ui/SKILL.md`
 - references for component primitives, semantic IDs, actions, flow testing, patching rules
 - references for on-demand platform skill routing across Expo, React Native, composition,
-  accessibility, native design, Apple, Android, systematic debugging, and context-engineering skills
+  accessibility, native design, Apple, Android, systematic debugging with TTD/TDD red-green
+  evidence, and context-engineering skills
 - examples of good screen generation
 - validation scripts or templates
 - optional command prompts and local agent definitions
@@ -382,7 +383,8 @@ should survive as structured agent backend state:
 - phase/product-stage state
 - handoff notes and review logs
 - validation rules and review checklists
-- systematic debugging rules for failures and blocked verification
+- systematic debugging rules for failures and blocked verification, including mandatory TTD/TDD
+  red-green evidence for debugging fixes
 - prompt resources and prompt rotation protocol
 - research status and implementation gates
 - flow specs and patch proposal policies

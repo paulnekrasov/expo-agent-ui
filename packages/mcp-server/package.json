@@ -16,8 +16,5 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
     "test": "node -e \"console.log('@agent-ui/mcp-server tests deferred until MCP tools exist')\""
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }

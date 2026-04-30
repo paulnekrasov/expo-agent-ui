@@ -44,7 +44,7 @@ export function resolvePrimitiveTestID(
 export function isDevelopmentRuntime(): boolean {
   const runtimeFlag = (globalThis as { __DEV__?: boolean }).__DEV__;
 
-  return typeof runtimeFlag === "boolean" ? runtimeFlag : true;
+  return runtimeFlag === true;
 }
 
 export function warnInDevelopment(message: string): void {
@@ -52,4 +52,3 @@ export function warnInDevelopment(message: string): void {
     console.warn(message);
   }
 }
-

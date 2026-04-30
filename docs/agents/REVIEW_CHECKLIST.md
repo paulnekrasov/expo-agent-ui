@@ -11,6 +11,8 @@ stage. Do not review future-stage obligations during an earlier-stage task.
 - [ ] No unrelated architectural drift was introduced.
 - [ ] Relevant reference docs were followed.
 - [ ] Verification commands were run, or limitations are explicitly stated.
+- [ ] Any debugging fix has red-green evidence: failing test/probe/command before the fix and the
+  same check passing after the fix.
 - [ ] Future-stage work is not mislabeled as a current bug.
 - [ ] Dirty user/research files outside the task scope were preserved.
 
@@ -117,4 +119,5 @@ Findings in `docs/agents/REVIEW.md` must include:
 - affected file,
 - why it matters,
 - governing rule or reference,
-- concrete fix direction.
+- concrete fix direction,
+- required red test/probe/command for fixers, or why one cannot be created.

@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch as RNSwitch,
   Text as RNText,
   TextInput,
   View
@@ -15,6 +16,7 @@ import type {
   PressableStateCallbackType,
   ScrollViewProps,
   StyleProp,
+  SwitchProps,
   TextInputProps,
   TextProps as RNTextProps,
   TextStyle,
@@ -195,6 +197,116 @@ export interface AgentUITextFieldProps
 
 export type AgentUISecureFieldProps = AgentUITextFieldProps;
 
+export interface AgentUIToggleProps
+  extends Omit<
+      SwitchProps,
+      | "accessibilityLabel"
+      | "accessibilityRole"
+      | "accessibilityState"
+      | "disabled"
+      | "id"
+      | "testID"
+    >,
+    AgentUIActionablePrimitiveProps {
+  label?: string;
+  value: boolean;
+}
+
+export interface AgentUISliderProps
+  extends Omit<
+      PressableProps,
+      | "accessibilityActions"
+      | "accessibilityLabel"
+      | "accessibilityRole"
+      | "accessibilityState"
+      | "accessibilityValue"
+      | "children"
+      | "disabled"
+      | "id"
+      | "onAccessibilityAction"
+      | "style"
+      | "testID"
+    >,
+    AgentUIActionablePrimitiveProps {
+  fillStyle?: StyleProp<ViewStyle>;
+  label?: string;
+  maximumValue?: number;
+  minimumValue?: number;
+  onValueChange?: (value: number) => void;
+  step?: number;
+  style?: PressableProps["style"];
+  thumbStyle?: StyleProp<ViewStyle>;
+  trackStyle?: StyleProp<ViewStyle>;
+  value: number;
+  valueFormatter?: (value: number) => string;
+}
+
+export type AgentUIPickerOptionValue = string | number;
+
+export interface AgentUIPickerOption {
+  disabled?: boolean;
+  id: string;
+  label: string;
+  value: AgentUIPickerOptionValue;
+}
+
+export interface AgentUIPickerProps
+  extends Omit<
+      ViewProps,
+      | "accessibilityLabel"
+      | "accessibilityRole"
+      | "accessibilityState"
+      | "children"
+      | "id"
+      | "testID"
+    >,
+    AgentUIActionablePrimitiveProps {
+  label?: string;
+  onValueChange?: (
+    value: AgentUIPickerOptionValue,
+    option: AgentUIPickerOption
+  ) => void;
+  optionStyle?: StyleProp<ViewStyle>;
+  optionTextStyle?: StyleProp<TextStyle>;
+  options: readonly AgentUIPickerOption[];
+  selectedOptionStyle?: StyleProp<ViewStyle>;
+  selectedOptionTextStyle?: StyleProp<TextStyle>;
+  selectedValue?: AgentUIPickerOptionValue;
+  spacing?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+export interface AgentUIStepperProps
+  extends Omit<
+      ViewProps,
+      | "accessibilityActions"
+      | "accessibilityLabel"
+      | "accessibilityRole"
+      | "accessibilityState"
+      | "accessibilityValue"
+      | "children"
+      | "id"
+      | "onAccessibilityAction"
+      | "testID"
+    >,
+    AgentUIActionablePrimitiveProps {
+  buttonStyle?: StyleProp<ViewStyle>;
+  buttonTextStyle?: StyleProp<TextStyle>;
+  controlStyle?: StyleProp<ViewStyle>;
+  decrementLabel?: string;
+  incrementLabel?: string;
+  label?: string;
+  labelTextStyle?: StyleProp<TextStyle>;
+  maximumValue?: number;
+  minimumValue?: number;
+  onValueChange?: (value: number) => void;
+  step?: number;
+  style?: StyleProp<ViewStyle>;
+  value: number;
+  valueFormatter?: (value: number) => string;
+  valueTextStyle?: StyleProp<TextStyle>;
+}
+
 function alignmentToFlex(alignment: StackAlignment | undefined): ViewStyle["alignItems"] {
   switch (alignment) {
     case "start":
@@ -213,11 +325,13 @@ function alignmentToFlex(alignment: StackAlignment | undefined): ViewStyle["alig
 interface SemanticPrimitiveOptions {
   accessibilityLabel?: string | undefined;
   actions?: AgentUISemanticPrimitive["actions"] | undefined;
+  checked?: boolean | undefined;
   disabled?: boolean | undefined;
   fallbackLabel?: string | undefined;
   id?: string | undefined;
   intent?: string | undefined;
   privacy?: AgentUISemanticPrimitive["privacy"] | undefined;
+  selected?: boolean | undefined;
   testID?: string | undefined;
   value?: AgentUISemanticPrimitive["value"] | undefined;
 }
@@ -239,6 +353,12 @@ function createSemanticPrimitive(
     ...(typeof props.disabled === "boolean"
       ? { disabled: props.disabled }
       : {}),
+    ...(typeof props.checked === "boolean"
+      ? { checked: props.checked }
+      : {}),
+    ...(typeof props.selected === "boolean"
+      ? { selected: props.selected }
+      : {}),
     ...(props.actions ? { actions: props.actions } : {}),
     ...(props.privacy ? { privacy: props.privacy } : {}),
     ...(props.value ? { value: props.value } : {})
@@ -247,7 +367,9 @@ function createSemanticPrimitive(
 
 function createAccessibilityState(options: {
   busy?: boolean | undefined;
+  checked?: boolean | "mixed" | undefined;
   disabled?: boolean | undefined;
+  selected?: boolean | undefined;
 }): AccessibilityState | undefined {
   const state: AccessibilityState = {};
 
@@ -259,7 +381,59 @@ function createAccessibilityState(options: {
     state.busy = options.busy;
   }
 
+  if (typeof options.checked === "boolean" || options.checked === "mixed") {
+    state.checked = options.checked;
+  }
+
+  if (typeof options.selected === "boolean") {
+    state.selected = options.selected;
+  }
+
   return Object.keys(state).length > 0 ? state : undefined;
+}
+
+function clampNumber(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function resolveRangeStep(
+  minimumValue: number,
+  maximumValue: number,
+  step: number | undefined
+): number {
+  if (typeof step === "number" && Number.isFinite(step) && step > 0) {
+    return step;
+  }
+
+  const range = maximumValue - minimumValue;
+
+  return range > 0 ? range / 100 : 1;
+}
+
+function resolveRangeBounds(
+  minimumValue: number | undefined,
+  maximumValue: number | undefined
+): { maximum: number; minimum: number } {
+  const minimum =
+    typeof minimumValue === "number" && Number.isFinite(minimumValue)
+      ? minimumValue
+      : 0;
+  const maximum =
+    typeof maximumValue === "number" && Number.isFinite(maximumValue)
+      ? maximumValue
+      : 1;
+
+  return maximum >= minimum
+    ? { maximum, minimum }
+    : { maximum: minimum, minimum: maximum };
+}
+
+function roundRangeValue(value: number): number {
+  return Number(value.toFixed(6));
+}
+
+function formatRangeValue(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(roundRangeValue(value));
 }
 
 function readableTextFromChildren(children: React.ReactNode): string | undefined {
@@ -309,6 +483,22 @@ function warnIfStructuredMetadataIsMissing(
     warnInDevelopment(
       `${componentName} should provide an accessibilityLabel or readable title.`
     );
+  }
+}
+
+function warnIfPickerOptionsAreMissing(
+  options: readonly AgentUIPickerOption[]
+): void {
+  if (options.length === 0) {
+    warnInDevelopment("Picker should provide at least one option.");
+    return;
+  }
+
+  for (const option of options) {
+    if (option.id.trim().length === 0 || option.label.trim().length === 0) {
+      warnInDevelopment("Picker options should provide stable ids and labels.");
+      return;
+    }
   }
 }
 
@@ -1013,6 +1203,480 @@ export function SecureField(props: AgentUISecureFieldProps): React.ReactElement 
   return <TextFieldBase {...props} secure />;
 }
 
+export function Toggle({
+  accessibilityLabel,
+  busy,
+  disabled = false,
+  id,
+  intent,
+  label,
+  testID,
+  value,
+  ...switchProps
+}: AgentUIToggleProps): React.ReactElement {
+  const resolvedTestID = resolvePrimitiveTestID(id, testID);
+  const resolvedLabel = accessibilityLabel ?? label;
+  const accessibilityState = React.useMemo(
+    () => createAccessibilityState({ busy, checked: value, disabled }),
+    [busy, disabled, value]
+  );
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("toggle", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["toggle", "activate"],
+        checked: value,
+        disabled,
+        id,
+        intent,
+        testID: resolvedTestID,
+        value: { checked: value }
+      }),
+    [disabled, id, intent, resolvedLabel, resolvedTestID, value]
+  );
+
+  React.useEffect(() => {
+    warnIfActionableMetadataIsMissing("Toggle", id, resolvedLabel);
+  }, [id, resolvedLabel]);
+
+  useDeferredSemanticPrimitive(semantic);
+
+  return (
+    <RNSwitch
+      {...switchProps}
+      accessibilityLabel={resolvedLabel}
+      accessibilityRole="switch"
+      accessibilityState={accessibilityState}
+      accessible
+      disabled={disabled}
+      testID={resolvedTestID}
+      value={value}
+    />
+  );
+}
+
+export function Slider({
+  accessibilityLabel,
+  busy,
+  disabled = false,
+  fillStyle,
+  id,
+  intent,
+  label,
+  maximumValue,
+  minimumValue,
+  onValueChange,
+  step,
+  style,
+  testID,
+  thumbStyle,
+  trackStyle,
+  value,
+  valueFormatter,
+  ...pressableProps
+}: AgentUISliderProps): React.ReactElement {
+  const { maximum, minimum } = resolveRangeBounds(minimumValue, maximumValue);
+  const resolvedStep = resolveRangeStep(minimum, maximum, step);
+  const clampedValue = clampNumber(value, minimum, maximum);
+  const resolvedTestID = resolvePrimitiveTestID(id, testID);
+  const resolvedLabel = accessibilityLabel ?? label;
+  const valueText = valueFormatter
+    ? valueFormatter(clampedValue)
+    : formatRangeValue(clampedValue);
+  const range = maximum - minimum;
+  const fillPercent = range > 0 ? ((clampedValue - minimum) / range) * 100 : 0;
+  const fillWidth = `${clampNumber(fillPercent, 0, 100)}%` as ViewStyle["width"];
+  const accessibilityState = React.useMemo(
+    () => createAccessibilityState({ busy, disabled }),
+    [busy, disabled]
+  );
+  const accessibilityValue = React.useMemo(
+    () => ({
+      max: maximum,
+      min: minimum,
+      now: clampedValue,
+      text: valueText
+    }),
+    [clampedValue, maximum, minimum, valueText]
+  );
+  const semanticValue = React.useMemo<AgentUISemanticPrimitive["value"]>(
+    () => ({
+      max: maximum,
+      min: minimum,
+      now: clampedValue,
+      step: resolvedStep,
+      text: valueText
+    }),
+    [clampedValue, maximum, minimum, resolvedStep, valueText]
+  );
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("slider", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["increment", "decrement", "set_value"],
+        disabled,
+        id,
+        intent,
+        testID: resolvedTestID,
+        value: semanticValue
+      }),
+    [disabled, id, intent, resolvedLabel, resolvedTestID, semanticValue]
+  );
+  const setValue = React.useCallback(
+    (nextValue: number) => {
+      if (disabled) {
+        return;
+      }
+
+      onValueChange?.(roundRangeValue(clampNumber(nextValue, minimum, maximum)));
+    },
+    [disabled, maximum, minimum, onValueChange]
+  );
+  const handleAccessibilityAction = React.useCallback<
+    NonNullable<PressableProps["onAccessibilityAction"]>
+  >(
+    (event) => {
+      if (event.nativeEvent.actionName === "increment") {
+        setValue(clampedValue + resolvedStep);
+      }
+
+      if (event.nativeEvent.actionName === "decrement") {
+        setValue(clampedValue - resolvedStep);
+      }
+    },
+    [clampedValue, resolvedStep, setValue]
+  );
+
+  React.useEffect(() => {
+    warnIfActionableMetadataIsMissing("Slider", id, resolvedLabel);
+  }, [id, resolvedLabel]);
+
+  useDeferredSemanticPrimitive(semantic);
+
+  return (
+    <Pressable
+      {...pressableProps}
+      accessibilityActions={[
+        { name: "increment", label: "Increase" },
+        { name: "decrement", label: "Decrease" }
+      ]}
+      accessibilityLabel={resolvedLabel}
+      accessibilityRole="adjustable"
+      accessibilityState={accessibilityState}
+      accessibilityValue={accessibilityValue}
+      disabled={disabled}
+      onAccessibilityAction={handleAccessibilityAction}
+      style={(state: PressableStateCallbackType) => [
+        styles.slider,
+        disabled ? styles.controlDisabled : undefined,
+        state.pressed && !disabled ? styles.rangePressed : undefined,
+        typeof style === "function"
+          ? style(state)
+          : (style as StyleProp<ViewStyle> | undefined)
+      ]}
+      testID={resolvedTestID}
+    >
+      <View style={[styles.sliderTrack, trackStyle]}>
+        <View style={[styles.sliderFill, { width: fillWidth }, fillStyle]} />
+        <View
+          style={[
+            styles.sliderThumb,
+            { left: fillWidth },
+            disabled ? styles.controlDisabled : undefined,
+            thumbStyle
+          ]}
+        />
+      </View>
+      <RNText style={styles.controlValueText}>{valueText}</RNText>
+    </Pressable>
+  );
+}
+
+export function Picker({
+  accessibilityLabel,
+  busy,
+  disabled = false,
+  id,
+  intent,
+  label,
+  onValueChange,
+  optionStyle,
+  optionTextStyle,
+  options,
+  selectedOptionStyle,
+  selectedOptionTextStyle,
+  selectedValue,
+  spacing,
+  style,
+  testID,
+  ...viewProps
+}: AgentUIPickerProps): React.ReactElement {
+  const resolvedTestID = resolvePrimitiveTestID(id, testID);
+  const resolvedLabel = accessibilityLabel ?? label;
+  const selectedOption = options.find((option) =>
+    Object.is(option.value, selectedValue)
+  );
+  const accessibilityState = React.useMemo(
+    () => createAccessibilityState({ busy, disabled }),
+    [busy, disabled]
+  );
+  const semanticValue = React.useMemo<AgentUISemanticPrimitive["value"]>(() => {
+    return {
+      ...(selectedOption
+        ? {
+            selected: String(selectedOption.value),
+            text: selectedOption.label
+          }
+        : {})
+    };
+  }, [selectedOption]);
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("picker", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["select"],
+        disabled,
+        id,
+        intent,
+        selected: Boolean(selectedOption),
+        testID: resolvedTestID,
+        value: semanticValue
+      }),
+    [
+      disabled,
+      id,
+      intent,
+      resolvedLabel,
+      resolvedTestID,
+      selectedOption,
+      semanticValue
+    ]
+  );
+
+  React.useEffect(() => {
+    warnIfActionableMetadataIsMissing("Picker", id, resolvedLabel);
+    warnIfPickerOptionsAreMissing(options);
+  }, [id, options, resolvedLabel]);
+
+  useDeferredSemanticPrimitive(semantic);
+
+  return (
+    <View
+      {...viewProps}
+      accessibilityLabel={resolvedLabel}
+      accessibilityRole="radiogroup"
+      accessibilityState={accessibilityState}
+      style={[
+        styles.picker,
+        typeof spacing === "number" ? { gap: spacing } : undefined,
+        disabled ? styles.controlDisabled : undefined,
+        style
+      ]}
+      testID={resolvedTestID}
+    >
+      {options.map((option) => {
+        const isSelected = Object.is(option.value, selectedValue);
+        const isDisabled = disabled || option.disabled === true;
+        const optionTestID = resolvedTestID
+          ? `${resolvedTestID}.${option.id}`
+          : option.id;
+
+        return (
+          <Pressable
+            accessibilityLabel={option.label}
+            accessibilityRole="radio"
+            accessibilityState={createAccessibilityState({
+              checked: isSelected,
+              disabled: isDisabled,
+              selected: isSelected
+            })}
+            disabled={isDisabled}
+            key={option.id}
+            onPress={() => {
+              if (!isDisabled) {
+                onValueChange?.(option.value, option);
+              }
+            }}
+            style={(state: PressableStateCallbackType) => [
+              styles.pickerOption,
+              isSelected ? styles.pickerOptionSelected : undefined,
+              isDisabled ? styles.controlDisabled : undefined,
+              state.pressed && !isDisabled ? styles.rangePressed : undefined,
+              optionStyle,
+              isSelected ? selectedOptionStyle : undefined
+            ]}
+            testID={optionTestID}
+          >
+            <RNText
+              style={[
+                styles.pickerOptionText,
+                optionTextStyle,
+                isSelected ? styles.pickerOptionTextSelected : undefined,
+                isSelected ? selectedOptionTextStyle : undefined
+              ]}
+            >
+              {option.label}
+            </RNText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+export function Stepper({
+  accessibilityLabel,
+  busy,
+  buttonStyle,
+  buttonTextStyle,
+  controlStyle,
+  decrementLabel,
+  disabled = false,
+  id,
+  incrementLabel,
+  intent,
+  label,
+  labelTextStyle,
+  maximumValue,
+  minimumValue,
+  onValueChange,
+  step,
+  style,
+  testID,
+  value,
+  valueFormatter,
+  valueTextStyle,
+  ...viewProps
+}: AgentUIStepperProps): React.ReactElement {
+  const { maximum, minimum } = resolveRangeBounds(minimumValue, maximumValue);
+  const resolvedStep = resolveRangeStep(minimum, maximum, step);
+  const clampedValue = clampNumber(value, minimum, maximum);
+  const canDecrement = !disabled && clampedValue > minimum;
+  const canIncrement = !disabled && clampedValue < maximum;
+  const resolvedTestID = resolvePrimitiveTestID(id, testID);
+  const resolvedLabel = accessibilityLabel ?? label;
+  const valueText = valueFormatter
+    ? valueFormatter(clampedValue)
+    : formatRangeValue(clampedValue);
+  const accessibilityState = React.useMemo(
+    () => createAccessibilityState({ busy, disabled }),
+    [busy, disabled]
+  );
+  const accessibilityValue = React.useMemo(
+    () => ({
+      max: maximum,
+      min: minimum,
+      now: clampedValue,
+      text: valueText
+    }),
+    [clampedValue, maximum, minimum, valueText]
+  );
+  const semanticValue = React.useMemo<AgentUISemanticPrimitive["value"]>(
+    () => ({
+      max: maximum,
+      min: minimum,
+      now: clampedValue,
+      step: resolvedStep,
+      text: valueText
+    }),
+    [clampedValue, maximum, minimum, resolvedStep, valueText]
+  );
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("stepper", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["increment", "decrement", "set_value"],
+        disabled,
+        id,
+        intent,
+        testID: resolvedTestID,
+        value: semanticValue
+      }),
+    [disabled, id, intent, resolvedLabel, resolvedTestID, semanticValue]
+  );
+  const setValue = React.useCallback(
+    (nextValue: number) => {
+      if (disabled) {
+        return;
+      }
+
+      onValueChange?.(roundRangeValue(clampNumber(nextValue, minimum, maximum)));
+    },
+    [disabled, maximum, minimum, onValueChange]
+  );
+  const handleAccessibilityAction = React.useCallback<
+    NonNullable<ViewProps["onAccessibilityAction"]>
+  >(
+    (event) => {
+      if (event.nativeEvent.actionName === "increment") {
+        setValue(clampedValue + resolvedStep);
+      }
+
+      if (event.nativeEvent.actionName === "decrement") {
+        setValue(clampedValue - resolvedStep);
+      }
+    },
+    [clampedValue, resolvedStep, setValue]
+  );
+
+  React.useEffect(() => {
+    warnIfActionableMetadataIsMissing("Stepper", id, resolvedLabel);
+  }, [id, resolvedLabel]);
+
+  useDeferredSemanticPrimitive(semantic);
+
+  return (
+    <View
+      {...viewProps}
+      accessibilityActions={[
+        { name: "increment", label: incrementLabel ?? "Increase" },
+        { name: "decrement", label: decrementLabel ?? "Decrease" }
+      ]}
+      accessibilityLabel={resolvedLabel}
+      accessibilityRole="adjustable"
+      accessibilityState={accessibilityState}
+      accessibilityValue={accessibilityValue}
+      accessible
+      onAccessibilityAction={handleAccessibilityAction}
+      style={[styles.stepper, disabled ? styles.controlDisabled : undefined, style]}
+      testID={resolvedTestID}
+    >
+      {label ? (
+        <RNText style={[styles.stepperLabel, labelTextStyle]}>{label}</RNText>
+      ) : null}
+      <View style={[styles.stepperControls, controlStyle]}>
+        <Pressable
+          accessible={false}
+          disabled={!canDecrement}
+          onPress={() => setValue(clampedValue - resolvedStep)}
+          style={[
+            styles.stepperButton,
+            !canDecrement ? styles.controlDisabled : undefined,
+            buttonStyle
+          ]}
+          testID={resolvedTestID ? `${resolvedTestID}.decrement` : undefined}
+        >
+          <RNText style={[styles.stepperButtonText, buttonTextStyle]}>-</RNText>
+        </Pressable>
+        <RNText style={[styles.stepperValueText, valueTextStyle]}>{valueText}</RNText>
+        <Pressable
+          accessible={false}
+          disabled={!canIncrement}
+          onPress={() => setValue(clampedValue + resolvedStep)}
+          style={[
+            styles.stepperButton,
+            !canIncrement ? styles.controlDisabled : undefined,
+            buttonStyle
+          ]}
+          testID={resolvedTestID ? `${resolvedTestID}.increment` : undefined}
+        >
+          <RNText style={[styles.stepperButtonText, buttonTextStyle]}>+</RNText>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
@@ -1033,6 +1697,16 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600"
+  },
+  controlDisabled: {
+    opacity: 0.45
+  },
+  controlValueText: {
+    color: "#6B7280",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 6,
+    textAlign: "right"
   },
   fill: {
     flex: 1
@@ -1057,6 +1731,35 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 12
+  },
+  picker: {
+    gap: 8
+  },
+  pickerOption: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
+  pickerOptionSelected: {
+    borderColor: "#0A7AFF",
+    borderWidth: 2
+  },
+  pickerOptionText: {
+    color: "#111111",
+    fontSize: 16,
+    lineHeight: 22
+  },
+  pickerOptionTextSelected: {
+    color: "#0A7AFF",
+    fontWeight: "600"
+  },
+  rangePressed: {
+    opacity: 0.78
   },
   spacer: {
     flexBasis: 0,
@@ -1086,6 +1789,75 @@ const styles = StyleSheet.create({
   },
   stack: {
     minWidth: 0
+  },
+  slider: {
+    minHeight: 44,
+    justifyContent: "center"
+  },
+  sliderFill: {
+    backgroundColor: "#0A7AFF",
+    borderRadius: 999,
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    top: 0
+  },
+  sliderThumb: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#0A7AFF",
+    borderRadius: 10,
+    borderWidth: 2,
+    height: 20,
+    marginLeft: -10,
+    marginTop: -8,
+    position: "absolute",
+    top: "50%",
+    width: 20
+  },
+  sliderTrack: {
+    backgroundColor: "#D1D5DB",
+    borderRadius: 999,
+    height: 4,
+    overflow: "visible",
+    position: "relative"
+  },
+  stepper: {
+    gap: 8,
+    minHeight: 44
+  },
+  stepperButton: {
+    alignItems: "center",
+    backgroundColor: "#EEF2FF",
+    borderColor: "#C7D2FE",
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    width: 44
+  },
+  stepperButtonText: {
+    color: "#111111",
+    fontSize: 20,
+    fontWeight: "600",
+    lineHeight: 24
+  },
+  stepperControls: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10
+  },
+  stepperLabel: {
+    color: "#111111",
+    fontSize: 16,
+    fontWeight: "600",
+    lineHeight: 22
+  },
+  stepperValueText: {
+    color: "#111111",
+    fontSize: 16,
+    lineHeight: 22,
+    minWidth: 44,
+    textAlign: "center"
   },
   text: {
     color: "#111111",

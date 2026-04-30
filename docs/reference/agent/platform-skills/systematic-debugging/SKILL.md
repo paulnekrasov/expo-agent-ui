@@ -33,6 +33,22 @@ script, Expo workflow, test, MCP command, bridge session, or scheduled runner fa
 the exact command, exact error, current stage, affected package, and the smallest reproducible
 condition.
 
+## TTD/TDD Red-Green Rule
+
+Every debugging fix must use a red-green loop after root cause investigation and before claiming
+completion.
+
+- Red first: add or run the smallest failing automated test that reproduces the bug before changing
+  production code. If the stage has no harness yet, use the smallest one-off probe, package command,
+  or script that fails for the same reason and record the exact failing output.
+- Green next: make the smallest source/config change that fixes the root cause, then rerun the same
+  red test or probe and show it now passes.
+- Broaden after green: run the stage verification commands from `TASK.md` or the relevant package.
+- No silent exceptions: if no meaningful red test or probe is possible, record why in `REVIEW.md`
+  and `HANDOFF.md`, then use the narrowest manual reproduction plus the normal verification gates.
+- Do not write only a post-fix test. A test that was never observed red is coverage, not debugging
+  evidence.
+
 ## When To Use
 
 Load this adapter before proposing or applying fixes for:
@@ -83,7 +99,8 @@ State one falsifiable hypothesis:
 
 ```text
 I think <specific cause> is the root cause because <evidence>.
-The smallest verification is <command/test/check>.
+The red reproduction is <failing test/probe/command>.
+The green verification will rerun the same test/probe/command after the minimal fix.
 ```
 
 Use the smallest test or command that can prove or disprove the hypothesis. Do not bundle multiple
@@ -93,8 +110,10 @@ fix attempts.
 
 Only after the hypothesis is supported:
 
-- Add or update the smallest relevant test when the stage has a test harness.
+- Add or update the smallest relevant test when the stage has a test harness, and observe it fail
+  for the expected reason before changing production code.
 - Fix the root cause, not only the visible symptom.
+- Rerun the red test or probe and confirm it turns green.
 - Avoid unrelated refactors.
 - Run the verification commands from `TASK.md` or the stage reference.
 - If three fix attempts fail or the fix requires crossing stage boundaries, stop and record an
@@ -135,7 +154,9 @@ Before marking a debugging-related task `DONE`, record:
 
 - the failure reproduced or the reason it could not be reproduced,
 - the root cause hypothesis and evidence,
+- the red test/probe/command and its expected failure,
 - the exact fix,
+- the green rerun of the same test/probe/command,
 - the exact verification commands and outcomes,
 - remaining concerns, if any.
 

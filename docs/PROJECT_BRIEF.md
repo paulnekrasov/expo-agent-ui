@@ -268,5 +268,6 @@ implementation gates.
   `packages/mcp-server`. They must not be imported by `packages/core` or bundled into the running
   mobile app.
 - Systematic debugging is agent-side workflow knowledge. Use it for bugs, failed verification,
-  runner-environment failures, bridge/MCP failures, and flaky async behavior, but do not bundle the
-  skill into app runtime code.
+  runner-environment failures, bridge/MCP failures, and flaky async behavior, and apply the project
+  TTD/TDD red-green loop for fixes: failing test/probe/command before the fix, same check passing
+  after the fix. Do not bundle the skill into app runtime code.

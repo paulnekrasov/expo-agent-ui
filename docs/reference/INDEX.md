@@ -99,7 +99,8 @@ been removed from active context. Use this index as the complete router for curr
   content. Summarize only the task-relevant decisions into hidden agent notes or docs.
 - Use the repo-local systematic debugging adapter before fixing bugs, failing verification,
   runner-environment failures, bridge/MCP failures, or unexpected behavior. Record evidence before
-  changing source.
+  changing source, then follow the project TTD/TDD red-green loop: failing test/probe/command before
+  the fix, same check passing after the fix.
 
 ## Cleanup Status
 

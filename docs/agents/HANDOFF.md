@@ -1,34 +1,46 @@
 # HANDOFF NOTE
 From: scheduled-run coordinator
-To: next Stage 2 implementer
+To: next Stage 3 implementer
 Session date: 2026-04-30
 
 ## What I Did
 
-- Ran the scheduled automation loop for the next bounded Stage 2 primitive task.
-- Used the repo-local context-prompt-engineering reference for task/state/prompt status updates.
+- Ran the scheduled automation loop for the final bounded Stage 2 primitive task.
 - Confirmed current-run verification was available:
   - direct Node child-process probe exited `0`,
   - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- Implemented the next primitive cluster in `packages/core/src`:
-  - `Scroll`
-  - `List`
-  - `Section`
-  - `Form`
-- Extended the deferred semantic primitive metadata with scroll/list/section/form roles and a scroll
-  action without implementing the Stage 3 registry.
-- Added development warnings for missing stable IDs or labels on scroll/list/form/section hierarchy.
+- Used the repo-local context-prompt-engineering reference for task/state/prompt status updates.
+- Used the repo-local systematic-debugging adapter for source/test failures and recorded red-green
+  evidence.
+- Implemented the remaining control primitive cluster in `packages/core/src`:
+  - `Toggle`
+  - `Slider`
+  - `Picker`
+  - `Stepper`
+- Extended deferred semantic primitive metadata with control roles, checked/selected/range values,
+  and `toggle`, `increment`, `decrement`, `set_value`, and `select` actions.
+- Added development warnings for new actionable controls missing stable IDs or accessible labels,
+  plus picker option ID/label validation.
 - Kept core free of `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, old parser
   assets, and new dependencies.
-- Updated the example app to render a simple settings-style runtime connection screen.
-- During review, fixed one API rough edge so string section headers/footers render inside React
-  Native `Text`, while custom nodes pass through.
-- Completed the authorized dependency-management pass for React typings:
-  - added workspace `@types/react`,
-  - removed the temporary local React declaration shim,
-  - changed the example app `typecheck` script to run `tsc`.
-- Aligned the example app and core peer ranges with the Expo Doctor-verified SDK 55 dependency set:
-  `expo@55.0.18` and `react-native@0.83.6`.
+- Updated the example app settings form to render the new control primitives.
+- Added React Native Testing Library coverage for stable IDs, roles, checked state, picker
+  selection state, range accessibility values, and stepper increment behavior.
+- Marked the Stage 2 roadmap complete with concerns deferred to Stage 3/Stage 7.
+
+## Debugging Evidence
+
+- Red: workspace typecheck failed because the example app resolved `@agent-ui/core` through stale
+  `dist` declarations that did not export the new controls.
+- Green: `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated package output, and
+  `cmd /c npm.cmd run typecheck --workspaces --if-present` passed.
+- Red: focused example tests failed because `Toggle` did not have an explicit accessibility element
+  boundary for RNTL role queries.
+- Green: `Toggle` now passes `accessible`; the same focused test advanced.
+- Red: focused example tests failed because hidden stepper press targets were excluded from
+  `getByTestId`.
+- Green: visible stepper press targets are no longer accessibility-hidden; the same focused example
+  test passed.
 
 ## Verification Completed
 
@@ -36,22 +48,19 @@ Session date: 2026-04-30
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
 - `git diff --check` exited `0`.
-- `cmd /c npx.cmd expo-doctor` in `packages/example-app` passed all 18 checks.
-- `cmd /c npx.cmd tsc --noEmit -p packages/example-app/tsconfig.json` exited `0`.
-- A forbidden-import scan of `packages/core/src` found no `@expo/ui`, Expo Router,
+- A PowerShell forbidden-import scan of `packages/core/src` found no `@expo/ui`, Expo Router,
   React Navigation, MCP SDK, old parser, tree-sitter, WASM, VS Code, or Canvas renderer imports.
 
 ## Known Concerns
 
-- The example app build/test scripts still use placeholders until an Expo build target
-  configuration and a React Native test harness are added.
-- `npm audit --omit=dev --audit-level=moderate` still reports moderate transitive Expo CLI/config
-  tooling advisories. The suggested forced fix downgrades Expo to 49, so do not apply it blindly.
-- `Scroll`, `List`, `Section`, and `Form` expose typed/deferred semantic metadata only. Stage 3 must
-  implement real tree snapshots, parent-child inspection, duplicate ID detection, and action
-  dispatch.
-- `Icon` is intentionally a dependency-free text/glyph wrapper. A concrete icon package or adapter
-  mapping remains future work.
+- `Slider`, `Picker`, and `Stepper` are dependency-free React Native fallback controls. Optional
+  native hosted equivalents belong in Stage 7 adapter work.
+- All primitives still register deferred semantic metadata only. Real semantic tree snapshots,
+  duplicate ID detection, node lookup, and action dispatch are Stage 3 work.
+- `Icon` remains a dependency-free text/glyph wrapper until a future adapter or optional icon
+  package task chooses a concrete mapping.
+- `rg.exe` is unavailable in the desktop runner; use PowerShell `Get-ChildItem` /
+  `Select-String` fallback unless npm/child-process verification starts failing too.
 
 ## What The Next Agent Must Do First
 
@@ -59,22 +68,22 @@ Session date: 2026-04-30
 2. Read `docs/reference/INDEX.md`.
 3. Read `docs/agents/TASK.md`.
 4. Read `docs/reference/react-native/accessibility-semantics.md`.
-5. Read `docs/reference/design/control-chrome.md`.
+5. Read `docs/reference/agent/security-privacy.md`.
 6. Check `git status --short --branch`.
 7. Use `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before fixing any bug,
    failed command, blocked verification, runner environment issue, bridge/MCP failure, or flaky
-   async behavior.
+   async behavior, and apply its TTD/TDD red-green rule.
 
 ## Suggested Next Target
 
-- Create a new bounded Stage 2 task for `Toggle`, `Slider`, `Picker`, and `Stepper`.
+- Create the first bounded Stage 3 task for semantic node schema and registry mount/unmount
+  behavior.
 
 ## What The Next Agent Must Not Do
 
 - Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas
   renderer assets.
-- Do not implement the Stage 3 semantic registry inside a Stage 2 primitive task.
+- Do not implement the agent bridge or MCP tools inside the first Stage 3 semantic-runtime task.
 - Do not make `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, icon packages, or
   control packages mandatory in `packages/core`.
-- Do not expose MCP tools before the runtime exists.
 - Do not treat repo-local platform skills as package source or runtime dependencies.

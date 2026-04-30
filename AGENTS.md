@@ -83,6 +83,9 @@ agent tool bridge, MCP server, and reusable agent skill.
   not implement MCP; MCP does not invent app runtime behavior.
 - Use Windows-safe path handling in tooling.
 - Do not add dependencies casually. Every dependency must be justified by the relevant reference.
+- For bugs, security findings, failed verification, runner failures, bridge/MCP failures, and flaky
+  async behavior, use the repo-local systematic debugging adapter and record TTD/TDD red-green
+  evidence before claiming the fix: failing test/probe/command first, same check passing after.
 - Do not recreate old parser, tree-sitter, WASM, VS Code extension, or Canvas renderer assets
   unless the user explicitly asks for historical archive work.
 

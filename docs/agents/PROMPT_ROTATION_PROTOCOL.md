@@ -77,6 +77,8 @@ Each active runtime prompt must include:
 - required docs to read,
 - verification commands,
 - debugging skill to load before fixing failures,
+- TTD/TDD red-green requirement for bug, security, tooling, runner, bridge, MCP, or flaky async
+  fixes,
 - required final status token.
 
 ## Deletion Safety Rule
