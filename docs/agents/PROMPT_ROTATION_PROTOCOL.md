@@ -18,6 +18,7 @@ Examples:
 - `docs/agents/CONTEXT_ENGINEERING_SYSTEM_TEMPLATE.md`
 - `docs/agents/research-prompts/expo-agent-ui/**`
 - `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
+- `docs/agents/DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT.md`
 - `docs/agents/MULTI_AGENT_LAUNCH_GUIDE.md`
 
 ### Runtime Prompts

@@ -1,24 +1,34 @@
-export interface AgentUIMcpManifest {
-  packageName: "@agent-ui/mcp-server";
-  transport: "stdio";
-  implementedTools: string[];
-  deferredTools: string[];
-}
+export type { AgentUIMcpManifest } from "./manifest.js";
 
-export function getAgentUIMcpManifest(): AgentUIMcpManifest {
-  return {
-    packageName: "@agent-ui/mcp-server",
-    transport: "stdio",
-    implementedTools: [],
-    deferredTools: [
-      "inspectTree",
-      "getState",
-      "tap",
-      "input",
-      "scroll",
-      "navigate",
-      "runFlow",
-      "observeEvents"
-    ]
-  };
-}
+export { getAgentUIMcpManifest } from "./manifest.js";
+
+export {
+  createAgentUIMcpListener,
+  type AgentUIMcpListenerConfig,
+  type AgentUIMcpListenerState,
+  type AgentUIMcpListener,
+  type AgentUIMcpAppSession
+} from "./listener.js";
+
+export {
+  createAgentUIMcpServer,
+  startAgentUIMcpServer,
+  type AgentUIMcpServerOptions
+} from "./cli.js";
+
+export {
+  createPlatformSkillResolver,
+  getPlatformSkillResourceUris,
+  getResourceMetadata,
+  listPlatformSkillEntries,
+  searchPlatformSkills,
+  recommendPlatformSkills,
+  type PlatformSkillResolver,
+  type PlatformSkillResource,
+  type PlatformSkillEntry,
+  type PlatformSkillContent,
+  type PlatformSkillSearchMatch,
+  type PlatformSkillSearchOptions,
+  type PlatformSkillRecommendation,
+  type PlatformSkillRecommendOptions
+} from "./platform-skills.js";

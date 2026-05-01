@@ -2,7 +2,7 @@ export type AgentUICommand = "init" | "dev" | "doctor";
 
 export interface AgentUICliManifest {
   packageName: "@agent-ui/cli";
-  stage: "package-foundation";
+  stage: "mcp-server";
   implementedCommands: AgentUICommand[];
   deferredCommands: AgentUICommand[];
 }
@@ -10,7 +10,7 @@ export interface AgentUICliManifest {
 export function getAgentUICliManifest(): AgentUICliManifest {
   return {
     packageName: "@agent-ui/cli",
-    stage: "package-foundation",
+    stage: "mcp-server",
     implementedCommands: [],
     deferredCommands: ["init", "dev", "doctor"]
   };

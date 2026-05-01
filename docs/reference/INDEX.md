@@ -21,6 +21,7 @@ been removed from active context. Use this index as the complete router for curr
 | Work Area | Open First |
 |---|---|
 | Overall rebuild plan | `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md` |
+| Deep debugging autonomous loop | `docs/agents/DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT.md` |
 | Research completion status | `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
 | Package foundation and Expo SDK | `expo/package-foundation.md` |
 | Expo UI SwiftUI adapter | `expo/expo-ui-swift-ui.md` |

@@ -1,65 +1,61 @@
 # TASK SPECIFICATION
 Created by: scheduled-run coordinator
 Date: 2026-05-01
-Last updated: 2026-05-01
-Roadmap Phase: Phase 4 - Agent Tool Bridge
-Product Stage: Stage 4 - Agent Tool Bridge
-Research Area: Agent bridge transport architecture and security/privacy
+Roadmap Phase: Phase 5 - MCP Server
+Product Stage: Stage 5 - MCP Server (sixth slice - final Stage 5 items)
+Research Area: MCP transport architecture, platform skill MCP surface, security/privacy
 
 ## Objective
 
-Implement the first bounded Stage 4 bridge slice: define the JS-only bridge protocol contracts and
-development-only runtime gate exposed through `AgentUIProvider`.
-
-Keep the work inside Stage 4. Do not implement WebSocket transport, MCP server tools, Node bridge
-listeners, navigation adapters, flow runner, Reanimated motion, Expo UI adapters, native modules,
-or old parser assets.
-
-## Status
-
-DONE_WITH_CONCERNS
+Complete all remaining Stage 5 MCP server items:
+- Register scroll, navigate, runFlow as MCP runtime-control tools.
+- Add read-only MCP resources for sessions and diagnostics.
+- Add MCP schema validation tests.
+- Mark Stage 5 as complete on the roadmap checklist.
 
 ## Acceptance Criteria
 
-- [x] Preserve Stage 2 primitives and Stage 3 semantic registry behavior.
-- [x] Add public bridge protocol/gate types for protocol version, transport mode, execution
-  environment, capabilities, and structured gate result codes.
-- [x] Add a pure JS gate that enables bridge control only when explicitly configured, `__DEV__`
-  is true, execution environment is non-standalone, a pairing token is present, and the URL policy
-  is accepted.
-- [x] Keep default bridge posture fail-closed: disabled by default, disabled outside development,
-  disabled for standalone/unknown execution environments, disabled for missing tokens, and disabled
-  for LAN/tunnel URLs unless a documented explicit unsafe LAN option is used.
-- [x] Expose the gate result through `AgentUIProvider` and a hook without opening sockets or
-  serializing semantic trees.
-- [x] Do not import `expo-constants`, `@expo/ui`, Expo Router, React Navigation, MCP SDK, native
-  modules, old parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code in
-  `@agent-ui/core`.
-- [x] Add focused tests for default-disabled, development-enabled loopback, production disabled,
-  standalone disabled, missing-token disabled, LAN rejection, explicit LAN opt-in, tunnel rejection,
-  and provider hook exposure.
+- [x] Register scroll MCP tool in `packages/mcp-server/src/cli.ts`:
+  - Session required (fail-closed with SESSION_NOT_CONNECTED).
+  - Required `id` (string), optional `sessionId`, `direction`, `amount`, `targetId`, `timeoutMs`.
+  - Routes through `session.sendCommand()` with `type: "scroll"`.
+  - Error codes: `NODE_NOT_FOUND`, `NOT_SCROLL_CONTAINER`, `DIRECTION_UNSUPPORTED`, `COMMAND_FAILED`.
+- [x] Register navigate MCP tool in `packages/mcp-server/src/cli.ts`:
+  - Session required.
+  - Optional `sessionId`, `screen`, `route`, `params`, `replace`, `timeoutMs`.
+  - Routes through `session.sendCommand()` with `type: "navigate"`.
+  - Error codes: `NAVIGATION_UNAVAILABLE`, `ROUTE_NOT_FOUND`, `PARAMS_INVALID`, `COMMAND_FAILED`.
+- [x] Register runFlow MCP tool in `packages/mcp-server/src/cli.ts`:
+  - Session required.
+  - Optional `sessionId`, `name`, `steps` (array of flow steps), `stopOnFailure`, `timeoutMs`.
+  - Routes through `session.sendCommand()` with `type: "runFlow"`.
+  - Error codes: `FLOW_NOT_FOUND`, `STEP_FAILED`, `TIMEOUT`, `COMMAND_FAILED`.
+- [x] Add read-only MCP resources for sessions and diagnostics:
+  - `agent-ui://sessions` - current active session metadata.
+  - `agent-ui://diagnostics` - listener, bridge, and server diagnostics.
+  - Both return metadata even when no session is active (not error states).
+- [x] Update `packages/mcp-server/src/manifest.ts`:
+  - Moved `scroll`, `navigate`, `runFlow` from `deferredTools` to `implementedTools`.
+  - `deferredTools` is now empty. Stage 5 runtime-control tool surface is complete.
+- [x] Update `packages/mcp-server/test/mcp-server.test.js` (9 new tests):
+  - scroll returns SESSION_NOT_CONNECTED without session.
+  - navigate returns SESSION_NOT_CONNECTED without session.
+  - runFlow returns SESSION_NOT_CONNECTED without session.
+  - listTools returns 13 tools (9 runtime-control + 4 skill-context).
+  - All 13 tools have valid inputSchemas with type: "object".
+  - All 13 tools have non-empty descriptions.
+  - ListResources includes sessions and diagnostics URIs.
+  - ReadResource for sessions URI returns metadata even without session.
+  - ReadResource for diagnostics URI returns server metadata.
+- [x] No imports of `@expo/ui`, Expo Router, React Navigation, react, react-native, old parser
+  assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+- [x] Existing typecheck, build, and all tests continue to pass.
 
-## Implementation Summary
+## File Allowlist
 
-- Added `packages/core/src/bridge.ts` with protocol version `1`, bridge capability, transport,
-  execution-environment, config, gate-result, and result-code contracts.
-- Added `createAgentUIBridgeGate(config?, options?)` as a pure JS fail-closed runtime gate.
-- Required explicit `enabled: true`, `__DEV__` development mode, known non-standalone execution
-  environment, non-empty pairing token, and valid `ws://` / `wss://` URL before the gate enables.
-- Kept loopback and Android emulator host URLs safe by default, required `unsafeAllowLAN: true` for
-  LAN mode, and rejected tunnel mode for v0.
-- Exposed the resolved bridge gate in `AgentUIProvider` context and `useAgentUIBridge()` without
-  opening a network socket.
-- Exported bridge constants, functions, and types from `@agent-ui/core`.
-- Added focused React Native Testing Library/Jest coverage in
-  `packages/example-app/app/agent-ui-bridge.test.tsx`.
-
-## File Allowlist Used
-
-- `packages/core/src/bridge.ts`
-- `packages/core/src/semantic.tsx`
-- `packages/core/src/index.ts`
-- `packages/example-app/app/agent-ui-bridge.test.tsx`
+- `packages/mcp-server/src/cli.ts`
+- `packages/mcp-server/src/manifest.ts`
+- `packages/mcp-server/test/mcp-server.test.js`
 - `docs/agents/TASK.md`
 - `docs/agents/PHASE_STATE.md`
 - `docs/agents/HANDOFF.md`
@@ -68,60 +64,28 @@ DONE_WITH_CONCERNS
 - `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
 - `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md`
 
-## Verification
+## Out Of Scope
 
-Current-run preflight:
+- Bridge-level scroll/navigate/runFlow implementation in `packages/core` (the MCP server delegates to
+  `sendCommand`; the bridge dispatcher handles the runtime behavior).
+- Processing `includeBounds` or `rootId` in `inspectTree` (deferred).
+- Dynamic sub-file template URIs for platform skills (deferred).
+- Dynamic INDEX.md parsing (deferred).
+- Expo SDK version bump (deferred to dedicated dependency pass).
+- Adding `@expo/ui`, Expo Router, React Navigation, native module, or config-plugin imports.
+- Old parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas renderer work.
 
-- `node -e "const r=require('child_process').spawnSync(process.execPath,['-e','process.exit(0)'],{encoding:'utf8'}); if(r.error){console.error(r.error.message); process.exit(2)} process.exit(r.status ?? 0)"` exited `0`.
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+## Verification Commands
 
-Focused red/green:
+```powershell
+cmd /c npm.cmd run typecheck --workspaces --if-present
+cmd /c npm.cmd run build --workspaces --if-present
+cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand
+cmd /c npm.cmd test --workspaces --if-present
+cmd /c npm.cmd audit --audit-level=moderate
+git diff --check
+```
 
-- Red: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  failed with six expected `createAgentUIBridgeGate is not a function` /
-  `useAgentUIBridge is not a function` failures.
-- Green: adding the bridge module, provider hook, and exports made the same focused command pass
-  with 7 tests.
-- Red: workspace typecheck failed because the example app resolved stale built `@agent-ui/core`
-  declarations without the new bridge exports and provider prop.
-- Green: `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated declarations, and the
-  same workspace typecheck passed.
+## Status
 
-Final verification:
-
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  exited `0`; 7 tests passed.
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
-  Android Expo export to `.tmp-review/android-export`.
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 4 suites and 31 tests passed.
-- `git diff --check` exited `0`.
-- A PowerShell forbidden-import scan of `packages/core/src` found no `expo-constants`, `@expo/ui`,
-  Expo Router, React Navigation, MCP SDK, old parser, tree-sitter, WASM, VS Code, or Canvas
-  renderer imports.
-
-## Concerns
-
-- This slice defines and exposes the bridge gate only; it does not open a WebSocket, perform a
-  handshake, validate WebSocket origins, maintain sessions, or emit bridge audit logs.
-- `executionEnvironment` is caller-supplied in core to avoid importing Expo Constants directly; a
-  later bridge/provider integration must pass Expo runtime evidence from an adapter or app layer.
-- LAN mode is structurally gated with `unsafeAllowLAN`, but the future Node bridge listener still
-  must bind loopback by default and implement pairing/origin checks before tool control works.
-
-## Out Of Scope Preserved
-
-- Opening a WebSocket connection from the app.
-- Implementing a Node bridge listener.
-- Implementing MCP tools or adding the MCP SDK dependency.
-- Adding Expo Constants imports to core.
-- Adding native modules or config-plugin mutations.
-- Supporting tunnel mode for semantic control.
-- Navigation adapters, flow runner, screenshots, coordinates, or old parser historical archive
-  work.
-
-## Next Candidate Task
-
-Implement the next bounded Stage 4 task for the loopback-first app bridge session model:
-session ids, hello/heartbeat envelopes, pairing-token validation shape, and an in-memory event log
-contract, still without MCP tools.
+DONE

@@ -78,34 +78,38 @@ Status: Complete with deferred bridge/MCP concerns
 ## Phase 4 - Agent Tool Bridge
 
 Product Stage: Stage 4 - Agent Tool Bridge
-Status: In progress
+Status: Complete with deferred MCP concerns
 
 - [x] Define bridge protocol
 - [x] Implement development-only runtime gate
-- [ ] Implement loopback-first WebSocket bridge
-- [ ] Implement pairing token flow
-- [ ] Implement sessions and heartbeat
-- [ ] Implement `inspectTree`, `getState`, `tap`, `input`, `waitFor`, `observeEvents`
-- [ ] Add structured error codes
-- [ ] Add security/redaction tests
+- [x] Implement session model contracts
+- [x] Implement hello/heartbeat envelope contracts
+- [x] Implement pairing token validation shape
+- [x] Implement in-memory event log contract
+- [x] Implement loopback-first WebSocket bridge connection (hello/welcome, heartbeat, reconnect)
+- [x] Implement bridge command dispatch against semantic registry
+- [x] Implement pairing token flow (server-side handshake validation)
+- [x] Implement `inspectTree`, `getState`, `tap`, `input`, `waitFor`, `observeEvents` tool contracts
+- [x] Add structured request/response types
+- [x] Add security/redaction tests
 
 ## Phase 5 - MCP Server
 
 Product Stage: Stage 5 - MCP Server
-Status: Not started
+Status: Complete
 
-- [ ] Add stdio MCP server package
-- [ ] Pin MCP SDK v1.x unless re-verified otherwise
-- [ ] Register only implemented tools
-- [ ] Add read-only resources for sessions, tree, screens, flows, diagnostics
-- [ ] Add read-only resources for repo-local platform skills
-- [ ] Add skill-context prompts for scaffold, accessibility review, visual editor notes, and task notes
-- [ ] Document side-by-side Agent UI MCP and Maestro MCP setup for optional external execution
-- [ ] Add read-only skill lookup tools: `listPlatformSkills`, `getPlatformSkill`,
-  `searchPlatformSkills`, `recommendPlatformSkills`
-- [ ] Keep skill-context tools separate from runtime-control tools and app-session requirements
-- [ ] Keep stdout protocol-clean
-- [ ] Add MCP schema tests
+- [x] Add stdio MCP server package
+- [x] Pin MCP SDK v1.x unless re-verified otherwise
+- [x] Register only implemented tools (inspectTree, getState)
+- [x] Register tap, input, observeEvents tools (second slice)
+- [x] Register waitFor tool (third slice)
+- [x] Register scroll, navigate, runFlow tools (sixth slice)
+- [x] Add read-only resources for sessions, diagnostics
+- [x] Add read-only resources for repo-local platform skills
+- [x] Add skill-context lookup tools: `listPlatformSkills`, `getPlatformSkill`, `searchPlatformSkills`, `recommendPlatformSkills`
+- [x] Keep skill-context tools separate from runtime-control tools and app-session requirements
+- [x] Keep stdout protocol-clean
+- [x] Add MCP schema tests
 
 ## Phase 6 - Motion Layer
 
@@ -153,6 +157,8 @@ Status: Not started; platform skill reference prework complete
   and TTD/TDD red-green fix evidence
 - [x] Add scaffold mode notes for cross-platform, iOS-enhanced, and Android-enhanced apps
 - [x] Refactor scheduled automation loop prompt for the full Expo Agent UI lifecycle
+- [x] Add deep debugging autonomous loop prompt for whole-codebase review, priority ranking, and
+  TTD/TDD red-green fix evidence
 - [ ] Add flow examples
 - [ ] Add validation script
 

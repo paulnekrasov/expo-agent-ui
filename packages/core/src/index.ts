@@ -1,20 +1,69 @@
 export const agentUICorePackage = "@agent-ui/core" as const;
-export const agentUICoreStage = "semantic-runtime" as const;
+export const agentUICoreStage = "agent-bridge" as const;
 
 export {
+  createAgentUIBridgeCommandDispatcher,
+  createAgentUIBridgeConnection,
+  createAgentUIBridgeEventLog,
   createAgentUIBridgeGate,
+  createAgentUIBridgeInspectTreeResponse,
+  createAgentUIBridgeGetStateResponse,
+  createAgentUIBridgeTapResponse,
+  createAgentUIBridgeInputResponse,
+  createAgentUIBridgeWaitForResponse,
+  createAgentUIBridgeObserveEventsResponse,
+  createAgentUIBridgeRequestId,
+  createAgentUIBridgeSessionId,
+  generateAgentUIPairingToken,
+  validateAgentUIBridgeRequest,
+  validateAgentUIPairingToken,
   AGENT_UI_BRIDGE_PROTOCOL_VERSION,
   DEFAULT_AGENT_UI_BRIDGE_CAPABILITIES
 } from "./bridge";
 export type {
   AgentUIBridgeCapability,
+  AgentUIBridgeCommandDispatcher,
+  AgentUIBridgeCommandRequest,
+  AgentUIBridgeCommandResponse,
+  AgentUIBridgeCommandStatusCode,
+  AgentUIBridgeCommandType,
   AgentUIBridgeConfig,
+  AgentUIBridgeConnection,
+  AgentUIBridgeConnectionConfig,
+  AgentUIBridgeConnectionState,
+  AgentUIBridgeEvent,
+  AgentUIBridgeEventCursor,
+  AgentUIBridgeEventLog,
+  AgentUIBridgeEventQueryResult,
+  AgentUIBridgeEventType,
   AgentUIBridgeExecutionEnvironment,
   AgentUIBridgeGateOptions,
   AgentUIBridgeGateResult,
   AgentUIBridgeGateResultCode,
+  AgentUIBridgeGetStateRequest,
+  AgentUIBridgeGetStateResponse,
+  AgentUIBridgeHeartbeatAckEnvelope,
+  AgentUIBridgeHeartbeatEnvelope,
+  AgentUIBridgeHelloEnvelope,
+  AgentUIBridgeInputRequest,
+  AgentUIBridgeInputResponse,
+  AgentUIBridgeInspectTreeRequest,
+  AgentUIBridgeInspectTreeResponse,
+  AgentUIBridgeObserveEventsRequest,
+  AgentUIBridgeObserveEventsResponse,
   AgentUIBridgeProtocolVersion,
-  AgentUIBridgeTransportMode
+  AgentUIBridgeRegistry,
+  AgentUIBridgeRequestId,
+  AgentUIBridgeSessionDescriptor,
+  AgentUIBridgeSessionId,
+  AgentUIBridgeSessionState,
+  AgentUIBridgeTapRequest,
+  AgentUIBridgeTapResponse,
+  AgentUIBridgeTransportMode,
+  AgentUIBridgeWaitCondition,
+  AgentUIBridgeWaitForRequest,
+  AgentUIBridgeWaitForResponse,
+  AgentUIBridgeWelcomeEnvelope
 } from "./bridge";
 export {
   AgentUIProvider,
@@ -121,7 +170,7 @@ export function getAgentUIPackageManifest(): AgentUIPackageManifest {
     packageName: agentUICorePackage,
     stage: agentUICoreStage,
     jsOnly: true,
-    implementedCapabilities: ["component-primitives", "semantic-runtime"],
-    deferredCapabilities: ["agent-bridge", "motion-layer"]
+    implementedCapabilities: ["component-primitives", "semantic-runtime", "agent-bridge"],
+    deferredCapabilities: ["motion-layer"]
   };
 }

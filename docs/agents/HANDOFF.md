@@ -1,89 +1,70 @@
 # HANDOFF NOTE
-From: scheduled-run coordinator
-To: next Stage 4 implementer
+From: deep debugging autonomous agent (Stage 5 MCP audit)
+To: next Stage 6 implementer or automated runner
 Session date: 2026-05-01
+
+## Deep Debugging Audit Summary
+
+Ran full deep debugging loop across the recently completed Stage 5 MCP server surface. All verification gates green. No High or Medium findings. Two Low findings documented: (1) `includeBounds` accepted in inspectTree schema but not passed to bridge, (2) session resource missing `expiresAt`. Both are deferred and documented.
+
+## Previous Handoff
+
+From: scheduled-run coordinator (sixth Stage 5 slice - final)
 
 ## What I Did
 
-- Ran the scheduled automation loop for the first Stage 4 bridge task.
-- Confirmed current-run verification was available:
-  - direct Node child-process probe exited `0`,
-  - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- Used the repo-local context-prompt-engineering reference for task/state/prompt status updates.
-- Used the repo-local systematic-debugging adapter for the focused red tests and stale declaration
-  typecheck failure.
-- Added `packages/core/src/bridge.ts` with bridge protocol version, capability, transport-mode,
-  execution-environment, config, gate-result, and result-code contracts.
-- Added `createAgentUIBridgeGate(config?, options?)` as a pure JS fail-closed gate.
-- Required explicit bridge enablement, development mode, known non-standalone execution
-  environment, pairing token, valid WebSocket URL, and accepted URL/transport policy before bridge
-  control enables.
-- Kept LAN behind explicit `unsafeAllowLAN` and rejected tunnel mode for v0 semantic control.
-- Exposed the resolved bridge gate through `AgentUIProvider` and `useAgentUIBridge()` without
-  opening sockets or serializing semantic snapshots.
-- Exported the bridge constants, types, and gate function from `@agent-ui/core`.
-- Added focused tests in `packages/example-app/app/agent-ui-bridge.test.tsx`.
-- Updated `ROADMAP_CHECKLIST.md` to mark bridge protocol and development-only runtime gate done.
+- Completed all remaining Stage 5 MCP server items in one bounded task:
+  - Registered scroll, navigate, runFlow as MCP runtime-control tools with full JSON-Schema-compliant input schemas.
+  - Added read-only MCP resources for sessions (`agent-ui://sessions`) and diagnostics (`agent-ui://diagnostics`).
+  - Updated manifest: all 13 tools (9 runtime-control + 4 skill-context) now implemented; deferredTools and deferredSkillTools are empty.
+  - Added 9 new MCP server tests: 3 SESSION_NOT_CONNECTED tests for new tools, updated listTools to 13, 2 schema validation tests, ListResource test for sessions/diagnostics, 2 ReadResource tests.
+  - Updated roadmap checklist: Stage 5 marked COMPLETE.
+  - 201 total tests pass (151 example-app + 50 mcp-server).
 
-## Debugging Evidence
+## MCP Tool Surface (Final Stage 5)
 
-- Red: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  failed with six expected `createAgentUIBridgeGate is not a function` /
-  `useAgentUIBridge is not a function` failures.
-- Green: adding the bridge module, provider hook, and exports made the same focused Jest command
-  pass with 7 tests.
-- Red: `cmd /c npm.cmd run typecheck --workspaces --if-present` failed because the example app
-  resolved stale built `@agent-ui/core` declarations without the new bridge exports and provider
-  prop.
-- Green: `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated declarations, and the
-  same workspace typecheck command passed.
+| Category | Tools |
+|---|---|
+| Runtime-control (9) | inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow |
+| Skill-context (4) | listPlatformSkills, getPlatformSkill, searchPlatformSkills, recommendPlatformSkills |
+
+## MCP Prompts (6)
+
+choose_platform_skills, plan_native_scaffold, review_accessibility_semantics, prepare_visual_editor_notes, write_agent_task_notes, debug_stage_failure
+
+## MCP Resources (13)
+
+11 platform-skill resources + 2 runtime resources (sessions, diagnostics)
 
 ## Verification Completed
 
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  exited `0`; 7 tests passed.
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 4 suites and 31 tests passed.
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0` (all 5 packages).
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0` (all 5 packages, including Android export).
+- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` exited `0`; 50 tests.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 201 total tests.
+- `cmd /c npm.cmd audit --audit-level=moderate` exited `0`; 0 vulnerabilities.
+- CLI standalone `--help` exited `0`.
 - `git diff --check` exited `0`.
-- A PowerShell forbidden-import scan of `packages/core/src` found no `expo-constants`, `@expo/ui`,
-  Expo Router, React Navigation, MCP SDK, native modules, old parser assets, tree-sitter, WASM, VS
-  Code, or Canvas renderer code.
 
 ## Known Concerns
 
-- This task did not implement WebSocket transport, pairing handshake, origin validation, sessions,
-  heartbeat, event log, or audit logging.
-- Core intentionally does not import Expo Constants. The future app/adapter bridge layer must pass
-  trustworthy `executionEnvironment` evidence into the gate.
-- LAN mode is structurally gated with `unsafeAllowLAN`, but the future Node bridge listener still
-  must bind loopback by default and implement token/origin checks.
+- inspectTree's includeBounds/rootId accepted but not processed by bridge dispatcher.
+- Bridge-level scroll/navigate/runFlow implementation in `packages/core` is deferred (MCP server delegates via `session.sendCommand()`).
+- Platform skill resources/recommendations are hardcoded; dynamic INDEX.md parsing is deferred.
+- Dynamic sub-file template URIs (`agent-ui://platform-skills/{name}/references/{ref}`) deferred.
+- Expo SDK at 55.0.18 vs ~55.0.19 (minor patch drift, deferred).
+- Session resource returns `connected: false` with `session: null` when no app is connected (not an error).
 
 ## What The Next Agent Must Do First
 
-1. Read `docs/PROJECT_BRIEF.md`.
-2. Read `docs/reference/INDEX.md`.
-3. Read `docs/agents/TASK.md`.
-4. Read `docs/reference/agent/mcp-transport-architecture.md`.
-5. Read `docs/reference/agent/security-privacy.md`.
-6. Check `git status --short --branch`.
-7. Use `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before fixing any bug,
-   failed command, blocked verification, runner environment issue, bridge/MCP failure, or flaky
-   async behavior, and apply its TTD/TDD red-green rule.
-
-## Suggested Next Target
-
-- Create the next bounded Stage 4 task for the loopback-first app bridge session model: session
-  ids, hello/heartbeat envelopes, pairing-token validation shape, and in-memory event log contract.
-  Keep MCP tools separate until Stage 5.
+1. Read `docs/PROJECT_BRIEF.md` and `docs/reference/INDEX.md`.
+2. Review `docs/agents/REVIEW.md` for the latest review (sixth slice at the top).
+3. Stage 5 is complete. Create the next bounded Stage 6 task from `docs/agents/ROADMAP_CHECKLIST.md` Phase 6 - Motion Layer.
+4. Read `docs/reference/motion/reanimated-4.md` and `docs/reference/motion/swiftui-motion-mapping.md`.
 
 ## What The Next Agent Must Not Do
 
-- Do not implement MCP tools yet.
-- Do not add `@modelcontextprotocol/sdk` until Stage 5 server code imports it.
-- Do not add native modules or config-plugin mutations for this JS-only bridge path.
-- Do not make Expo Router, React Navigation, `@expo/ui`, or Expo Constants mandatory imports in
-  `packages/core`.
-- Do not fallback to screenshots or coordinates as the primary control model.
-- Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas
-  renderer assets.
+- Do not bump Expo SDK version without a dedicated dependency-management pass.
+- Do not add @expo/ui, Expo Router, React Navigation, native modules, or old parser assets.
+- Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas renderer assets.
+- Do not remove the --forceExit from listener tests without fixing the open-handle cleanup.

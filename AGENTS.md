@@ -39,6 +39,7 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Maestro semantic flow adapter: `docs/reference/agent/maestro-semantic-flow-adapter.md`
 - Systematic debugging adapter: `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md`
 - Scheduled automation loop prompt: `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
+- Deep debugging autonomous loop prompt: `docs/agents/DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT.md`
 - Navigation adapters: `docs/reference/react-native/navigation-adapters.md`
 - Testing and devtools: `docs/reference/react-native/testing-and-devtools.md`
 - SwiftUI-inspired layout DNA: `docs/reference/design/swiftui-layout-dna.md`

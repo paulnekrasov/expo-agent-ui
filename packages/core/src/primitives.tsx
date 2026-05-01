@@ -10,6 +10,7 @@ import {
   View
 } from "react-native";
 import type {
+  GestureResponderEvent,
   ImageProps as RNImageProps,
   ImageStyle,
   PressableProps,
@@ -1020,13 +1021,18 @@ export function Button({
     [busy, disabled]
   );
   const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
-    () =>
-      onPress
-        ? {
-            activate: () => onPress(undefined as never),
-            tap: () => onPress(undefined as never)
-          }
-        : undefined,
+    () => {
+      if (!onPress) {
+        return undefined;
+      }
+
+      const syntheticEvent = { nativeEvent: {} } as GestureResponderEvent;
+
+      return {
+        activate: () => onPress(syntheticEvent),
+        tap: () => onPress(syntheticEvent)
+      };
+    },
     [onPress]
   );
   const semantic = React.useMemo(

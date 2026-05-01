@@ -15,6 +15,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
-    "test": "node -e \"console.log('@agent-ui/mcp-server tests deferred until MCP tools exist')\""
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "@agent-ui/core": "*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/ws": "^8.5.0",
+    "ts-jest": "^29.1.0"
   }
 }
