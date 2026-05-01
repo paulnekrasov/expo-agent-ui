@@ -348,16 +348,19 @@ Phase 2 — Pattern Analysis
 Phase 3 — Hypothesis and Minimal Test
   → Form one falsifiable hypothesis
   → Write the smallest possible test that validates or refutes it
-  → Run the test before writing any fix
+  → Run the test before writing any fix and observe the red failure
 
 Phase 4 — Implementation
   → Implement the minimal fix that satisfies the test
+  → Re-run the same test and observe the green pass before broad verification
   → Do NOT refactor unrelated code in the same change
   → Re-run the full test suite; check for regressions
 ```
 
 **Iron laws of systematic debugging:**
 - Never guess. Always reproduce first.
+- No debugging fix is complete without TTD/TDD red-green evidence unless a meaningful red check is
+  impossible and that exception is documented.
 - One hypothesis at a time.
 - Fix the root cause, not the symptom.
 - If the fix takes more than 30 minutes, escalate to architecture review.

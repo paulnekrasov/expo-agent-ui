@@ -13,6 +13,9 @@
   connected Android Compose runtime, both reporting semantic state to the same editor.
 - A local Windows developer can run Android Emulator locally and use EAS to build iOS artifacts,
   but live iOS interaction still needs a Mac-hosted simulator/device or cloud capture workflow.
+- EAS Android build profiles that compile the Compose adapter should enable Gradle cache with
+  `EAS_GRADLE_CACHE=1` where available; cache hits are verified in the Run Gradle step through
+  `FROM CACHE` task output.
 - EAS Workflows can run jobs on macOS workers for iOS simulator jobs and nested-virtualization
   Linux workers for Android Emulator jobs, which makes automated screenshot/video/test capture
   possible after semantic flows exist.
@@ -30,6 +33,7 @@
 | iOS simulator artifacts | EAS supports iOS Simulator builds with `ios.simulator: true`; simulator builds can be installed with EAS CLI or Expo Orbit and then paired with `npx expo start` for development builds. | EAS can produce the `.app` artifact for an iOS simulator lane, but an iOS Simulator host is still needed to run it interactively. | https://docs.expo.dev/build-reference/simulators and https://docs.expo.dev/tutorial/eas/ios-development-build-for-simulators/, accessed 2026-04-27 |
 | EAS Workflows workers | EAS Workflows custom jobs include macOS workers that run iOS jobs including simulators, and Linux nested-virtualization workers for Android Emulators. | Cloud-based automated preview/test capture is plausible, but it is a workflow lane, not a free local live editor session. | https://docs.expo.dev/eas/workflows/syntax/, accessed 2026-04-27 |
 | Android native adapter | Expo UI Jetpack Compose is a separate Android entrypoint from SwiftUI, with its own `Host` and modifier namespace. | Android native preview must run in an Android runtime and use a separate adapter path. | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-27 |
+| Android Gradle cache | EAS can enable Gradle build cache with `EAS_GRADLE_CACHE=1`; Expo says subsequent builds reuse task outputs when inputs match and cached Gradle tasks appear as `FROM CACHE` in build logs. | Android Compose build lanes should document the env setting and log check, especially for development builds with native UI dependencies. | https://expo.dev/changelog/gradle-cache, accessed 2026-04-30 |
 
 ## Runtime Modes
 
@@ -37,7 +41,7 @@
 |---|---|---|---|
 | React Native fallback, local | Fast cross-platform preview on Expo/RN without `@expo/ui`. | Native SwiftUI/Compose visual fidelity. | Core development and v0 correctness. |
 | iOS SwiftUI development build from EAS | Real iOS native SwiftUI artifact, built on Expo cloud macOS infrastructure. | A persistent local iOS Simulator on Windows/Linux. | Install/run on Mac-hosted simulator, iOS device, or remote runtime. |
-| Android Compose development build | Real Android-native Compose artifact. | iOS SwiftUI rendering. | Run locally on Android Emulator or Android device; later cloud Android lane. |
+| Android Compose development build | Real Android-native Compose artifact. | iOS SwiftUI rendering. | Run locally on Android Emulator or Android device; enable EAS Gradle cache for repeated EAS Android builds when using the cloud lane. |
 | EAS Workflow simulator/emulator job | Automated run/capture on cloud worker classes. | Always-on interactive visual editor unless extra remote streaming tooling exists. | Post-v0 screenshots, recordings, and semantic flow validation. |
 | Remote Mac session | Interactive iOS Simulator controlled through a remote machine. | Android Compose in the same iOS simulator. | Optional live side-by-side editor lane. |
 
@@ -101,6 +105,8 @@ different after the semantic flow has reached the same state.
   build metadata.
 - Stage 5: MCP resources can expose connected sessions and adapter capabilities.
 - Stage 7: SwiftUI and Compose adapters must declare explicit capability flags and fallback paths.
+- Stage 7: Android Compose build docs should include an `eas.json` env example for
+  `EAS_GRADLE_CACHE=1` and tell implementers to verify `FROM CACHE` in Run Gradle logs.
 - Stage 9: visual editor and side-by-side comparison can consume multi-session bridge data and
   optional screenshot/video artifacts.
 - Stage 10: publish docs should explain local Android, EAS-built iOS, remote Mac, and cloud
@@ -126,6 +132,9 @@ different after the semantic flow has reached the same state.
 - Expo UI Jetpack Compose, https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/,
   accessed 2026-04-27. Supports claims about Android-native Compose entrypoints and platform
   boundaries.
+- Gradle cache for Android builds, https://expo.dev/changelog/gradle-cache, accessed
+  2026-04-30. Supports `EAS_GRADLE_CACHE=1`, lockfile-derived cache keys, and `FROM CACHE` log
+  verification.
 
 ## Final Recommendation
 
@@ -134,6 +143,7 @@ remove the iOS build barrier, but keep live iOS preview tied to an iOS runtime. 
 editor around multiple connected runtime sessions so iOS SwiftUI and Android Compose can be
 viewed side by side through shared semantic IDs and adapter capability metadata. Keep cloud
 simulator/emulator capture optional and post-v0 until semantic flows, redaction, and native
-adapter boundaries are stable.
+adapter boundaries are stable. For Android Compose EAS build lanes, document `EAS_GRADLE_CACHE=1`
+as the default cache opt-in and require `FROM CACHE` log evidence before claiming cache behavior.
 
 DONE_WITH_CONCERNS

@@ -27,6 +27,7 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Research status: `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`
 - Expo package foundation: `docs/reference/expo/package-foundation.md`
 - Expo UI SwiftUI adapter: `docs/reference/expo/expo-ui-swift-ui.md`
+- Expo UI Jetpack Compose adapter: `docs/reference/expo/expo-ui-jetpack-compose.md`
 - EAS native preview and adapter comparison: `docs/reference/expo/eas-native-preview.md`
 - Reanimated motion layer: `docs/reference/motion/reanimated-4.md`
 - React Native semantic accessibility: `docs/reference/react-native/accessibility-semantics.md`
@@ -35,6 +36,7 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Platform skill routing: `docs/reference/agent/platform-skill-routing.md`
 - Repo-local platform skills: `docs/reference/agent/platform-skills/INDEX.md`
 - Platform skill MCP surface: `docs/reference/agent/platform-skill-mcp-surface.md`
+- Maestro semantic flow adapter: `docs/reference/agent/maestro-semantic-flow-adapter.md`
 - Systematic debugging adapter: `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md`
 - Scheduled automation loop prompt: `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
 - Navigation adapters: `docs/reference/react-native/navigation-adapters.md`
@@ -54,7 +56,7 @@ agent tool bridge, MCP server, and reusable agent skill.
 | Stage 4 - Agent Tool Bridge | local app bridge, sessions, tool dispatch, event log |
 | Stage 5 - MCP Server | stdio MCP server, tools, resources, prompts |
 | Stage 6 - Motion Layer | Reanimated presets, transitions, gestures, reduced motion |
-| Stage 7 - Expo UI Adapter | optional `@expo/ui/swift-ui` adapter, future Compose adapter, and fallbacks |
+| Stage 7 - Expo UI Adapter | explicit SwiftUI and Jetpack Compose `@expo/ui` adapters, fallbacks, and platform build lanes |
 | Stage 8 - Agent Skill | `skills/expo-agent-ui` skill, references, examples |
 | Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | repeatable flows, structured patch plans, and multi-session native preview comparison |
 | Stage 10 - Publish Readiness | README, compatibility, install docs, release path |
@@ -67,6 +69,8 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Do not make screenshots or coordinates the primary agent-control model.
 - Keep the core v0 runtime JS-only unless research proves a native bridge is required.
 - Keep `@expo/ui` optional behind adapter boundaries.
+- Do not defer Android Jetpack Compose below SwiftUI; Stage 7 builds both platform-native adapter
+  lanes behind explicit adapter imports.
 - Treat native adapters as platform-bound. EAS can build iOS SwiftUI artifacts on cloud Macs, but
   live iOS preview still needs an iOS runtime; Android Compose preview needs an Android runtime.
 - Do not promise one simulator can render both iOS SwiftUI and Android Jetpack Compose. Future
@@ -74,6 +78,11 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Treat platform skills as on-demand agent knowledge, not runtime dependencies or automatic scope
   expansion. Prefer the repo-local copies under `docs/reference/agent/platform-skills/`.
 - Skill-context MCP resources/tools must be read-only and separate from app runtime-control tools.
+- Maestro is an optional external execution adapter, not a core runtime dependency. Keep Agent UI
+  semantic flows as the source of truth and generated Maestro YAML as an export artifact.
+- Do not depend on Revyl or any paid cloud device farm. Borrow natural-language flow generation,
+  visual replay, YAML sync, reusable modules, and self-healing ideas only as local-first Agent UI
+  features.
 - Gate agent control behind development-only safety checks.
 - Redact sensitive semantic values before they leave the app runtime.
 - Use stable semantic IDs for actionable nodes.
@@ -83,6 +92,9 @@ agent tool bridge, MCP server, and reusable agent skill.
   not implement MCP; MCP does not invent app runtime behavior.
 - Use Windows-safe path handling in tooling.
 - Do not add dependencies casually. Every dependency must be justified by the relevant reference.
+- For bugs, security findings, failed verification, runner failures, bridge/MCP failures, and flaky
+  async behavior, use the repo-local systematic debugging adapter and record TTD/TDD red-green
+  evidence before claiming the fix: failing test/probe/command first, same check passing after.
 - Do not recreate old parser, tree-sitter, WASM, VS Code extension, or Canvas renderer assets
   unless the user explicitly asks for historical archive work.
 

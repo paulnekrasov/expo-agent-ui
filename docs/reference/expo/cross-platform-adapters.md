@@ -1,8 +1,8 @@
 # Cross-Platform Adapter Research
 
 ## Executive Summary
-- Agent UI v0 should not depend on Android-native or web-native adapters; keep React Native primitives plus the semantic registry as the shared baseline.
-- `@expo/ui/jetpack-compose` is Android-only, alpha, and explicitly subject to breaking changes, so it is a post-v0 optional adapter, not a core dependency. The current Expo docs list bundled version `~55.0.12` (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-29).
+- Agent UI core should not depend on Android-native or web-native adapters; keep React Native primitives plus the semantic registry as the shared baseline.
+- Stage 7 must build Android Jetpack Compose alongside iOS SwiftUI behind explicit native adapter imports. `@expo/ui/jetpack-compose` remains Android-only, alpha, development-build-only, and explicitly subject to breaking changes, so those facts are implementation gates rather than a reason to defer the adapter below SwiftUI. The current Expo docs list bundled version `~55.0.12` (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-30).
 - Expo UI requires a platform `Host` boundary for native UI: `@expo/ui/jetpack-compose` components must be wrapped in `Host`, and SwiftUI also crosses through `Host` (sources: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/ and https://docs.expo.dev/guides/expo-ui-swift-ui/, accessed 2026-04-27).
 - Compose support is Material 3 / Jetpack Compose shaped, while SwiftUI support is SwiftUI shaped; Agent UI should abstract semantic roles, state, actions, IDs, and layout intent, not native component APIs.
 - Compose modifiers use a `modifiers` prop and ordered array, similar enough to SwiftUI modifiers for a shared Agent UI modifier intent layer, but the concrete modifier functions and platform behavior must remain adapter-specific (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/modifiers/, accessed 2026-04-29).
@@ -19,7 +19,7 @@
 - Side-by-side native comparison should connect separate runtime sessions, for example iOS
   SwiftUI on an iOS simulator/device/remote Mac and Android Compose on an Android
   emulator/device/cloud worker.
-- Explicitly defer cloud flow recording, screenshot comparison, custom native component layers, and full parity between SwiftUI and Compose adapters until after the semantic runtime and local tools are stable.
+- Explicitly defer cloud flow recording, screenshot comparison, custom native component layers, and pixel-perfect parity between SwiftUI and Compose adapters until after the semantic runtime and local tools are stable.
 - Remaining concerns are now implementation gates, not research gaps: verify Compose `Host` accessibility propagation with TalkBack/native tree inspection, verify adapter sizing in fixture screens, and regenerate the component/export list from the installed `@expo/ui` package before coding.
 
 ## Expo UI Android / Compose Findings
@@ -42,7 +42,7 @@ The Compose modifier model is ordered and array-based: Expo documents `modifiers
 The Compose adapter model differs from the SwiftUI adapter model in native design language and component vocabulary. Expo's SwiftUI guide says SwiftUI components have a 1-to-1 mapping to SwiftUI views and use `Host` to cross from React Native/UIKit to SwiftUI (source: https://docs.expo.dev/guides/expo-ui-swift-ui/, accessed 2026-04-27). Compose pages emphasize Material 3 components and Jetpack Compose APIs, not SwiftUI parity (sources: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/button/ and https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/text/, accessed 2026-04-27). Therefore, Agent UI should not promise that a SwiftUI `VStack`/modifier expression maps mechanically to Compose.
 
 Limitations:
-- Alpha status and frequent breaking changes make Compose unsafe as an MVP foundation (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-27).
+- Alpha status and frequent breaking changes require tighter implementation gates for Compose: read installed `.d.ts` files, smoke-test the selected components, and keep fallbacks available (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-30).
 - Expo Go is not supported for Compose UI; development builds are required (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-27).
 - `Host` creates a native boundary with sizing and layout behavior Agent UI must handle explicitly (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/host/, accessed 2026-04-27).
 - Compose has a documented `testID(tag)` modifier for UI-testing identifiers (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/modifiers/, accessed 2026-04-29).
@@ -114,7 +114,7 @@ Adapter-specific surface:
 
 Recommended architecture:
 - Keep `@agent-ui/expo` core independent of `@expo/ui`.
-- Add optional subpath adapters such as `@agent-ui/expo/swift-ui`, `@agent-ui/expo/compose`, and `@agent-ui/expo/web`.
+- Add explicit subpath adapters such as `@agent-ui/expo/swift-ui`, `@agent-ui/expo/jetpack-compose`, and later `@agent-ui/expo/web`.
 - Let adapters consume the same semantic registration hooks and expose explicit capability flags.
 - Return structured `UNSUPPORTED_PLATFORM`, `UNSUPPORTED_COMPONENT`, or `HOST_REQUIRED` diagnostics when a semantic component cannot use the requested native adapter.
 - Treat adapter switching as a per-runtime capability. On iOS, switch between React Native
@@ -178,7 +178,7 @@ Verified updates:
 Resolved concern:
 
 - Semantic ID projection for Compose is no longer just a guess: use the documented
-  `testID(tag)` modifier from the optional Compose adapter.
+  `testID(tag)` modifier from the Compose adapter.
 
 Remaining implementation gates:
 
@@ -204,12 +204,11 @@ Remaining implementation gates:
 | Expo Go support | NEEDS_VERIFICATION for current SwiftUI support | Not supported for Compose per Expo docs | Supported when dependencies are Expo Go compatible | Supported in browser build/dev | Compose adapter must require dev build |
 | Web semantics | Not applicable | Not applicable | RNW can render fallback components | DOM/ARIA plus semantic HTML | Web is a first-class fallback target, not a native UI adapter |
 | Visual parity | iOS-native | Android Material-native | Cross-platform but less native | Browser-native | Prioritize semantic parity over visual parity |
-| MVP readiness | Optional for iOS native fidelity | Defer | Required baseline | Useful after core semantic runtime | v0 ships RN fallback and iOS adapter first; Compose/web adapters post-v0 |
+| MVP readiness | Stage 7 native adapter target | Stage 7 native adapter target | Required baseline | Useful after core semantic runtime | Stage 7 ships paired SwiftUI and Compose adapter lanes; web remains later |
 
-## Deferred Work
+## Remaining Gates And Deferred Work
 
-- Full Android Compose adapter: deferred because `@expo/ui/jetpack-compose` is alpha, breaking-change-prone, and unavailable in Expo Go (source: https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/, accessed 2026-04-27).
-- Direct Compose accessibility verification: deferred until there is an implementation prototype with TalkBack testing and native tree inspection.
+- Direct Compose accessibility verification: required during the Stage 7 adapter prototype with TalkBack testing and native tree inspection.
 - Full Web DOM adapter: deferred until the semantic registry and React Native fallback components stabilize; web should initially inherit RNW output.
 - Expo DOM component adapter: deferred because this pass did not inspect the current API deeply enough; NEEDS_VERIFICATION.
 - Pixel/visual parity between SwiftUI, Compose, RN, and web: deferred because the product goal is semantic agent control, not a new cross-platform design framework.
@@ -224,7 +223,7 @@ Remaining implementation gates:
 | Title | URL | Access Date | Supported Claim |
 |---|---|---|---|
 | Expo UI | https://docs.expo.dev/versions/latest/sdk/ui/ | 2026-04-27 | Expo UI provides native input components for Jetpack Compose and SwiftUI; available platforms include Android and iOS/tvOS. |
-| Jetpack Compose - Expo Documentation | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/ | 2026-04-27 | Compose entrypoint, Android platform support, alpha status, development-build requirement, `Host` requirement, bundled version. |
+| Jetpack Compose - Expo Documentation | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/ | 2026-04-30 | Compose entrypoint, Android platform support, alpha status, development-build requirement, `Host` requirement, bundled version. |
 | Host - Jetpack Compose | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/host/ | 2026-04-27 | Compose `Host` props, sizing behavior, style support, layout callbacks, keyboard inset behavior. |
 | Modifiers - Jetpack Compose | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/modifiers/ | 2026-04-27 | Compose modifier array model, modifier ordering, modifier categories and examples. |
 | Button - Jetpack Compose | https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/button/ | 2026-04-27 | Material 3 button variants and API shape. |
@@ -241,7 +240,7 @@ Remaining implementation gates:
 
 ## Final Recommendation
 
-Ship Agent UI v0 on a platform-neutral semantic runtime and React Native fallback primitives, with optional iOS SwiftUI adapter support where it improves native fidelity. Treat Android Compose and Web DOM as post-v0 adapter packages that consume the same semantic registry and action contract. Compose should remain experimental until `@expo/ui/jetpack-compose` is no longer alpha or the project accepts a development-build-only Android path. Web should initially rely on React Native Web's accessibility and semantic HTML mapping, then add a dedicated DOM adapter only for web-specific improvements such as native form semantics, landmark roles, keyboard focus management, and browser automation integration.
+Ship Agent UI core on a platform-neutral semantic runtime and React Native fallback primitives, with paired Stage 7 native adapter work for iOS SwiftUI and Android Jetpack Compose. Treat Compose alpha status and development-build-only support as gates: use explicit adapter imports, installed type declarations, `Host` fixture screens, TalkBack validation, semantic registration in JavaScript, and React Native fallbacks. Web should initially rely on React Native Web's accessibility and semantic HTML mapping, then add a dedicated DOM adapter only for web-specific improvements such as native form semantics, landmark roles, keyboard focus management, and browser automation integration.
 
 For native visual comparison, use EAS to reduce build friction but keep runtime truth
 platform-bound. The final side-by-side model is two connected sessions: iOS SwiftUI on an iOS

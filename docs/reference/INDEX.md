@@ -24,6 +24,7 @@ been removed from active context. Use this index as the complete router for curr
 | Research completion status | `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
 | Package foundation and Expo SDK | `expo/package-foundation.md` |
 | Expo UI SwiftUI adapter | `expo/expo-ui-swift-ui.md` |
+| Expo UI Jetpack Compose adapter | `expo/expo-ui-jetpack-compose.md` |
 | EAS native preview and adapter comparison | `expo/eas-native-preview.md` |
 | Reanimated motion layer | `motion/reanimated-4.md` |
 | Semantic accessibility contract | `react-native/accessibility-semantics.md` |
@@ -32,6 +33,7 @@ been removed from active context. Use this index as the complete router for curr
 | Platform skill routing | `agent/platform-skill-routing.md` |
 | Repo-local platform skill library | `agent/platform-skills/INDEX.md` |
 | Platform skill MCP surface | `agent/platform-skill-mcp-surface.md` |
+| Maestro semantic flow adapter | `agent/maestro-semantic-flow-adapter.md` |
 | Systematic debugging and blocked verification | `agent/platform-skills/systematic-debugging/SKILL.md` |
 | Navigation adapters | `react-native/navigation-adapters.md` |
 | Testing and devtools | `react-native/testing-and-devtools.md` |
@@ -53,11 +55,11 @@ been removed from active context. Use this index as the complete router for curr
 | Stage 2 - Component Primitives | `react-native/accessibility-semantics.md`, `design/swiftui-layout-dna.md`, `design/ios-tokens.md`, `design/control-chrome.md`, `native/symbols-and-icons.md`, `expo/expo-ui-swift-ui.md` for optional adapter boundaries |
 | Stage 3 - Semantic Runtime | `react-native/accessibility-semantics.md`, `agent/security-privacy.md` |
 | Stage 4 - Agent Tool Bridge | `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/navigation-adapters.md` when navigation tools are in scope |
-| Stage 5 - MCP Server | `agent/mcp-transport-architecture.md`, `agent/platform-skill-mcp-surface.md`, `agent/security-privacy.md` |
+| Stage 5 - MCP Server | `agent/mcp-transport-architecture.md`, `agent/platform-skill-mcp-surface.md`, `agent/security-privacy.md`, `agent/maestro-semantic-flow-adapter.md` when external Maestro MCP interop is in scope |
 | Stage 6 - Motion Layer | `motion/reanimated-4.md`, `motion/swiftui-motion-mapping.md` |
-| Stage 7 - Expo UI Adapter | `expo/expo-ui-swift-ui.md`, `expo/cross-platform-adapters.md`, `expo/eas-native-preview.md` for native preview and build boundaries |
-| Stage 8 - Agent Skill | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `docs/agents/research-prompts/expo-agent-ui/README.md`, `react-native/accessibility-semantics.md`, `agent/mcp-transport-architecture.md` |
-| Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/testing-and-devtools.md`, `agent/cloud-flows-visual-comparison.md`, `expo/eas-native-preview.md` |
+| Stage 7 - Expo UI Adapter | `expo/expo-ui-swift-ui.md`, `expo/expo-ui-jetpack-compose.md`, `expo/cross-platform-adapters.md`, `expo/eas-native-preview.md` for native preview and build boundaries |
+| Stage 8 - Agent Skill | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `docs/agents/research-prompts/expo-agent-ui/README.md`, `react-native/accessibility-semantics.md`, `agent/mcp-transport-architecture.md`, `agent/maestro-semantic-flow-adapter.md` for flow-generation guidance |
+| Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/testing-and-devtools.md`, `agent/cloud-flows-visual-comparison.md`, `agent/maestro-semantic-flow-adapter.md`, `expo/eas-native-preview.md` |
 | Stage 10 - Publish Readiness | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `expo/package-foundation.md`, `expo/eas-native-preview.md`, all compatibility and install decisions from research status |
 | Cross-stage bug, test failure, or blocked verification | `agent/platform-skills/systematic-debugging/SKILL.md`, plus the active stage references above |
 
@@ -68,19 +70,24 @@ been removed from active context. Use this index as the complete router for curr
 - Build core runtime JS-only.
 - Use npm workspaces.
 - Keep config plugin optional and defer native modules.
-- Keep `@expo/ui` optional behind explicit adapter imports.
-- Treat native adapters as platform-bound: SwiftUI on Apple runtimes, Jetpack Compose on Android
-  runtimes, with React Native fallback as the shared baseline.
+- Keep `@expo/ui` optional for core/root imports and isolate it behind explicit native adapter
+  imports.
+- Treat native adapters as platform-bound Stage 7 deliverables: SwiftUI on Apple runtimes,
+  Jetpack Compose on Android runtimes, with React Native fallback as the shared baseline.
 - Use React Native accessibility props as the semantic foundation.
 - Map stable semantic IDs to `testID`, but do not treat `testID` alone as sufficient semantics.
 - Build local stdio MCP over a development-only app WebSocket bridge.
 - Bind bridge to loopback by default and require pairing tokens.
 - Use MCP SDK v1.x for v0 unless implementation-time research says otherwise.
 - Use Jest and React Native Testing Library for v0 semantic correctness.
-- Treat Maestro, Detox, Appium, Figma import, cloud flows, visual diff, and side-by-side native
-  preview/editor work as post-v0.
+- Treat Maestro as the first optional semantic-flow export/execution adapter after Agent UI's own
+  flow schema is stable. Detox, Appium, Figma import, cloud flows, visual diff, and side-by-side
+  native preview/editor work remain optional later adapters or post-v0 surfaces.
 - EAS Build can produce iOS SwiftUI artifacts on cloud Macs, but live interactive iOS preview
   still requires an iOS runtime: simulator, device, remote Mac, or cloud workflow capture.
+- For Android native adapter builds on EAS, enable Gradle cache with `EAS_GRADLE_CACHE=1` when
+  the profile compiles `@expo/ui/jetpack-compose`, and verify `FROM CACHE` entries in Run Gradle
+  logs on later builds.
 - Treat Expo, React Native, composition, native accessibility, native design, Android, Apple, and
   context-engineering skills as on-demand agent knowledge, not package/runtime dependencies. Use the
   repo-local copies under `agent/platform-skills/` before global skill installs.
@@ -93,13 +100,20 @@ been removed from active context. Use this index as the complete router for curr
 - Implement redaction before any semantic tree leaves the app runtime.
 - Do not support physical-device LAN bridge by default until the secure setup is verified.
 - Do not promise native automation selector mappings until compiled fixtures confirm behavior.
+- Do not promise Maestro export support until compiled fixture apps prove Agent UI `testID`
+  selectors are targetable as Maestro `id` selectors on both iOS and Android. Keep Maestro CLI/MCP
+  optional and outside `packages/core`.
 - Do not promise that one simulator can render both iOS SwiftUI and Android Compose. Side-by-side
   native comparison requires multiple connected runtime sessions.
+- Do not defer the Android Compose adapter below the SwiftUI adapter. Keep Compose alpha status,
+  development-build requirements, `Host` sizing, and TalkBack/accessibility verification as Stage 7
+  implementation gates.
 - Do not copy whole external platform skills into the Agent UI runtime or expose them as visible app
   content. Summarize only the task-relevant decisions into hidden agent notes or docs.
 - Use the repo-local systematic debugging adapter before fixing bugs, failing verification,
   runner-environment failures, bridge/MCP failures, or unexpected behavior. Record evidence before
-  changing source.
+  changing source, then follow the project TTD/TDD red-green loop: failing test/probe/command before
+  the fix, same check passing after the fix.
 
 ## Cleanup Status
 

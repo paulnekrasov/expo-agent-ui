@@ -101,7 +101,9 @@ content must target Expo Agent UI stages.
 3. Implementer completes only the bounded task and updates `HANDOFF.md`.
 4. Reviewer uses `REVIEW_CHECKLIST.md` and writes `REVIEW.md`.
 5. Fixer resolves only `BUG`, `ACTIVE_STAGE_GAP`, and accepted `SECURITY_GAP` items, using the
-   repo-local systematic debugging adapter before changing code for failures.
+   repo-local systematic debugging adapter before changing code for failures. Debugging fixes must
+   follow the repo TTD/TDD red-green loop: reproduce the issue with a failing test, probe, or
+   command before the fix, then rerun that same check green after the minimal fix.
 6. Reviewer re-checks once.
 7. Orchestrator updates `PHASE_STATE.md`.
 
@@ -124,6 +126,8 @@ content must target Expo Agent UI stages.
 - Semantic runtime tasks must include focused tests for registry behavior, accessibility mapping,
   redaction, and action dispatch.
 - Bridge/MCP tasks must include security-gate tests before being marked complete.
+- Debugging-related fixes must record red-green evidence in `REVIEW.md` or `HANDOFF.md`: the red
+  failing test/probe/command, the root-cause fix, and the same check passing green after the fix.
 - If an environment-level failure blocks verification, record the exact command and error in
   `HANDOFF.md` and `REVIEW.md`.
 
@@ -141,4 +145,5 @@ At the start of any coding or review session:
 7. Map the request to Roadmap Phase, Product Stage, and Research Area.
 8. Open only the reference docs needed for the active task.
 9. For bugs, failed verification, runner failures, bridge/MCP failures, or unexpected behavior,
-   read `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before proposing fixes.
+   read `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before proposing fixes,
+   then use its TTD/TDD red-green rule for the fix.

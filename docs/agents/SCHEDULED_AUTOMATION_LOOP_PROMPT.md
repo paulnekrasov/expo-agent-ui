@@ -65,6 +65,11 @@ to the global source:
 
 `C:\Users\Asus\.codex\skills\systematic-debugging\SKILL.md`
 
+For every debugging fix, apply the project TTD/TDD red-green rule after root-cause investigation:
+first capture a failing test, probe, or command that reproduces the issue; then make the minimal
+fix; then rerun the same check green before broad verification. If no meaningful red check can be
+created, record why in `REVIEW.md`, `HANDOFF.md`, runtime status, and memory.
+
 Use other repo-local platform skills only when the active task needs their domain guidance. Load the
 narrowest relevant reference and compress it into code, tests, docs, review notes, or handoff.
 
@@ -126,7 +131,7 @@ When the preflight passes:
 8. Review against `REVIEW_CHECKLIST.md`; write findings only as `BUG`, `ACTIVE_STAGE_GAP`,
    `FUTURE_STAGE_GAP`, `RESEARCH_GAP`, `SECURITY_GAP`, or `BLOCKED`.
 9. Fix only `BUG`, `ACTIVE_STAGE_GAP`, and accepted `SECURITY_GAP` items. Use systematic debugging
-   first for any failure or unexpected behavior.
+   first for any failure or unexpected behavior, and require red-green evidence for the fix.
 10. Re-review once, then stop. Do not start a second unrelated task in the same scheduled run.
 
 ## Verification
@@ -142,6 +147,9 @@ cmd /c npm.cmd test --workspaces --if-present
 
 If verification cannot run, record the exact command, error, and classification in `REVIEW.md`,
 `HANDOFF.md`, `PHASE_STATE.md`, runtime status, and memory. Do not mark the task `DONE`.
+
+For debugging fixes, verification must include the red-green pair unless explicitly impossible:
+the same failing test/probe/command observed red before the fix and green after the fix.
 
 ## Prompt Rotation Rules
 

@@ -13,12 +13,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
-    "test": "node -e \"console.log('@agent-ui/core tests deferred until Stage 2 runtime work')\""
+    "test": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
-    "expo": "^55.0.0",
+    "expo": "~55.0.18",
     "react": "19.2.0",
-    "react-native": "0.83.x",
+    "react-native": "0.83.6",
     "react-native-reanimated": "^4.0.0",
     "react-native-worklets": "^0.8.0"
   },

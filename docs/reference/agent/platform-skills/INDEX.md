@@ -25,7 +25,7 @@ content, MCP tool schemas, or a replacement for the Stage 8 `skills/expo-agent-u
 | Native app design engineering | `native-app-design-engineering/SKILL.md` | Native-feeling polish, motion, haptics, transitions, reduced motion, platform UI feel. |
 | Expo | `expo-skill/SKILL.md` | Expo app structure, Expo Router, config plugins, EAS, dev clients, Expo UI, Expo Modules, deployment. |
 | Context prompt engineering | `context-prompt-engineering/SKILL.md` | Prompt resources, task notes, agent workflows, handoffs, review notes, validation plans. |
-| Systematic debugging | `systematic-debugging/SKILL.md` | Root-cause-first debugging for bugs, test/build failures, blocked verification, runner environment errors, bridge/MCP failures, and flaky async behavior. |
+| Systematic debugging | `systematic-debugging/SKILL.md` | Root-cause-first debugging for bugs, test/build failures, blocked verification, runner environment errors, bridge/MCP failures, and flaky async behavior, with TTD/TDD red-green evidence required for fixes. |
 | Vercel React Native | `vercel-react-native-skills/SKILL.md` | React Native components, lists, images, animations, native deps, performance, monorepo guidance. |
 | Vercel composition patterns | `vercel-composition-patterns/SKILL.md` | Component APIs, provider/context shape, compound components, avoiding boolean prop drift. |
 

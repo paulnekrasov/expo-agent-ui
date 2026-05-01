@@ -42,39 +42,46 @@ Status: Complete
 ## Phase 2 - Component Primitives
 
 Product Stage: Stage 2 - Component Primitives
-Status: Next
+Status: Complete with deferred semantic-runtime concerns
 
-- [ ] Implement `AgentUIProvider`
-- [ ] Implement `Screen`
-- [ ] Implement `VStack`, `HStack`, `ZStack`, `Spacer`
-- [ ] Implement `Text`, `Image`, `Icon`, `Label`
-- [ ] Implement `Button`, `TextField`, `SecureField`
-- [ ] Implement `Scroll`, `List`, `Section`, `Form`
-- [ ] Add accessibility prop mapping
-- [ ] Add stable semantic ID validation warnings
-- [ ] Add first example settings screen
+- [x] Implement `AgentUIProvider`
+- [x] Implement `Screen`
+- [x] Implement `VStack`, `HStack`, `ZStack`, `Spacer`
+- [x] Implement `Text`
+- [x] Implement `Image`, `Icon`, `Label`
+- [x] Implement `Button`
+- [x] Implement `TextField`, `SecureField`
+- [x] Implement `Scroll`, `List`, `Section`, `Form`
+- [x] Implement `Toggle`, `Slider`, `Picker`, `Stepper`
+- [x] Add initial accessibility prop mapping for the first primitive slice
+- [x] Add initial stable semantic ID validation warning for `Button`
+- [x] Extend accessibility prop mapping to remaining primitives
+- [x] Extend stable semantic ID validation warnings to remaining actionable primitives
+- [x] Add first example settings screen
+- [x] Add first simple primitive example screen
 
 ## Phase 3 - Semantic Runtime
 
 Product Stage: Stage 3 - Semantic Runtime
-Status: Not started
+Status: Complete with deferred bridge/MCP concerns
 
-- [ ] Define `SemanticNode` schema
-- [ ] Implement registry mount/unmount
-- [ ] Implement parent-child tree snapshots
-- [ ] Implement duplicate ID warnings
-- [ ] Implement node lookup by ID
-- [ ] Implement action metadata
-- [ ] Implement privacy/redaction metadata
-- [ ] Add semantic registry tests
+- [x] Define `SemanticNode` schema
+- [x] Implement registry mount/unmount
+- [x] Implement parent-child tree snapshots
+- [x] Implement duplicate ID warnings
+- [x] Implement node lookup by ID
+- [x] Implement runtime action dispatch
+- [x] Implement action metadata
+- [x] Implement privacy/redaction metadata
+- [x] Add semantic registry tests
 
 ## Phase 4 - Agent Tool Bridge
 
 Product Stage: Stage 4 - Agent Tool Bridge
-Status: Not started
+Status: In progress
 
-- [ ] Define bridge protocol
-- [ ] Implement development-only runtime gate
+- [x] Define bridge protocol
+- [x] Implement development-only runtime gate
 - [ ] Implement loopback-first WebSocket bridge
 - [ ] Implement pairing token flow
 - [ ] Implement sessions and heartbeat
@@ -93,6 +100,7 @@ Status: Not started
 - [ ] Add read-only resources for sessions, tree, screens, flows, diagnostics
 - [ ] Add read-only resources for repo-local platform skills
 - [ ] Add skill-context prompts for scaffold, accessibility review, visual editor notes, and task notes
+- [ ] Document side-by-side Agent UI MCP and Maestro MCP setup for optional external execution
 - [ ] Add read-only skill lookup tools: `listPlatformSkills`, `getPlatformSkill`,
   `searchPlatformSkills`, `recommendPlatformSkills`
 - [ ] Keep skill-context tools separate from runtime-control tools and app-session requirements
@@ -115,12 +123,17 @@ Status: Not started
 Product Stage: Stage 7 - Expo UI Adapter
 Status: Not started
 
-- [ ] Add optional `@expo/ui/swift-ui` adapter path
-- [ ] Wrap `Host` behavior safely
+- [ ] Add explicit `@expo/ui/swift-ui` adapter path
+- [ ] Add explicit `@expo/ui/jetpack-compose` adapter path
+- [ ] Wrap `Host` behavior safely for SwiftUI and Jetpack Compose
+- [ ] Build the first native component subset for both SwiftUI and Jetpack Compose adapters
 - [ ] Add fallback behavior for unsupported platforms
-- [ ] Keep `@expo/ui` optional peer
-- [ ] Document EAS iOS artifact build lane separately from live iOS runtime requirements
-- [ ] Keep Android Compose as a separate optional/future adapter path with capability flags
+- [ ] Keep `@expo/ui` optional peer behind explicit adapter imports
+- [ ] Document EAS iOS artifact and Android development build lanes separately from live runtime
+  requirements
+- [ ] Enable/document EAS Gradle cache for Android native adapter builds with
+  `EAS_GRADLE_CACHE=1` and `FROM CACHE` log verification
+- [ ] Add SwiftUI and Jetpack Compose capability flags
 - [ ] Add adapter tests
 
 ## Phase 8 - Agent Skill
@@ -132,10 +145,12 @@ Status: Not started; platform skill reference prework complete
 - [ ] Add component reference
 - [ ] Add semantic ID reference
 - [ ] Add MCP/tool reference
+- [ ] Add Maestro semantic-flow export and failure-healing reference
 - [x] Add platform skill MCP surface specification
 - [x] Add on-demand platform skill routing reference
 - [x] Add repo-local platform skill copy index
-- [x] Add repo-local systematic debugging adapter for cross-stage failures and blocked verification
+- [x] Add repo-local systematic debugging adapter for cross-stage failures, blocked verification,
+  and TTD/TDD red-green fix evidence
 - [x] Add scaffold mode notes for cross-platform, iOS-enhanced, and Android-enhanced apps
 - [x] Refactor scheduled automation loop prompt for the full Expo Agent UI lifecycle
 - [ ] Add flow examples
@@ -147,9 +162,13 @@ Product Stage: Stage 9 - Flow Runner, Patch Proposals, And Native Preview Compar
 Status: Not started
 
 - [ ] Define flow schema
+- [ ] Define semantic-to-Maestro YAML export contract
 - [ ] Implement local flow runner
+- [ ] Add optional Maestro adapter package or CLI path outside `packages/core`
 - [ ] Add assertions and wait conditions
 - [ ] Define patch proposal schema
+- [ ] Define self-healing proposal schema for failed external flow selectors
+- [ ] Add local visual flow replay and evidence bundle format
 - [ ] Define multi-session runtime metadata for future visual editor comparison
 - [ ] Define side-by-side iOS SwiftUI / Android Compose comparison constraints
 - [ ] Keep the visual editor development-only, semantic-first, and redaction-gated
@@ -164,6 +183,7 @@ Status: Not started
 - [ ] Add compatibility matrix
 - [ ] Add install docs
 - [ ] Add local MCP config snippets
+- [ ] Add optional Maestro install, MCP, YAML export, and EAS workflow docs
 - [ ] Add troubleshooting guide
 - [ ] Add release checklist
 

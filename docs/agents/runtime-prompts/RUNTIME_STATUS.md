@@ -1,35 +1,60 @@
 # Runtime Prompt Status
 
-Updated: 2026-04-30
+Updated: 2026-05-01
 
 ## Status
 
-Runtime prompts are in status-only mode after the Expo Agent UI rebuild pivot.
+Runtime prompts are in status-only mode after completing the first Stage 4 bridge slice: bridge
+protocol contracts and the development-only runtime gate.
 
-The old Stage 3 recursive resolver traversal task is obsolete. Do not recreate runtime prompts
-for parser, resolver, layout, renderer, VS Code WebView, or SwiftUI preview work unless the
-developer explicitly creates a bounded archive/cleanup task.
+The old Stage 3 recursive resolver traversal task is obsolete. Do not recreate runtime prompts for
+parser, resolver, layout, renderer, VS Code WebView, or SwiftUI preview work unless the developer
+explicitly creates a bounded archive/cleanup task.
 
-## Active Task
+## Completed Task
 
-The active bounded task is:
-
-- Roadmap Phase: Phase 2 - Component Primitives
-- Product Stage: Stage 2 - Component Primitives
+- Roadmap Phase: Phase 4 - Agent Tool Bridge
+- Product Stage: Stage 4 - Agent Tool Bridge
 - Task file: `docs/agents/TASK.md`
+- Status: `DONE_WITH_CONCERNS`
 
 ## Active Runtime Prompts
 
 None.
 
-Generate new `ACTIVE_*.md` runtime prompts only if a scheduled or autonomous run is going to
-execute the active Stage 2 component primitives task.
+No `ACTIVE_*.md` files are present. This run completed the bounded Stage 4 bridge protocol/gate
+task in-process, so no disposable active prompts were generated. Generate new runtime prompts only
+after the next bounded Stage 4 session/heartbeat task is created.
 
-The stable scheduled automation prompt has been refactored for the full Expo Agent UI lifecycle at
-`docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`. It keeps the legacy automation memory path
-`C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` intentionally.
+## Prompt Rotation Action
 
-## Prompt Generation Inputs
+- No active prompt files needed deletion.
+- `RUNTIME_STATUS.md` was refreshed because the active task changed from completed Stage 3 runtime
+  action dispatch work to completed Stage 4 bridge protocol/gate work.
+- The next run should create or refresh `docs/agents/TASK.md` from the next unchecked Stage 4
+  bridge roadmap cluster: loopback-first session model, pairing-token validation shape, heartbeat,
+  and event log contract.
+
+## Verification Evidence
+
+- Direct Node child-process probe exited `0`.
+- Preflight `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- Red/green: focused Jest failed with six expected missing bridge export/hook failures, then passed
+  with 7 tests after the bridge module, provider hook, and exports were added.
+- Red/green: workspace typecheck failed on stale built core declarations, then passed after
+  `@agent-ui/core` was rebuilt.
+- Final `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
+  exited `0`; 7 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 4 suites and 31 tests passed.
+- `git diff --check` exited `0`.
+- A PowerShell forbidden-import scan of `packages/core/src` found no `expo-constants`, `@expo/ui`,
+  Expo Router, React Navigation, MCP SDK, old parser, tree-sitter, WASM, VS Code, or Canvas
+  renderer imports.
+
+## Next Prompt Generation Inputs
 
 Use these files in order:
 
@@ -42,27 +67,19 @@ Use these files in order:
 7. `docs/agents/TASK.md`
 8. `docs/agents/REVIEW.md`
 9. `docs/agents/REVIEW_CHECKLIST.md`
-10. `docs/reference/react-native/accessibility-semantics.md`
-11. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a
+10. `docs/reference/agent/mcp-transport-architecture.md`
+11. `docs/reference/agent/security-privacy.md`
+12. `docs/reference/react-native/navigation-adapters.md` only if navigation actions enter the
+    bridge task
+13. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a
     bug, failing command, blocked verification, runner environment failure, bridge/MCP failure, or
-    flaky async behavior
-
-## Scheduled Runner Guidance
-
-If automation runs with a child-process-blocked environment, record the exact failure and finish
-with `NEEDS_CONTEXT`. Do not classify that as a package-foundation source regression.
-
-Do not classify `rg.exe` access denial alone as a runner blocker if PowerShell search and npm
-verification still work. Use the systematic debugging adapter to distinguish current-run
-environment blockers from source failures.
-
-If verification is available, Stage 2 component primitives should use the commands specified in
-`docs/agents/TASK.md`, or explain why package scripts are not available yet.
+    flaky async behavior; apply its TTD/TDD red-green rule before source/config fixes
 
 ## Notes
 
-- Research outputs already exist under `docs/reference/**`.
-- The research coordinator report is
-  `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md`.
-- Old parser assets have been cleaned from active context; do not recreate them unless a
-  historical archive task is explicitly active.
+- Stage 4 bridge protocol and development-only runtime gate are complete.
+- The bridge does not yet open sockets, perform pairing handshakes, validate WebSocket origins,
+  maintain sessions, emit events, or write audit logs.
+- MCP server tools remain Stage 5 work.
+- Project debugging rules require a TTD/TDD red-green loop for fixes: failing test/probe/command
+  before the fix, same check passing after the fix, then broader verification.

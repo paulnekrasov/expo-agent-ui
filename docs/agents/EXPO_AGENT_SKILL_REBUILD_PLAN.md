@@ -220,7 +220,8 @@ This means the project must ship instruction artifacts, not only code:
 - `skills/expo-agent-ui/SKILL.md`
 - references for component primitives, semantic IDs, actions, flow testing, patching rules
 - references for on-demand platform skill routing across Expo, React Native, composition,
-  accessibility, native design, Apple, Android, systematic debugging, and context-engineering skills
+  accessibility, native design, Apple, Android, systematic debugging with TTD/TDD red-green
+  evidence, and context-engineering skills
 - examples of good screen generation
 - validation scripts or templates
 - optional command prompts and local agent definitions
@@ -382,7 +383,8 @@ should survive as structured agent backend state:
 - phase/product-stage state
 - handoff notes and review logs
 - validation rules and review checklists
-- systematic debugging rules for failures and blocked verification
+- systematic debugging rules for failures and blocked verification, including mandatory TTD/TDD
+  red-green evidence for debugging fixes
 - prompt resources and prompt rotation protocol
 - research status and implementation gates
 - flow specs and patch proposal policies
@@ -783,6 +785,9 @@ Why MCP:
 
 This project's local MCP server should focus on free semantic control and structured
 introspection. It can interoperate with Expo MCP screenshots and simulator automation later.
+It may also document side-by-side usage with Maestro MCP for optional native E2E execution, but
+Agent UI semantic MCP tools and Maestro execution tools must remain separate unless a later
+facade is explicitly designed and tested.
 
 MCP tools:
 
@@ -830,6 +835,8 @@ MCP prompts:
 - `review_accessibility_semantics`
 - `prepare_visual_editor_notes`
 - `write_agent_task_notes`
+- `draft_maestro_flow`
+- `heal_external_flow_failure`
 
 Skill-context MCP tools:
 
@@ -976,6 +983,11 @@ Potential trigger phrases:
 Objective: support repeatable agent workflows, structured patch planning, and later multi-session
 native preview comparison.
 
+Maestro is the first preferred optional external execution adapter for these flows. Agent UI
+semantic JSON remains the source of truth; Maestro YAML is generated output. The adapter belongs
+outside `packages/core`, can use Maestro CLI/MCP when installed, and must fail gracefully when
+Maestro is unavailable.
+
 Flow schema:
 
 ```json
@@ -989,6 +1001,16 @@ Flow schema:
   ]
 }
 ```
+
+Maestro export rules:
+
+- map semantic `id` values to React Native `testID` and Maestro `id` selectors,
+- preserve semantic IDs in generated flow comments or metadata,
+- use visible text only for human-facing assertions or exploratory drafts,
+- keep `point` selectors as labelled diagnostics, never the default,
+- keep Expo Go `openLink` launch templates separate from development/standalone `launchApp`
+  templates,
+- require compiled fixture proof on iOS and Android before declaring export support stable.
 
 Patch proposal schema:
 
@@ -1011,6 +1033,15 @@ Patch proposal schema:
 ```
 
 Do not implement automatic source patching until the proposal format is stable.
+
+External flow self-healing should produce structured proposals, not silent mutations. It may search
+new candidates by screen, intent, role, action, label, tree position, and recent unmount history,
+but mutating steps such as taps, input, checkout, auth, network, payment, submit, and destructive
+actions require human approval before a healed flow is accepted.
+
+Revyl-style UX patterns are allowed only as local Agent UI features: natural-language semantic
+flow generation, visual replay, reusable flow modules, YAML sync, self-healing suggestions, and
+unified local reports. Do not depend on Revyl or any paid cloud service.
 
 Native preview comparison:
 
@@ -1070,6 +1101,7 @@ Compatibility matrix should track:
 - React Native DevTools integration options.
 - React Native Testing Library role/query behavior.
 - Maestro/Detox/Appium interop if needed later.
+- Maestro MCP side-by-side usage and optional semantic-flow export.
 - Security model for local agent tools.
 - How to gate agent control behind development mode only.
 - How to expose semantic tree without leaking secrets from app state.
@@ -1080,6 +1112,7 @@ Compatibility matrix should track:
 - Web/DOM adapter.
 - Figma/design-system import.
 - Cloud recording of flows.
+- Local visual flow replay and external-flow healing proposals.
 - Visual screenshot comparison.
 - Side-by-side native adapter visual editor over multiple connected runtime sessions.
 

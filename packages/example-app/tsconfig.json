@@ -5,5 +5,5 @@
     "noEmit": true,
     "rootDir": "."
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx"]
+  "include": ["App.tsx", "app/**/*.ts", "app/**/*.tsx"]
 }

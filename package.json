@@ -24,8 +24,22 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
   },
+  "overrides": {
+    "@expo/metro-config@55.0.17": {
+      "postcss": "8.5.12"
+    },
+    "jest-environment-jsdom@29.7.0": {
+      "jsdom": "23.2.0"
+    },
+    "xcode@3.0.1": {
+      "uuid": "14.0.0"
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.19.0",
+    "@types/react": "^19.2.14",
+    "expo": "~55.0.18",
+    "jest-expo": "~55.0.16",
     "typescript": "^5.9.2"
   }
 }

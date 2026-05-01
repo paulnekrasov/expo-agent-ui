@@ -4,7 +4,7 @@
 - **Adopt Expo SDK 55 as the strict baseline:** SDK 55 firmly removes the Legacy Architecture, preventing the need to maintain dual-architecture support [cite: 1].
 - **Enforce JS-only runtime for Stage 1:** Develop `packages/core` without a native bridge to ensure zero-friction adoption across both managed and bare workflows. 
 - **Align package versions with SDK rules:** Implement the Expo SDK 55 package versioning convention where applicable; current npm metadata shows `expo`, `expo-router`, and `@expo/ui` all published in the `55.0.x` line [cite: 1, 28, 29, 30].
-- **Separate the MCP server from the runtime:** Build `packages/mcp-server` as an out-of-app Node.js integration over standard `stdio`, leaving the app runtime lightweight and secure [cite: 10].
+- **Separate the MCP server from the runtime:** Build `packages/mcp-server` as an out-of-app Node.js integration over standard `stdio`, leaving the app runtime lightweight and secure [cite: 10]. Keep the package shell dependency-free until Stage 5 code imports the MCP SDK.
 - **Defer Config Plugins to Stage 7+:** Keep the default installation pure JavaScript. Utilize `packages/expo-plugin` only if later stages require `AndroidManifest.xml` or `Info.plist` mutations for OS-level automation frameworks.
 - **Isolate Reanimated 4 worklets:** Ensure `react-native-worklets` is explicitly handled as a peer dependency alongside `react-native-reanimated`, updating documentation to include its required Babel plugin [cite: 5, 6].
 
@@ -21,7 +21,7 @@
 | Worklets | `~0.8.x` | https://www.npmjs.com/package/react-native-worklets | Extracted from Reanimated. Requires `react-native-worklets/plugin` [cite: 5, 13]. |
 | Expo Router | `^55.0.0` | https://www.npmjs.com/package/expo-router | npm reports `expo-router@55.0.13`; use as an optional peer only for router integration [cite: 29]. |
 | `@expo/ui` | `^55.0.0` | https://www.npmjs.com/package/@expo/ui | npm reports `@expo/ui@55.0.12`; SwiftUI and Jetpack Compose adapters should remain optional [cite: 8, 30]. |
-| MCP SDK | `^1.29.0` | https://www.npmjs.com/package/@modelcontextprotocol/sdk | Current npm metadata reports `@modelcontextprotocol/sdk@1.29.0`; keep this in `packages/mcp-server`, not app runtime packages [cite: 10]. |
+| MCP SDK | `^1.29.0` | https://www.npmjs.com/package/@modelcontextprotocol/sdk | Stage 5 target. Current npm metadata reports `@modelcontextprotocol/sdk@1.29.0`; add it to `packages/mcp-server` when server implementation imports it, not before [cite: 10]. |
 
 ## Recommended Package Layout
 The repository should adopt an npm workspace structure to securely isolate environments (Node context vs. React Native context) while enabling unified CI/CD.
@@ -30,7 +30,7 @@ The repository should adopt an npm workspace structure to securely isolate envir
 packages/
 ├── core/            # The JS-only semantic runtime and UI primitive components. Must be lean and runnable on devices.
 ├── expo-plugin/     # Optional automated native app configurations for prebuild. Kept separate to prevent bundling Node APIs into the app.
-├── mcp-server/      # The local stdio server utilizing `@modelcontextprotocol/sdk` to expose agent tools. Runs in Node.js on the host machine.
+├── mcp-server/      # The local stdio server package shell. Add `@modelcontextprotocol/sdk` when implemented tools exist. Runs in Node.js on the host machine.
 ├── cli/             # CLI tools for initializing the configuration and launching the local MCP server over Metro.
 └── example-app/     # An Expo SDK 55 testing ground mimicking a consumer application to run E2E tests and validate semantic IDs.
 ```
@@ -44,7 +44,7 @@ packages/
 | `react-native` | `peerDependency` | `0.83.x` | Required by SDK 55 [cite: 1]. | Low. |
 | `react-native-reanimated` | `peerDependency` | `^4.0.0` | Powers the SwiftUI-inspired high-fidelity motion layer [cite: 15]. | API divergence from v3. |
 | `react-native-worklets` | `peerDependency` | `^0.8.0` | Mandatory decoupled multithreading dependency for Reanimated 4 [cite: 5, 6]. | Users may forget the Babel plugin. |
-| `@expo/ui` | optional `peerDependency` | `^55.0.0` | Required only if developers utilize the `swift-ui` adapters [cite: 16, 30]. | High churn as it matures. |
+| `@expo/ui` | optional `peerDependency` | `^55.0.0` | Required only if developers utilize the `swift-ui` or `jetpack-compose` adapters [cite: 16, 30]. | High churn as it matures. |
 | `expo-router` | optional `peerDependency` | `^55.0.0` | Used for `navigate()` intents if the app relies on file-based routing [cite: 29]. | Navigation APIs evolve rapidly. |
 
 ## Config Plugin Findings

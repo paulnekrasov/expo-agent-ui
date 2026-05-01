@@ -34,7 +34,7 @@ Initial resource URIs:
 | `agent-ui://platform-skills/android` | `docs/reference/agent/platform-skills/android-ecosystem-skill/SKILL.md` | Android ecosystem and Compose entrypoint. |
 | `agent-ui://platform-skills/apple` | `docs/reference/agent/platform-skills/apple-ecosystem-app-building/SKILL.md` | Apple ecosystem and SwiftUI entrypoint. |
 | `agent-ui://platform-skills/context-prompt-engineering` | `docs/reference/agent/platform-skills/context-prompt-engineering/SKILL.md` | Prompt, workflow, handoff, and validation-note entrypoint. |
-| `agent-ui://platform-skills/systematic-debugging` | `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` | Root-cause debugging, blocked verification triage, and evidence-backed fix workflow. |
+| `agent-ui://platform-skills/systematic-debugging` | `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` | Root-cause debugging, blocked verification triage, TTD/TDD red-green evidence, and evidence-backed fix workflow. |
 
 Later resource templates may expose sub-files:
 
@@ -60,7 +60,7 @@ Initial prompts:
 | `review_accessibility_semantics` | `platform`, `screenOrComponent`, optional `codeContext` | Native accessibility plus React Native accessibility reference | Accessibility issues, fixes, and verification steps. |
 | `prepare_visual_editor_notes` | `sessions`, optional `platforms`, optional `adapterCapabilities` | Routing, native preview, cloud-flow comparison, security | Development-only editor notes with redaction and multi-session constraints. |
 | `write_agent_task_notes` | `task`, `stage`, optional `selectedSkills` | Context prompt engineering and active stage docs | Hidden notes for task scope, assumptions, checks, and handoff. |
-| `debug_stage_failure` | `stage`, `commandOrSymptom`, optional `package`, optional `evidence` | Systematic debugging, active stage references, review checklist | A root-cause investigation plan, one falsifiable hypothesis, minimal verification command, and status classification. |
+| `debug_stage_failure` | `stage`, `commandOrSymptom`, optional `package`, optional `evidence` | Systematic debugging, active stage references, review checklist | A root-cause investigation plan, one falsifiable hypothesis, required red test/probe/command, green rerun target, and status classification. |
 
 Prompts must return scoped plans or notes. They must not execute app actions or claim that
 unimplemented runtime capabilities exist.
