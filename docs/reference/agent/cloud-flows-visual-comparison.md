@@ -4,6 +4,9 @@
 - Keep Agent UI v0 local-first and semantic-first; cloud execution and visual diff should be post-v0 adapters, not required runtime dependencies (Expo Agent UI rebuild plan; access date 2026-04-27).
 - Expo EAS Workflows has pre-packaged `maestro` and `maestro-cloud` jobs, so the most Expo-native future cloud lane is exporting Agent UI semantic flows to Maestro YAML and running them through EAS when a team already has the required EAS and Maestro Cloud setup (https://docs.expo.dev/eas/workflows/pre-packaged-jobs/; access date 2026-04-29).
 - Maestro is the strongest fit for semantic flow export because it supports React Native, Expo Go/development builds/EAS workflows, stable `testID` selectors, screenshots, recording, and `assertScreenshot` visual checks (https://docs.maestro.dev/get-started/supported-platform/react-native; https://docs.maestro.dev/reference/commands-available/assertscreenshot; https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow; access date 2026-04-29).
+- 2026-05-01 planning update: `docs/reference/agent/maestro-semantic-flow-adapter.md` is the
+  dedicated reference for optional Agent UI to Maestro export, side-by-side Agent UI MCP and
+  Maestro MCP usage, self-healing proposals, and Revyl-inspired local authoring/replay patterns.
 - Appium remains the broadest interoperability target for commercial device clouds; Agent UI should export Appium-compatible selectors from semantic IDs but should not adopt Appium as the core control model (https://appium.io/docs/en/2.16/; https://www.browserstack.com/docs/app-automate/appium; https://docs.saucelabs.com/mobile-apps/automated-testing/appium/index.html; access date 2026-04-27).
 - Visual comparison should validate rendered appearance after semantic assertions pass; it should catch layout, clipping, theming, typography, and image regressions, not prove business flow correctness (https://storybook.js.org/docs/writing-tests/visual-testing/; https://www.chromatic.com/docs/faq/chromatic-mobile-testing; access date 2026-04-27).
 - EAS Build can compile iOS SwiftUI artifacts on Expo macOS cloud infrastructure, but live
@@ -288,6 +291,10 @@ Remaining implementation gates:
 
 - Before implementing cloud export, create fixture flows that prove `testID` selectors from Agent
   UI primitives compile to stable Maestro `id` selectors on Expo Go and development builds.
+- Before implementing Maestro export, define the canonical Agent UI semantic flow schema and keep
+  Maestro YAML as generated output rather than the source of truth.
+- Before implementing self-healing, define a structured proposal schema that requires human
+  approval for taps, input, checkout, auth, network, payment, submit, and destructive actions.
 - Before enabling cloud upload, implement redaction and an explicit `uploadAllowed` flag in the
   recording schema.
 - Before adding provider adapters, recheck current plan, quota, artifact-retention, and privacy
@@ -297,6 +304,10 @@ Remaining implementation gates:
 
 ## Deferred Work And Anti-Goals
 - Do not require Maestro Cloud, BrowserStack, Sauce Labs, App Percy, Applitools, Sherlo, or Chromatic for Agent UI v0.
+- Do not require Maestro CLI or Maestro MCP for core Agent UI runtime use.
+- Do not depend on Revyl. Borrow natural-language flow generation, visual replay, YAML sync,
+  reusable modules, self-healing suggestions, and unified reports only as local-first Agent UI
+  patterns.
 - Do not make screenshot diff the primary correctness model.
 - Do not add provider SDKs to the core runtime package.
 - Do not store raw text inputs, tokens, payment data, auth headers, screenshots with PII, or unredacted logs in cloud recordings.
@@ -323,6 +334,9 @@ Remaining implementation gates:
 - Maestro Cloud run tests, https://docs.maestro.dev/maestro-cloud/run-tests-on-maestro-cloud, access date 2026-04-27. Supports claims about `maestro cloud`, app binary requirements, Cloud plan requirement, and results artifacts.
 - Maestro `assertScreenshot`, https://docs.maestro.dev/reference/commands-available/assertscreenshot, access date 2026-04-27. Supports claims about screenshot comparison, `cropOn`, `thresholdPercentage`, and default 95% threshold.
 - Maestro record your flow, https://docs.maestro.dev/maestro-flows/workspace-management/record-your-flow, access date 2026-04-27. Supports claims about MP4 test recordings and screenshot commands.
+- Agent UI Maestro semantic flow adapter, docs/reference/agent/maestro-semantic-flow-adapter.md,
+  access date 2026-05-01. Defines the local-first Agent UI integration rules for optional Maestro
+  export/execution and Revyl-inspired UX patterns.
 - Detox artifacts, https://wix.github.io/Detox/docs/config/artifacts/, access date 2026-04-27. Supports claims about screenshots, logs, videos, performance, and UI hierarchy artifacts.
 - Detox Expo guide, https://wix.github.io/Detox/docs/19.x/guide/expo, access date 2026-04-27. Supports existence of Detox Expo guidance, with modern Expo compatibility marked NEEDS_VERIFICATION.
 - Appium documentation, https://appium.io/docs/en/2.16/, access date 2026-04-27. Supports claims about Appium as a UI automation framework for mobile and other platforms.

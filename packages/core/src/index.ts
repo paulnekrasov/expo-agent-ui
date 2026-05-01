@@ -1,8 +1,25 @@
 export const agentUICorePackage = "@agent-ui/core" as const;
-export const agentUICoreStage = "component-primitives" as const;
+export const agentUICoreStage = "semantic-runtime" as const;
 
 export {
+  createAgentUIBridgeGate,
+  AGENT_UI_BRIDGE_PROTOCOL_VERSION,
+  DEFAULT_AGENT_UI_BRIDGE_CAPABILITIES
+} from "./bridge";
+export type {
+  AgentUIBridgeCapability,
+  AgentUIBridgeConfig,
+  AgentUIBridgeExecutionEnvironment,
+  AgentUIBridgeGateOptions,
+  AgentUIBridgeGateResult,
+  AgentUIBridgeGateResultCode,
+  AgentUIBridgeProtocolVersion,
+  AgentUIBridgeTransportMode
+} from "./bridge";
+export {
   AgentUIProvider,
+  createAgentUISemanticRegistry,
+  useAgentUIBridge,
   useAgentUIRuntime,
   useDeferredSemanticPrimitive
 } from "./semantic";
@@ -12,9 +29,24 @@ export type {
   AgentUIPrimitivePrivacy,
   AgentUIPrimitiveRole,
   AgentUIProviderProps,
+  AgentUISemanticActionDispatchOptions,
+  AgentUISemanticActionHandler,
+  AgentUISemanticActionHandlerContext,
+  AgentUISemanticActionHandlers,
+  AgentUISemanticActionMetadata,
+  AgentUISemanticActionName,
+  AgentUISemanticActionResult,
+  AgentUISemanticActionResultCode,
+  AgentUISemanticNode,
+  AgentUISemanticNodeLookupOptions,
+  AgentUISemanticNodeValue,
   AgentUISemanticPrimitive,
   AgentUISemanticPrimitiveValue,
+  AgentUISemanticPrivacy,
+  AgentUISemanticRegistry,
   AgentUISemanticRuntime,
+  AgentUISemanticSnapshot,
+  AgentUISemanticState,
   AgentUISemanticUnregister
 } from "./semantic";
 export {
@@ -89,11 +121,7 @@ export function getAgentUIPackageManifest(): AgentUIPackageManifest {
     packageName: agentUICorePackage,
     stage: agentUICoreStage,
     jsOnly: true,
-    implementedCapabilities: ["component-primitives"],
-    deferredCapabilities: [
-      "semantic-runtime",
-      "agent-bridge",
-      "motion-layer"
-    ]
+    implementedCapabilities: ["component-primitives", "semantic-runtime"],
+    deferredCapabilities: ["agent-bridge", "motion-layer"]
   };
 }

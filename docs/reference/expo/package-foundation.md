@@ -44,7 +44,7 @@ packages/
 | `react-native` | `peerDependency` | `0.83.x` | Required by SDK 55 [cite: 1]. | Low. |
 | `react-native-reanimated` | `peerDependency` | `^4.0.0` | Powers the SwiftUI-inspired high-fidelity motion layer [cite: 15]. | API divergence from v3. |
 | `react-native-worklets` | `peerDependency` | `^0.8.0` | Mandatory decoupled multithreading dependency for Reanimated 4 [cite: 5, 6]. | Users may forget the Babel plugin. |
-| `@expo/ui` | optional `peerDependency` | `^55.0.0` | Required only if developers utilize the `swift-ui` adapters [cite: 16, 30]. | High churn as it matures. |
+| `@expo/ui` | optional `peerDependency` | `^55.0.0` | Required only if developers utilize the `swift-ui` or `jetpack-compose` adapters [cite: 16, 30]. | High churn as it matures. |
 | `expo-router` | optional `peerDependency` | `^55.0.0` | Used for `navigate()` intents if the app relies on file-based routing [cite: 29]. | Navigation APIs evolve rapidly. |
 
 ## Config Plugin Findings

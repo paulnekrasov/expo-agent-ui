@@ -168,19 +168,25 @@ Package boundary:
 
 - `@agent-ui/expo` contains React Native-first primitives, the semantic registry, accessibility mapping, motion hooks, and tool bridge integration.
 - `@agent-ui/expo/swift-ui` contains all imports from `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`.
-- A future `@agent-ui/expo/jetpack-compose` path can be evaluated separately. Do not force Compose parity into the SwiftUI adapter.
+- `@agent-ui/expo/jetpack-compose` contains all imports from `@expo/ui/jetpack-compose` and
+  `@expo/ui/jetpack-compose/modifiers`. Keep it separate from the SwiftUI adapter, but build it
+  as the paired Android-native Stage 7 lane rather than deferring it below SwiftUI.
 
 Public imports:
 
 - Core app code imports stable primitives from `@agent-ui/expo`.
 - Apps that explicitly want native iOS SwiftUI controls import from `@agent-ui/expo/swift-ui`.
-- The root package must not re-export SwiftUI adapter components, because that would make root consumers vulnerable to missing `@expo/ui` resolution.
+- Apps that explicitly want native Android Jetpack Compose controls import from
+  `@agent-ui/expo/jetpack-compose`.
+- The root package must not re-export native adapter components, because that would make root
+  consumers vulnerable to missing `@expo/ui` resolution.
 
 Fallback behavior:
 
 - iOS/tvOS development build with `@expo/ui` installed: render the SwiftUI adapter through `Host`.
 - Expo Go: use React Native fallback and warn in development that SwiftUI Expo UI requires a development build.
-- Android: use React Native fallback in v0. Jetpack Compose is separate research and implementation work.
+- Android development build with `@expo/ui` installed: use the Jetpack Compose adapter from
+  `@agent-ui/expo/jetpack-compose`; otherwise use React Native fallback with a development warning.
 - Web: use React Native Web/DOM-compatible fallback.
 - Missing `@expo/ui`: use fallback and emit a clear development warning from the adapter entrypoint or component boundary.
 - EAS-built iOS artifact: valid way to produce the native SwiftUI build from non-macOS
@@ -276,9 +282,9 @@ No unresolved research blocker remains for the adapter decision. These items bel
 
 ## Final Recommendation
 
-Stage 7 should implement a narrow, optional SwiftUI adapter. Keep the core package React Native-first and semantic-first. Add an explicit `@agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
+Stage 7 should implement paired native adapter lanes for SwiftUI and Jetpack Compose. Keep the core package React Native-first and semantic-first. Add an explicit `@agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
 
-The v0 SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android, web, Expo Go, and missing-peer cases should fall back to core React Native components with development warnings. EAS should be supported as the preferred cloud build lane for iOS SwiftUI artifacts, but interactive side-by-side native preview should be handled by later multi-session editor work. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
+The SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android Compose adapter component selection belongs in `docs/reference/expo/expo-ui-jetpack-compose.md`. Web, Expo Go, unsupported-platform, and missing-peer cases should fall back to core React Native components with development warnings. EAS should be supported as the preferred cloud build lane for iOS SwiftUI artifacts, but interactive side-by-side native preview should be handled by later multi-session editor work. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
 
 Custom SwiftUI components and modifiers are now a valid Stage 7 interop and expansion path for iOS
 fidelity. Existing user-owned custom SwiftUI should be preserved and semantically wrapped. Agent

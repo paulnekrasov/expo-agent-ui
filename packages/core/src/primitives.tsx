@@ -36,7 +36,10 @@ import {
 } from "./props";
 
 import type { AgentUISemanticPrimitive } from "./semantic";
-import { useDeferredSemanticPrimitive } from "./semantic";
+import {
+  AgentUISemanticBoundary,
+  useDeferredSemanticPrimitive
+} from "./semantic";
 
 type AccessibilityState = NonNullable<ViewProps["accessibilityState"]>;
 
@@ -325,12 +328,15 @@ function alignmentToFlex(alignment: StackAlignment | undefined): ViewStyle["alig
 interface SemanticPrimitiveOptions {
   accessibilityLabel?: string | undefined;
   actions?: AgentUISemanticPrimitive["actions"] | undefined;
+  actionHandlers?: AgentUISemanticPrimitive["actionHandlers"] | undefined;
+  busy?: boolean | undefined;
   checked?: boolean | undefined;
   disabled?: boolean | undefined;
   fallbackLabel?: string | undefined;
   id?: string | undefined;
   intent?: string | undefined;
   privacy?: AgentUISemanticPrimitive["privacy"] | undefined;
+  screen?: string | undefined;
   selected?: boolean | undefined;
   testID?: string | undefined;
   value?: AgentUISemanticPrimitive["value"] | undefined;
@@ -344,12 +350,16 @@ function createSemanticPrimitive(
     role,
     ...(props.id ? { id: props.id } : {}),
     ...(props.intent ? { intent: props.intent } : {}),
+    ...(props.screen ? { screen: props.screen } : {}),
     ...(props.accessibilityLabel
       ? { label: props.accessibilityLabel }
       : props.fallbackLabel
         ? { label: props.fallbackLabel }
         : {}),
     ...(props.testID ? { testID: props.testID } : {}),
+    ...(typeof props.busy === "boolean"
+      ? { busy: props.busy }
+      : {}),
     ...(typeof props.disabled === "boolean"
       ? { disabled: props.disabled }
       : {}),
@@ -360,6 +370,7 @@ function createSemanticPrimitive(
       ? { selected: props.selected }
       : {}),
     ...(props.actions ? { actions: props.actions } : {}),
+    ...(props.actionHandlers ? { actionHandlers: props.actionHandlers } : {}),
     ...(props.privacy ? { privacy: props.privacy } : {}),
     ...(props.value ? { value: props.value } : {})
   };
@@ -434,6 +445,62 @@ function roundRangeValue(value: number): number {
 
 function formatRangeValue(value: number): string {
   return Number.isInteger(value) ? String(value) : String(roundRangeValue(value));
+}
+
+function readStringPayload(payload: unknown): string {
+  if (typeof payload === "string") {
+    return payload;
+  }
+
+  if (typeof payload === "number" || typeof payload === "boolean") {
+    return String(payload);
+  }
+
+  if (payload && typeof payload === "object") {
+    const value = (payload as { text?: unknown; value?: unknown }).text ??
+      (payload as { value?: unknown }).value;
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+  }
+
+  return "";
+}
+
+function readNumberPayload(payload: unknown): number | undefined {
+  if (typeof payload === "number" && Number.isFinite(payload)) {
+    return payload;
+  }
+
+  if (payload && typeof payload === "object") {
+    const value = (payload as { now?: unknown; value?: unknown }).value ??
+      (payload as { now?: unknown }).now;
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function readPickerPayload(payload: unknown): unknown {
+  if (payload && typeof payload === "object") {
+    const payloadRecord = payload as {
+      id?: unknown;
+      optionId?: unknown;
+      value?: unknown;
+    };
+
+    return payloadRecord.value ?? payloadRecord.optionId ?? payloadRecord.id;
+  }
+
+  return payload;
 }
 
 function readableTextFromChildren(children: React.ReactNode): string | undefined {
@@ -515,18 +582,20 @@ export function Screen({
 }: ScreenProps): React.ReactElement {
   const resolvedTestID = resolvePrimitiveTestID(id, testID);
   const label = accessibilityLabel ?? title ?? name;
+  const screenName = name ?? id ?? title;
   const semantic = React.useMemo(
     () =>
       createSemanticPrimitive("screen", {
         accessibilityLabel: label,
         id,
         intent,
+        screen: screenName,
         testID: resolvedTestID
       }),
-    [id, intent, label, resolvedTestID]
+    [id, intent, label, resolvedTestID, screenName]
   );
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -535,7 +604,9 @@ export function Screen({
       style={[styles.screen, style]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey} screen={screenName}>
+        {children}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -566,7 +637,7 @@ function Stack({
     [accessibilityLabel, id, intent, resolvedTestID]
   );
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -583,7 +654,9 @@ function Stack({
       ]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -620,7 +693,7 @@ export function ZStack({
     [accessibilityLabel, id, intent, resolvedTestID]
   );
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -638,7 +711,9 @@ export function ZStack({
       ]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -702,7 +777,7 @@ export function Scroll({
     }
   }, [id]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <ScrollView
@@ -715,7 +790,9 @@ export function Scroll({
       style={style}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </ScrollView>
   );
 }
@@ -747,7 +824,7 @@ export function List({
     warnIfStructuredMetadataIsMissing("List", id, accessibilityLabel);
   }, [accessibilityLabel, id]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -757,7 +834,9 @@ export function List({
       style={[styles.list, typeof spacing === "number" ? { gap: spacing } : undefined, style]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -797,7 +876,7 @@ export function Section({
     warnIfStructuredMetadataIsMissing("Section", id, label);
   }, [id, label]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   const renderedHeader = title ? (
     <RNText accessibilityRole="header" style={[styles.sectionTitle, titleStyle]}>
@@ -828,9 +907,11 @@ export function Section({
       ]}
       testID={resolvedTestID}
     >
-      {renderedHeader}
-      <View style={styles.sectionBody}>{children}</View>
-      {renderedFooter}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {renderedHeader}
+        <View style={styles.sectionBody}>{children}</View>
+        {renderedFooter}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -862,7 +943,7 @@ export function Form({
     warnIfStructuredMetadataIsMissing("Form", id, accessibilityLabel);
   }, [accessibilityLabel, id]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -871,7 +952,9 @@ export function Form({
       style={[styles.form, typeof spacing === "number" ? { gap: spacing } : undefined, style]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -900,7 +983,7 @@ export function Text({
     [accessibilityLabel, fallbackLabel, id, intent, resolvedTestID]
   );
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <RNText
@@ -909,7 +992,9 @@ export function Text({
       style={[styles.text, textVariantStyles[variant], style]}
       testID={resolvedTestID}
     >
-      {children}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children}
+      </AgentUISemanticBoundary>
     </RNText>
   );
 }
@@ -921,6 +1006,7 @@ export function Button({
   disabled = false,
   id,
   intent,
+  onPress,
   style,
   testID,
   textStyle,
@@ -933,25 +1019,46 @@ export function Button({
     () => createAccessibilityState({ busy, disabled }),
     [busy, disabled]
   );
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onPress
+        ? {
+            activate: () => onPress(undefined as never),
+            tap: () => onPress(undefined as never)
+          }
+        : undefined,
+    [onPress]
+  );
   const semantic = React.useMemo(
     () =>
       createSemanticPrimitive("button", {
         accessibilityLabel,
         actions: ["activate", "tap"],
+        actionHandlers,
+        busy,
         disabled,
         fallbackLabel,
         id,
         intent,
         testID: resolvedTestID
       }),
-    [accessibilityLabel, disabled, fallbackLabel, id, intent, resolvedTestID]
+    [
+      accessibilityLabel,
+      actionHandlers,
+      busy,
+      disabled,
+      fallbackLabel,
+      id,
+      intent,
+      resolvedTestID
+    ]
   );
 
   React.useEffect(() => {
     warnIfActionableMetadataIsMissing("Button", id, label);
   }, [id, label]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <Pressable
@@ -960,6 +1067,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={accessibilityState}
       disabled={disabled}
+      onPress={onPress}
       style={(state: PressableStateCallbackType) => [
         styles.button,
         disabled ? styles.buttonDisabled : undefined,
@@ -970,11 +1078,13 @@ export function Button({
       ]}
       testID={resolvedTestID}
     >
-      {typeof children === "string" || typeof children === "number" ? (
-        <RNText style={[styles.buttonText, textStyle]}>{children}</RNText>
-      ) : (
-        children
-      )}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {typeof children === "string" || typeof children === "number" ? (
+          <RNText style={[styles.buttonText, textStyle]}>{children}</RNText>
+        ) : (
+          children
+        )}
+      </AgentUISemanticBoundary>
     </Pressable>
   );
 }
@@ -1051,7 +1161,7 @@ export function Icon({
     );
   }, [accessibilityLabel, decorative]);
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <RNText
@@ -1061,7 +1171,9 @@ export function Icon({
       style={[styles.icon, { color, fontSize: size, lineHeight: size + 4 }, style]}
       testID={resolvedTestID}
     >
-      {children ?? name}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {children ?? name}
+      </AgentUISemanticBoundary>
     </RNText>
   );
 }
@@ -1094,7 +1206,7 @@ export function Label({
     [accessibilityLabel, fallbackLabel, id, intent, resolvedTestID]
   );
 
-  useDeferredSemanticPrimitive(semantic);
+  const mountKey = useDeferredSemanticPrimitive(semantic);
 
   return (
     <View
@@ -1103,16 +1215,18 @@ export function Label({
       style={[styles.label, { gap: spacing }, style]}
       testID={resolvedTestID}
     >
-      {icon ? (
-        <Icon decorative name={icon} style={iconStyle}>
-          {iconChildren}
-        </Icon>
-      ) : null}
-      {typeof children === "string" || typeof children === "number" ? (
-        <RNText style={[styles.labelText, textStyle]}>{children}</RNText>
-      ) : (
-        children
-      )}
+      <AgentUISemanticBoundary mountKey={mountKey}>
+        {icon ? (
+          <Icon decorative name={icon} style={iconStyle}>
+            {iconChildren}
+          </Icon>
+        ) : null}
+        {typeof children === "string" || typeof children === "number" ? (
+          <RNText style={[styles.labelText, textStyle]}>{children}</RNText>
+        ) : (
+          children
+        )}
+      </AgentUISemanticBoundary>
     </View>
   );
 }
@@ -1126,6 +1240,7 @@ function TextFieldBase({
   id,
   intent,
   label,
+  onChangeText,
   placeholder,
   style,
   testID,
@@ -1154,11 +1269,23 @@ function TextFieldBase({
       ...(secure ? { redaction: "redacted" } : {})
     };
   }, [hasValue, secure]);
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onChangeText
+        ? {
+            clear: () => onChangeText(""),
+            input: (payload) => onChangeText(readStringPayload(payload))
+          }
+        : undefined,
+    [onChangeText]
+  );
   const semantic = React.useMemo(
     () =>
       createSemanticPrimitive("textInput", {
         accessibilityLabel: resolvedLabel,
         actions: ["focus", "input", "clear", "submit"],
+        actionHandlers,
+        busy,
         disabled: isDisabled,
         id,
         intent,
@@ -1166,7 +1293,17 @@ function TextFieldBase({
         testID: resolvedTestID,
         value: semanticValue
       }),
-    [id, intent, isDisabled, resolvedLabel, resolvedTestID, secure, semanticValue]
+    [
+      actionHandlers,
+      busy,
+      id,
+      intent,
+      isDisabled,
+      resolvedLabel,
+      resolvedTestID,
+      secure,
+      semanticValue
+    ]
   );
 
   React.useEffect(() => {
@@ -1186,6 +1323,7 @@ function TextFieldBase({
       accessibilityState={accessibilityState}
       defaultValue={defaultValue}
       editable={!isDisabled}
+      onChangeText={onChangeText}
       placeholder={placeholder}
       secureTextEntry={secure}
       style={[styles.textField, isDisabled ? styles.textFieldDisabled : undefined, style]}
@@ -1210,6 +1348,7 @@ export function Toggle({
   id,
   intent,
   label,
+  onValueChange,
   testID,
   value,
   ...switchProps
@@ -1220,11 +1359,23 @@ export function Toggle({
     () => createAccessibilityState({ busy, checked: value, disabled }),
     [busy, disabled, value]
   );
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onValueChange
+        ? {
+            activate: () => onValueChange(!value),
+            toggle: () => onValueChange(!value)
+          }
+        : undefined,
+    [onValueChange, value]
+  );
   const semantic = React.useMemo(
     () =>
       createSemanticPrimitive("toggle", {
         accessibilityLabel: resolvedLabel,
         actions: ["toggle", "activate"],
+        actionHandlers,
+        busy,
         checked: value,
         disabled,
         id,
@@ -1232,7 +1383,16 @@ export function Toggle({
         testID: resolvedTestID,
         value: { checked: value }
       }),
-    [disabled, id, intent, resolvedLabel, resolvedTestID, value]
+    [
+      actionHandlers,
+      busy,
+      disabled,
+      id,
+      intent,
+      resolvedLabel,
+      resolvedTestID,
+      value
+    ]
   );
 
   React.useEffect(() => {
@@ -1249,6 +1409,7 @@ export function Toggle({
       accessibilityState={accessibilityState}
       accessible
       disabled={disabled}
+      onValueChange={onValueChange}
       testID={resolvedTestID}
       value={value}
     />
@@ -1309,19 +1470,6 @@ export function Slider({
     }),
     [clampedValue, maximum, minimum, resolvedStep, valueText]
   );
-  const semantic = React.useMemo(
-    () =>
-      createSemanticPrimitive("slider", {
-        accessibilityLabel: resolvedLabel,
-        actions: ["increment", "decrement", "set_value"],
-        disabled,
-        id,
-        intent,
-        testID: resolvedTestID,
-        value: semanticValue
-      }),
-    [disabled, id, intent, resolvedLabel, resolvedTestID, semanticValue]
-  );
   const setValue = React.useCallback(
     (nextValue: number) => {
       if (disabled) {
@@ -1331,6 +1479,49 @@ export function Slider({
       onValueChange?.(roundRangeValue(clampNumber(nextValue, minimum, maximum)));
     },
     [disabled, maximum, minimum, onValueChange]
+  );
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onValueChange
+        ? {
+            decrement: () => setValue(clampedValue - resolvedStep),
+            increment: () => setValue(clampedValue + resolvedStep),
+            set_value: (payload) => {
+              const nextValue = readNumberPayload(payload);
+
+              if (typeof nextValue !== "number") {
+                throw new Error("Slider set_value requires a numeric payload.");
+              }
+
+              setValue(nextValue);
+            }
+          }
+        : undefined,
+    [clampedValue, onValueChange, resolvedStep, setValue]
+  );
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("slider", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["increment", "decrement", "set_value"],
+        actionHandlers,
+        busy,
+        disabled,
+        id,
+        intent,
+        testID: resolvedTestID,
+        value: semanticValue
+      }),
+    [
+      actionHandlers,
+      busy,
+      disabled,
+      id,
+      intent,
+      resolvedLabel,
+      resolvedTestID,
+      semanticValue
+    ]
   );
   const handleAccessibilityAction = React.useCallback<
     NonNullable<PressableProps["onAccessibilityAction"]>
@@ -1430,11 +1621,35 @@ export function Picker({
         : {})
     };
   }, [selectedOption]);
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onValueChange
+        ? {
+            select: (payload) => {
+              const nextValue = readPickerPayload(payload);
+              const option = options.find(
+                (candidate) =>
+                  Object.is(candidate.value, nextValue) ||
+                  candidate.id === nextValue
+              );
+
+              if (!option || option.disabled === true) {
+                throw new Error("Picker select requires an enabled option payload.");
+              }
+
+              onValueChange(option.value, option);
+            }
+          }
+        : undefined,
+    [onValueChange, options]
+  );
   const semantic = React.useMemo(
     () =>
       createSemanticPrimitive("picker", {
         accessibilityLabel: resolvedLabel,
         actions: ["select"],
+        actionHandlers,
+        busy,
         disabled,
         id,
         intent,
@@ -1443,6 +1658,8 @@ export function Picker({
         value: semanticValue
       }),
     [
+      actionHandlers,
+      busy,
       disabled,
       id,
       intent,
@@ -1581,19 +1798,6 @@ export function Stepper({
     }),
     [clampedValue, maximum, minimum, resolvedStep, valueText]
   );
-  const semantic = React.useMemo(
-    () =>
-      createSemanticPrimitive("stepper", {
-        accessibilityLabel: resolvedLabel,
-        actions: ["increment", "decrement", "set_value"],
-        disabled,
-        id,
-        intent,
-        testID: resolvedTestID,
-        value: semanticValue
-      }),
-    [disabled, id, intent, resolvedLabel, resolvedTestID, semanticValue]
-  );
   const setValue = React.useCallback(
     (nextValue: number) => {
       if (disabled) {
@@ -1603,6 +1807,49 @@ export function Stepper({
       onValueChange?.(roundRangeValue(clampNumber(nextValue, minimum, maximum)));
     },
     [disabled, maximum, minimum, onValueChange]
+  );
+  const actionHandlers = React.useMemo<AgentUISemanticPrimitive["actionHandlers"]>(
+    () =>
+      onValueChange
+        ? {
+            decrement: () => setValue(clampedValue - resolvedStep),
+            increment: () => setValue(clampedValue + resolvedStep),
+            set_value: (payload) => {
+              const nextValue = readNumberPayload(payload);
+
+              if (typeof nextValue !== "number") {
+                throw new Error("Stepper set_value requires a numeric payload.");
+              }
+
+              setValue(nextValue);
+            }
+          }
+        : undefined,
+    [clampedValue, onValueChange, resolvedStep, setValue]
+  );
+  const semantic = React.useMemo(
+    () =>
+      createSemanticPrimitive("stepper", {
+        accessibilityLabel: resolvedLabel,
+        actions: ["increment", "decrement", "set_value"],
+        actionHandlers,
+        busy,
+        disabled,
+        id,
+        intent,
+        testID: resolvedTestID,
+        value: semanticValue
+      }),
+    [
+      actionHandlers,
+      busy,
+      disabled,
+      id,
+      intent,
+      resolvedLabel,
+      resolvedTestID,
+      semanticValue
+    ]
   );
   const handleAccessibilityAction = React.useCallback<
     NonNullable<ViewProps["onAccessibilityAction"]>

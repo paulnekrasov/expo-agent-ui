@@ -1,6 +1,6 @@
 # Project Brief: Expo Agent UI
 
-Last updated: 2026-04-27
+Last updated: 2026-05-01
 Status: active rebuild direction
 
 ## Project Identity
@@ -35,6 +35,8 @@ mobile environment through:
   commands.
 - An MCP server for compatible agent hosts, including runtime-control tools and read-only
   platform-skill resources/prompts.
+- A future optional Maestro adapter that exports semantic flows to Maestro YAML and can run them
+  through Maestro CLI/MCP without making Maestro a core app dependency.
 - A future development-only visual editor that can compare multiple connected native runtime
   sessions by semantics and redacted evidence.
 - An agent skill that teaches agents how to use the primitives, semantic IDs, tools, and flow
@@ -52,6 +54,7 @@ mobile environment through:
 - Not a VS Code WebView previewer.
 - Not a replacement for Expo, React Native, Reanimated, Expo Router, `@expo/ui`, or Expo MCP.
 - Not a paid remote MCP service.
+- Not a wrapper around Maestro, Maestro Cloud, Revyl, Appium, Detox, or any device farm.
 - Not a screenshot-first or coordinate-first automation system.
 - Not a full IDE.
 - Not a user-visible mobile UI surface. The context-engineering layer is hidden agent backend
@@ -67,8 +70,8 @@ Expo app
 AgentUIProvider
   |
   +-- React Native-first primitives
-  +-- optional Expo UI SwiftUI adapter
-  +-- future optional Jetpack Compose adapter
+  +-- explicit Expo UI SwiftUI adapter
+  +-- explicit Expo UI Jetpack Compose adapter
   +-- Reanimated motion helpers
   |
   v
@@ -96,6 +99,13 @@ MCP stdio server
   +-- waitFor
   +-- observeEvents
   +-- read-only platform skill resources/prompts
+  +-- optional semantic-flow export helpers
+        |
+        v
+     Maestro CLI/MCP adapter (optional, external)
+        +-- generated YAML flows
+        +-- native device execution
+        +-- screenshots, recordings, hierarchy, reports
   |
   v
 Agent skill + hidden context backend
@@ -168,6 +178,10 @@ The server may also expose repo-local platform skills as read-only resources, sc
 small deterministic lookup tools. These are skill-context capabilities, not app runtime-control
 capabilities, and they must not require a connected app session.
 
+Stage 5 may document side-by-side MCP usage with external tools such as Maestro MCP, but Agent UI
+must keep its semantic MCP tools separate from Maestro execution tools unless a later compatibility
+facade is explicitly designed and tested.
+
 ### Stage 6 - Motion Layer
 
 Wrap Reanimated primitives in SwiftUI-inspired presets. Honor reduced motion. Prefer transform
@@ -175,11 +189,13 @@ and opacity. Emit coarse semantic motion events only when useful.
 
 ### Stage 7 - Expo UI Adapter
 
-Add optional `@expo/ui/swift-ui` adapters behind explicit imports. Core primitives must remain
-usable without `@expo/ui`.
+Add explicit `@expo/ui/swift-ui` and `@expo/ui/jetpack-compose` adapters behind adapter imports.
+Core primitives must remain usable without `@expo/ui`, but Stage 7 must build both native adapter
+lanes with equal implementation priority.
 
-Android Jetpack Compose through `@expo/ui/jetpack-compose` is a separate optional adapter path.
-It must not be treated as SwiftUI parity or required for core v0.
+Android Jetpack Compose is not SwiftUI parity and must use its own Material 3, `Host`, component,
+and modifier surface. The shared Agent UI contract remains semantic IDs, roles, state, actions,
+privacy, and React Native fallback behavior.
 
 ### Stage 8 - Agent Skill
 
@@ -192,6 +208,13 @@ and context-engineered notes without loading every skill for every task.
 
 Define repeatable semantic flows and structured patch proposals. Do not implement automatic
 source patching until the proposal schema is stable.
+
+Agent UI semantic flows are the source of truth. Maestro YAML is the first preferred external
+export target because Maestro can execute native Expo/React Native E2E flows through stable
+`testID`/`id` selectors, but Maestro remains optional and outside `packages/core`. Revyl-inspired
+UX patterns such as natural-language flow generation, visual replay, reusable modules, and
+self-healing suggestions should be implemented locally over semantic metadata rather than through
+a paid cloud dependency.
 
 Side-by-side native preview belongs here or later. It should compare multiple connected runtime
 sessions, such as one iOS SwiftUI session and one Android Compose session, through semantic IDs,
@@ -249,16 +272,26 @@ implementation gates.
 ## Active Constraints
 
 - Core v0 should stay JS-only.
-- `@expo/ui` stays optional.
+- `@expo/ui` stays optional for core/root imports and is required only by explicit native adapter
+  entrypoints.
 - Expo Router and React Navigation are adapters, not hard dependencies.
 - Reanimated and Worklets are peer expectations for the motion layer.
 - MCP server runs outside the app in Node.
 - Screenshots and simulator automation are optional interop, not the primary model.
+- Maestro integration is an optional Stage 9 adapter. It may use an external Maestro CLI/MCP
+  server or a future optional adapter package, but it must not be imported by `packages/core` or
+  required for normal Agent UI use.
+- Canonical Agent UI semantic flows and redacted evidence bundles remain the source of truth.
+  Maestro YAML, EAS jobs, Maestro Cloud, and visual reports are generated artifacts or optional
+  execution lanes.
 - Native adapters are platform-bound: SwiftUI renders on Apple runtimes, while Jetpack Compose
   renders on Android runtimes.
 - EAS Build can produce iOS SwiftUI artifacts on Expo macOS cloud infrastructure, but an
   interactive iOS preview still needs an iOS Simulator, iOS device, remote Mac session, or cloud
   workflow capture.
+- Android Compose development builds should use Expo/EAS Android lanes and may enable EAS Gradle
+  caching with `EAS_GRADLE_CACHE=1`; verify cache hits in the Run Gradle build logs as
+  `FROM CACHE` rather than treating cache configuration as correctness evidence.
 - A future visual editor should support side-by-side native comparison by connecting two runtime
   sessions, not by trying to run iOS SwiftUI and Android Compose inside one simulator.
 - External platform skills are agent-side knowledge resources. They must be loaded just-in-time,
@@ -267,6 +300,8 @@ implementation gates.
 - Platform skills may become MCP-facing read-only resources, prompts, and lookup tools in
   `packages/mcp-server`. They must not be imported by `packages/core` or bundled into the running
   mobile app.
+- Revyl-style authoring, replay, reporting, and self-healing ideas may be borrowed only as
+  local-first Agent UI features. Do not depend on Revyl or any paid cloud service for core flows.
 - Systematic debugging is agent-side workflow knowledge. Use it for bugs, failed verification,
   runner-environment failures, bridge/MCP failures, and flaky async behavior, and apply the project
   TTD/TDD red-green loop for fixes: failing test/probe/command before the fix, same check passing

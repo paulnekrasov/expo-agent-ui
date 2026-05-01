@@ -523,3 +523,299 @@ Task status: runner search tool fixed
 - No package source changed for this runner-environment fix.
 - If Codex Desktop changes its PATH layout in a future update, re-run `Get-Command rg -All` before
   assuming the user-local copy still resolves first.
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-04-30
+Roadmap Phase: Phase 3 - Semantic Runtime
+Product Stage: Stage 3 - Semantic Runtime
+Task status: done with concerns
+
+## Findings
+
+No blocking findings for the first Stage 3 semantic node schema and registry lifecycle slice.
+
+## Verified
+
+- `packages/core/src/semantic.tsx` defines Stage 3 semantic node, state, value, action, privacy,
+  registry, and snapshot contracts.
+- `createAgentUISemanticRegistry()` implements the existing primitive registration runtime contract
+  without adding dependencies or native/runtime bridge behavior.
+- Registered primitives normalize into flat semantic nodes with stable or generated IDs, type,
+  label, intent, state, actions, value, privacy metadata, and `children: []`.
+- Unregister handles remove only their mounted primitive and are idempotent, including same-ID
+  mounts.
+- `AgentUIProvider` now creates an internal development registry by default while preserving
+  fail-closed no-op behavior outside `__DEV__ === true`.
+- Primitive busy state is carried into semantic state for actionable controls.
+- `packages/example-app/app/semantic-registry.test.tsx` covers normalization, generated IDs,
+  mount-specific unregister, provider unmount cleanup, and production fail-closed behavior.
+- Core did not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, old
+  parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+
+## TDD Red-Green Evidence
+
+- Red: workspace typecheck failed because `packages/core/src/semantic.tsx` did not preserve
+  TypeScript's optional `primitive.id` narrowing, and the example app still resolved
+  `@agent-ui/core` from stale `dist` declarations.
+- Green: ID normalization now uses an explicitly narrowed `primitiveId`,
+  `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated declarations, and
+  `cmd /c npm.cmd run typecheck --workspaces --if-present` passed.
+- Red: after adding busy-state metadata, workspace typecheck failed because the example app again
+  saw stale `AgentUISemanticPrimitive` declarations.
+- Green: rebuilding `@agent-ui/core` regenerated declarations, and the same workspace typecheck
+  passed.
+
+## Verification Commands
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+  10 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `git diff --check` exited `0`.
+- PowerShell forbidden-import scan of `packages/core/src` returned no matches.
+- `rg --version` exited `0`.
+
+## Limitations And Follow-Ups
+
+- The first Stage 3 snapshot is intentionally flat; parent-child hierarchy, screen/modal scoping,
+  hidden subtree pruning, and virtualized-list visibility remain future Stage 3 tasks.
+- Duplicate ID warnings, node lookup by ID, and runtime action dispatch are still intentionally
+  deferred.
+- Redaction metadata is carried through schema and primitive value normalization, but bridge/MCP
+  serialization redaction enforcement remains future Stage 3/Stage 4 work.
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-04-30
+Roadmap Phase: Phase 3 - Semantic Runtime
+Product Stage: Stage 3 - Semantic Runtime
+Task status: done with concerns
+
+## Findings
+
+No blocking findings for the Stage 3 parent-child tree snapshot and duplicate-ID warning slice.
+
+## Verified
+
+- `packages/core/src/semantic.tsx` now reconstructs semantic snapshots as parent-child trees using
+  internal mount keys and parent mount metadata rather than public semantic IDs.
+- Screen roots preserve screen scope, and descendant nodes inherit the resolved screen scope.
+- Default snapshots prune subtrees whose semantic state marks them hidden.
+- Development duplicate-ID warnings are scoped by screen, and the same stable ID is allowed in
+  different screen scopes.
+- Generated ID metadata, generated node counts, mounted node counts, and mount-specific unregister
+  behavior are preserved.
+- Child-bearing primitives now provide semantic parent boundaries without importing optional
+  adapters or future bridge/MCP dependencies.
+- `packages/example-app/app/semantic-registry.test.tsx` covers rendered hierarchy, screen scoping,
+  hidden pruning, duplicate warnings, and same-ID separate-screen behavior.
+- Core did not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, old
+  parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+
+## TDD Red-Green Evidence
+
+- Red: workspace typecheck and the focused example test failed because `semantic.tsx` referenced
+  `warnInDevelopment` without importing it, `Form` rendered a semantic boundary without a local
+  `mountKey`, and the example app saw stale `@agent-ui/core` declarations.
+- Green: importing `warnInDevelopment`, assigning the missing `Form` mount key, and rebuilding
+  `@agent-ui/core` made the same commands pass.
+- Red: a cleanup patch accidentally removed `mountKey` assignments from `Screen` and then `Stack`;
+  the same workspace typecheck and focused example test failed on the missing variables.
+- Green: restoring those assignments while leaving `Spacer` as a leaf registration made the same
+  commands pass.
+
+## Verification Commands
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+  14 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `git diff --check` exited `0`.
+- PowerShell forbidden-import scan of `packages/core/src` returned no matches.
+
+## Limitations And Follow-Ups
+
+- Node lookup by ID remains the next unchecked Stage 3 roadmap item.
+- Runtime action dispatch remains intentionally deferred to a separate Stage 3 slice.
+- Broader redaction enforcement before bridge/MCP serialization remains future Stage 3/Stage 4
+  work.
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-05-01
+Roadmap Phase: Phase 3 - Semantic Runtime
+Product Stage: Stage 3 - Semantic Runtime
+Task status: done with concerns
+
+## Findings
+
+No blocking findings for the Stage 3 node lookup slice.
+
+## Verified
+
+- `packages/core/src/semantic.tsx` exposes `getNodeById(id, options?)` on the semantic registry.
+- Lookup runs over the visible semantic tree, so screen scope is resolved consistently with
+  `getSnapshot()` and hidden subtrees are absent by default.
+- Lookup supports stable IDs and generated IDs, returns a deep clone, and returns `undefined` for
+  missing, empty, hidden, or ambiguous unscoped IDs.
+- Screen-scoped lookup can resolve the same stable ID in separate screen scopes without returning
+  the wrong node.
+- `packages/core/src/index.ts` exports the lookup options type.
+- `packages/example-app/app/semantic-registry.test.tsx` covers successful lookup, generated-ID
+  lookup, clone isolation, screen disambiguation, hidden subtree pruning, and missing/empty IDs.
+- Core did not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, old
+  parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+
+## TDD Red-Green Evidence
+
+- Red: focused Jest failed with five expected lookup failures because `registry.getNodeById` was
+  not implemented.
+- Green: adding the registry lookup API made the same focused Jest command pass with 3 suites and
+  19 tests.
+- Red: workspace typecheck failed because strict indexed access kept `matches[0]` possibly
+  undefined and the example app resolved stale `@agent-ui/core` declarations.
+- Green: narrowing the matched node and rebuilding `@agent-ui/core` made the same workspace
+  typecheck pass.
+
+## Verification Commands
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+  19 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `git diff --check` exited `0`.
+- PowerShell forbidden-import scan of `packages/core/src` returned no matches.
+
+## Limitations And Follow-Ups
+
+- Runtime action dispatch remains the next Stage 3 semantic-runtime task.
+- Bridge/MCP tool transport and broader bridge/MCP serialization redaction enforcement remain
+  future stages.
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-05-01
+Roadmap Phase: Phase 3 - Semantic Runtime
+Product Stage: Stage 3 - Semantic Runtime
+Task status: done with concerns
+
+## Findings
+
+No blocking findings for the Stage 3 runtime action dispatch slice.
+
+## Verified
+
+- `packages/core/src/semantic.tsx` exposes `dispatchAction(id, action, options?)` on the semantic
+  registry.
+- Dispatch targets the same visible semantic tree used by snapshots and lookup, preserving screen
+  scoping and hidden-subtree pruning.
+- Dispatch returns structured failures for missing nodes, ambiguous IDs, unsupported actions,
+  disabled/busy nodes, missing handlers, and handler failure.
+- Local action handlers are stored on mounted records and are not exposed through snapshots or
+  lookup nodes.
+- Core primitive callback wiring exists for `Button`, `TextField`, `SecureField`, `Toggle`,
+  `Slider`, `Picker`, and `Stepper`.
+- `packages/core/src/index.ts` exports the dispatch result, handler, and option types.
+- `packages/example-app/app/semantic-registry.test.tsx` covers dispatch success, structured
+  refusal cases, screen-scoped dispatch, hidden pruning, missing handlers, and rendered primitive
+  callback wiring.
+- Core did not import `@expo/ui`, Expo Router, React Navigation, MCP SDK, native modules, old
+  parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+
+## TDD Red-Green Evidence
+
+- Red: focused Jest failed with five expected `registry.dispatchAction is not a function` failures.
+- Green: adding the dispatch API and local handlers made the same focused Jest command pass with 3
+  suites and 24 tests.
+- Red: workspace typecheck failed because the example app resolved stale built `@agent-ui/core`
+  declarations without `dispatchAction` or `actionHandlers`.
+- Green: rebuilding `@agent-ui/core` made the same workspace typecheck pass.
+
+## Verification Commands
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+  24 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
+- `git diff --check` exited `0`.
+- PowerShell forbidden-import scan of `packages/core/src` returned no matches.
+
+## Limitations And Follow-Ups
+
+- Dispatch is local and in-process only. Bridge authorization, token pairing, transport sessions,
+  MCP tools, audit logs, and serialized redaction enforcement remain Stage 4 and Stage 5 work.
+- Button semantic dispatch invokes existing `onPress` callbacks without a native press event; event
+  dependent handlers can fail safely with `ACTION_HANDLER_FAILED`.
+- `focus`, `submit`, `scroll`, and passive `observe` metadata can be declared before platform or
+  bridge handlers exist; dispatch returns `ACTION_HANDLER_MISSING` until a local handler is wired.
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-05-01
+Roadmap Phase: Phase 4 - Agent Tool Bridge
+Product Stage: Stage 4 - Agent Tool Bridge
+Task status: done with concerns
+
+## Findings
+
+No blocking findings for the first Stage 4 bridge protocol and runtime-gate slice.
+
+## Verified
+
+- `packages/core/src/bridge.ts` defines public bridge protocol version, capability, transport-mode,
+  execution-environment, config, gate-result, and structured result-code contracts.
+- `createAgentUIBridgeGate(config?, options?)` remains pure JS and fail-closed by default.
+- Bridge control enables only with explicit `enabled: true`, development mode, known non-standalone
+  execution environment, non-empty pairing token, valid WebSocket URL, and accepted URL/transport
+  policy.
+- Default-disabled, non-development, standalone, unknown execution environment, missing token, LAN
+  without unsafe opt-in, and tunnel mode all return structured disabled results.
+- `AgentUIProvider` exposes the resolved gate through context and `useAgentUIBridge()` without
+  opening a WebSocket, serializing semantic snapshots, or starting MCP tooling.
+- Core did not import `expo-constants`, `@expo/ui`, Expo Router, React Navigation, MCP SDK, native
+  modules, old parser assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
+
+## TDD Red-Green Evidence
+
+- Red: focused Jest failed with six expected `createAgentUIBridgeGate is not a function` /
+  `useAgentUIBridge is not a function` failures.
+- Green: adding the bridge module, provider hook, and exports made the same focused Jest command
+  pass with 7 tests.
+- Red: workspace typecheck failed because the example app resolved stale built `@agent-ui/core`
+  declarations without the new bridge exports and provider prop.
+- Green: rebuilding `@agent-ui/core` regenerated declarations, and the same workspace typecheck
+  passed.
+
+## Verification Commands
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
+- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
+  exited `0`; 7 tests passed.
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
+  Android Expo export to `.tmp-review/android-export`.
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 4 suites and 31 tests passed.
+- `git diff --check` exited `0`.
+- PowerShell forbidden-import scan of `packages/core/src` returned no matches.
+
+## Limitations And Follow-Ups
+
+- This slice does not open sockets, perform pairing handshakes, validate WebSocket origins,
+  maintain sessions, or write audit logs.
+- Core intentionally accepts caller-supplied `executionEnvironment` instead of importing Expo
+  Constants; the future app/adapter bridge layer must provide that runtime evidence.
+- Next Stage 4 work should implement the loopback-first session/heartbeat/event-log contract while
+  keeping MCP tools separate until Stage 5.
