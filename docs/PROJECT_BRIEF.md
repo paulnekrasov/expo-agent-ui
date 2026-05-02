@@ -184,8 +184,17 @@ facade is explicitly designed and tested.
 
 ### Stage 6 - Motion Layer
 
-Wrap Reanimated primitives in SwiftUI-inspired presets. Honor reduced motion. Prefer transform
-and opacity. Emit coarse semantic motion events only when useful.
+Build a three-tier motion architecture. Tier 1 wraps Reanimated 4 primitives in SwiftUI-inspired
+presets (spring, bouncy, snappy, easeInOut, opacity/slide/scale transitions, layout transitions)
+as the cross-platform default for iOS, Android, and web. Tier 2 defines native iOS SwiftUI motion
+adapter contracts that map Agent UI presets to SwiftUI `Animation`, `spring`, `transition`,
+`symbolEffect`, `SensoryFeedback`, `matchedGeometryEffect`, `KeyframeAnimator`, and
+`PhaseAnimator` behind `@expo/ui/swift-ui`. Tier 3 defines native Android Jetpack Compose motion
+adapter contracts that map to `animate*AsState`, `AnimatedVisibility`, `SharedTransitionLayout`,
+`spring`, `graphicsLayer`, and `infiniteTransition` behind `@expo/ui/jetpack-compose`. Native
+adapter implementations are Stage 7 work; Stage 6 defines the contracts, capability flags, and
+resolution logic. All tiers honor reduced motion. All tiers emit coarse semantic motion events.
+Native adapters fall back to Tier 1 when their optional peer is not installed.
 
 ### Stage 7 - Expo UI Adapter
 

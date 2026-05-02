@@ -147,3 +147,129 @@ adapter boundaries are stable. For Android Compose EAS build lanes, document `EA
 as the default cache opt-in and require `FROM CACHE` log evidence before claiming cache behavior.
 
 DONE_WITH_CONCERNS
+
+## EAS Development Build Configuration
+
+### iOS SwiftUI Development Build
+
+The iOS SwiftUI adapter requires a development build profile in `eas.json` that targets the
+simulator. This profile builds a `.app` bundle suitable for iOS Simulator installation.
+
+**Prerequisites:** `@expo/ui` must already be installed in the project via
+`npx expo install @expo/ui`.
+
+```json
+{
+  "build": {
+    "ios-swiftui-dev": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "image": "latest"
+      },
+      "channel": "development",
+      "developmentClient": true,
+      "env": {
+        "EXPO_UI_SWIFTUI_ENABLED": "1"
+      }
+    }
+  }
+}
+```
+
+Key points for this profile:
+
+| Aspect | Detail |
+|---|---|
+| `ios.simulator: true` | Produces a simulator-targeted `.app` bundle instead of a device IPA |
+| `developmentClient: true` | Includes `expo-dev-client` for live refresh via `npx expo start` |
+| `distribution: "internal"` | Makes the build available for internal distribution only |
+| `channel: "development"` | Binds the build to the development update channel |
+| `EXPO_UI_SWIFTUI_ENABLED` | Environment flag read by the adapter at runtime to confirm native SwiftUI is active |
+
+**Installation and running:**
+
+- Install the simulator build: `eas build:run` or drag the `.app` into Expo Orbit
+- iOS Simulator requires a macOS host to run interactively; EAS only produces the artifact
+- Once installed on a Mac-hosted simulator, connect with `npx expo start --dev-client` for live JS refresh
+- EAS cloud macOS workers compile the SwiftUI adapter regardless of the developer's local OS
+
+### Android Compose Development Build
+
+The Android Compose adapter uses a standard Android development build profile. Enabling Gradle
+cache significantly speeds up repeated EAS cloud builds when native dependencies are stable.
+
+```json
+{
+  "build": {
+    "android-compose-dev": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
+      "channel": "development",
+      "env": {
+        "EAS_GRADLE_CACHE": "1"
+      }
+    }
+  }
+}
+```
+
+Key points for this profile:
+
+| Aspect | Detail |
+|---|---|
+| `android.buildType: "apk"` | Produces a debug APK (no Play Store signing needed) |
+| `developmentClient: true` | Includes `expo-dev-client` for live refresh via `npx expo start` |
+| `EAS_GRADLE_CACHE: "1"` | Enables Gradle build cache on EAS cloud workers |
+| `distribution: "internal"` | Internal distribution; no Play Store listing required |
+| `image: "latest"` | Uses the latest EAS Android build image |
+
+**Prerequisites:** `npx expo install @expo/ui` must be completed before the first build.
+
+**Installation and running:**
+
+- Download the APK from the EAS dashboard or via `eas build:run`
+- Install on Android Emulator or physical device
+- Connect to `npx expo start --dev-client` for live JS refresh and hot reload
+
+### Development Build Requirements
+
+Before triggering any EAS development build with `@expo/ui`, the following must be in place:
+
+| # | Requirement | Command / Action |
+|---|---|---|
+| 1 | `@expo/ui` installed | `npx expo install @expo/ui` |
+| 2 | `expo-dev-client` installed | `npx expo install expo-dev-client` |
+| 3 | `eas.json` with a development build profile | Create or update `eas.json` with at least one dev profile |
+| 4 | iOS: Apple Developer account configured for EAS | Register device UDID, configure provisioning in EAS dashboard |
+| 5 | Android: no special account for debug APK builds | Debug APK builds do not require Play Store credentials |
+| 6 | Both: `eas build` can be triggered from any OS | EAS cloud workers handle platform-specific compilation |
+
+### Verifying Gradle Cache
+
+When `EAS_GRADLE_CACHE=1` is set in the Android build profile, EAS caches Gradle task outputs
+between builds. Verification steps:
+
+| Build | What to look for in EAS logs |
+|---|---|
+| First build with cache enabled | No `FROM CACHE` markers — the cache is being populated. All tasks run normally. |
+| Subsequent builds, same inputs | Most Gradle tasks show `FROM CACHE` in the "Run Gradle" step. The build log output for cached tasks includes the `FROM-CACHE` tag. |
+| Inputs changed (dependency version, Gradle config) | Tasks with changed inputs show normal execution. Unchanged tasks still show `FROM CACHE`. |
+
+If tasks show `UP-TO-DATE` instead of `FROM CACHE`, the Gradle cache key changed, meaning build
+inputs differ from the previous run (different dependency versions, modified Gradle files,
+or a different EAS build image).
+
+Example log excerpt for a cached task:
+
+```text
+> Task :expo-modules-core:compileReleaseKotlin FROM-CACHE
+```
+
+> **Note:** Gradle configuration cache (`EAS_GRADLE_CONFIGURATION_CACHE=1`) is separate from the
+> task output cache and may require additional EAS build environment support. Verify against the
+> current Expo changelog before enabling.

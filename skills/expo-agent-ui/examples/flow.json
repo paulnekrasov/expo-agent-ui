@@ -1,0 +1,87 @@
+{
+  "$schema": "../references/flows.schema.json",
+  "flow": {
+    "name": "checkout.happyPath",
+    "stopOnFailure": true,
+    "timeoutMs": 15000,
+    "steps": [
+      {
+        "type": "assert",
+        "conditions": [
+          { "kind": "nodeExists", "nodeId": "checkout" },
+          { "kind": "nodeState", "nodeId": "checkout.confirm", "expected": { "disabled": false } }
+        ]
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.shipping.name",
+        "value": "Jane Smith"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.shipping.address",
+        "value": "456 Oak Avenue"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.shipping.city",
+        "value": "Portland"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.shipping.zip",
+        "value": "97201"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.payment.cardnumber",
+        "value": "$CARD_FIXTURE"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.payment.expiry",
+        "value": "12/28"
+      },
+      {
+        "type": "input",
+        "targetId": "checkout.payment.cvv",
+        "value": "$CVV_FIXTURE"
+      },
+      {
+        "type": "tap",
+        "targetId": "checkout.confirm"
+      },
+      {
+        "type": "waitFor",
+        "conditions": [
+          { "kind": "nodeVisible", "nodeId": "orderConfirmation.screen" },
+          { "kind": "nodeState", "nodeId": "orderConfirmation.statusLabel", "expected": { "label": "Confirmed" } }
+        ]
+      },
+      {
+        "type": "assert",
+        "conditions": [
+          { "kind": "nodeState", "nodeId": "orderConfirmation.statusLabel", "expected": { "label": "Confirmed" } }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "description": "Happy-path checkout flow for the checkout-screen.tsx example. Requires human approval for the submit_order tap step.",
+    "requiresApproval": true,
+    "gatedSteps": [9],
+    "gatedReason": "Step 9 taps checkout.confirm with intent submit_order — order mutation requires approval.",
+    "fixtures": {
+      "CARD_FIXTURE": "Test card number (do not commit real values)",
+      "CVV_FIXTURE": "Test CVV (do not commit real values)"
+    },
+    "expectedOutcome": {
+      "ok": true,
+      "flowName": "checkout.happyPath",
+      "completed": true,
+      "totalSteps": 11,
+      "completedSteps": 11,
+      "durationMs": "<variable>"
+    }
+  }
+}

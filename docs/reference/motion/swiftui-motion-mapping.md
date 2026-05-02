@@ -2,6 +2,7 @@
 
 Status: inspiration only
 Product stage: Stage 6 - Motion Layer
+Counterpart: `motion/compose-motion-mapping.md` (Compose / Material Motion)
 
 The old animation research is retained here as taste guidance for Stage 6. Expo Agent UI maps
 SwiftUI-like motion names to Reanimated behavior instead of emulating CSS or Core Animation.

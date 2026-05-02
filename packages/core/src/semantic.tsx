@@ -193,7 +193,12 @@ export interface AgentUISemanticRegistry extends AgentUISemanticRuntime {
     id: string,
     options?: AgentUISemanticNodeLookupOptions
   ): AgentUISemanticNode | undefined;
-  getSnapshot(): AgentUISemanticSnapshot;
+  getSnapshot(options?: {
+    screen?: string | undefined;
+    maxDepth?: number | undefined;
+    includeHidden?: boolean | undefined;
+    rootId?: string | undefined;
+  } | undefined): AgentUISemanticSnapshot;
 }
 
 export interface AgentUIContextValue {
@@ -389,12 +394,21 @@ function cloneSemanticNode(node: AgentUISemanticNode): AgentUISemanticNode {
   };
 }
 
-function createEmptySemanticNodeClone(
+function shallowCloneSemanticNode(
   node: AgentUISemanticNode
 ): AgentUISemanticNode {
   return {
-    ...cloneSemanticNode(node),
-    children: []
+    actions: node.actions.map((action) => ({ ...action })),
+    children: [],
+    id: node.id,
+    state: { ...node.state },
+    type: node.type,
+    ...(node.generated ? { generated: true } : {}),
+    ...(node.intent ? { intent: node.intent } : {}),
+    ...(node.label ? { label: node.label } : {}),
+    ...(node.privacy ? { privacy: node.privacy } : {}),
+    ...(node.screen ? { screen: node.screen } : {}),
+    ...(node.value ? { value: { ...node.value } } : {})
   };
 }
 
@@ -432,13 +446,36 @@ function pruneHiddenSemanticTreeRecordRefs(
 }
 
 function buildSemanticTree(
-  mountedRecords: Map<string, MountedSemanticRecord>
+  mountedRecords: Map<string, MountedSemanticRecord>,
+  options?: {
+    includeHidden?: boolean | undefined;
+    screen?: string | undefined;
+    maxDepth?: number | undefined;
+    rootId?: string | undefined;
+  }
 ): AgentUISemanticNode[] {
-  return buildSemanticTreeRecordRefs(mountedRecords).map((entry) => entry.node);
+  const recordRefs = buildSemanticTreeRecordRefs(mountedRecords, options?.includeHidden === true);
+  let nodes = recordRefs.map((entry) => entry.node);
+
+  if (typeof options?.screen === "string" && options.screen.length > 0) {
+    nodes = filterSemanticNodesByScreen(nodes, options.screen);
+  }
+
+  if (typeof options?.rootId === "string" && options.rootId.length > 0) {
+    const rooted = findSemanticNodeById(nodes, options.rootId);
+    nodes = rooted ? [rooted] : [];
+  }
+
+  if (typeof options?.maxDepth === "number" && options.maxDepth >= 0) {
+    nodes = truncateSemanticNodeDepth(nodes, options.maxDepth);
+  }
+
+  return nodes;
 }
 
 function buildSemanticTreeRecordRefs(
-  mountedRecords: Map<string, MountedSemanticRecord>
+  mountedRecords: Map<string, MountedSemanticRecord>,
+  includeHidden?: boolean | undefined
 ): SemanticTreeRecordRef[] {
   const records = Array.from(mountedRecords.values()).sort(
     (a, b) => a.order - b.order
@@ -450,7 +487,7 @@ function buildSemanticTreeRecordRefs(
     entriesByMountKey.set(record.mountKey, {
       children: [],
       mountKey: record.mountKey,
-      node: createEmptySemanticNodeClone(record.node)
+      node: shallowCloneSemanticNode(record.node)
     });
   }
 
@@ -478,7 +515,64 @@ function buildSemanticTreeRecordRefs(
     applyScreenScope(root.node, undefined);
   }
 
-  return pruneHiddenSemanticTreeRecordRefs(roots);
+  return includeHidden ? roots : pruneHiddenSemanticTreeRecordRefs(roots);
+}
+
+function filterSemanticNodesByScreen(
+  nodes: AgentUISemanticNode[],
+  screen: string
+): AgentUISemanticNode[] {
+  return nodes.flatMap((node) => filterNodeByScreen(node, screen)).filter(
+    (n): n is AgentUISemanticNode => n !== undefined
+  );
+}
+
+function filterNodeByScreen(
+  node: AgentUISemanticNode,
+  screen: string
+): AgentUISemanticNode | undefined {
+  if (node.screen !== screen) {
+    return undefined;
+  }
+
+  const filteredChildren = node.children
+    .map((child) => filterNodeByScreen(child, screen))
+    .filter((n): n is AgentUISemanticNode => n !== undefined);
+
+  return { ...node, children: filteredChildren };
+}
+
+function truncateSemanticNodeDepth(
+  nodes: AgentUISemanticNode[],
+  maxDepth: number
+): AgentUISemanticNode[] {
+  if (maxDepth <= 0) {
+    return [];
+  }
+
+  return nodes.map((node) => ({
+    ...node,
+    children: truncateSemanticNodeDepth(node.children, maxDepth - 1)
+  }));
+}
+
+function findSemanticNodeById(
+  nodes: AgentUISemanticNode[],
+  id: string
+): AgentUISemanticNode | undefined {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return node;
+    }
+
+    const found = findSemanticNodeById(node.children, id);
+
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
 }
 
 function collectDuplicateStableIdKeys(
@@ -490,7 +584,7 @@ function collectDuplicateStableIdKeys(
   function visit(node: AgentUISemanticNode): void {
     const scope = node.screen ?? "global";
 
-    if (node.generated !== true && node.id.trim().length > 0) {
+    if (node.generated !== true && node.id.length > 0) {
       const key = `${scope}\u0000${node.id}`;
 
       if (seen.has(key)) {
@@ -669,18 +763,8 @@ export function createAgentUISemanticRegistry(): AgentUISemanticRegistry {
         });
       }
 
-      const match = matches[0];
-
-      if (!match) {
-        return createSemanticActionResult({
-          action: actionName,
-          code: "NODE_NOT_FOUND",
-          message: `No visible semantic node found for id "${lookupId}".`,
-          nodeId: lookupId,
-          ok: false,
-          screen: lookupScreen
-        });
-      }
+      // matches.length === 1 is guaranteed by the guards above
+      const match = matches[0]!;
 
       const node = match.node;
       const supportedActions = getSupportedActionNames(node);
@@ -773,8 +857,8 @@ export function createAgentUISemanticRegistry(): AgentUISemanticRegistry {
 
       return matchedNode ? cloneSemanticNode(matchedNode) : undefined;
     },
-    getSnapshot() {
-      const nodes = buildSemanticTree(mountedRecords);
+    getSnapshot(options) {
+      const nodes = buildSemanticTree(mountedRecords, options);
 
       return {
         generatedNodeCount: Array.from(mountedRecords.values()).filter(

@@ -2,6 +2,7 @@
 
 Status: inspiration only
 Product stage: Stage 2 - Component Primitives
+Counterpart: `design/android-layout-dna.md` (Material Design 3 / Compose layout)
 
 This document preserves the useful layout ideas from the retired SwiftUI parser project. It is
 not a static parser contract and it is not a requirement to emulate SwiftUI exactly.

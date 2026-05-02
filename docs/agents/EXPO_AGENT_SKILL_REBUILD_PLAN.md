@@ -858,7 +858,30 @@ Verification:
 
 ### Stage 6 - Motion Layer
 
-Objective: provide SwiftUI-feeling animation helpers over Reanimated.
+Objective: build a three-tier motion architecture with Reanimated 4 as the cross-platform
+base and native adapter contracts for iOS SwiftUI and Android Jetpack Compose motion.
+
+#### Three-Tier Architecture
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│                    Agent UI Motion API                       │
+│   motion.spring()  motion.bouncy()  transition.opacity       │
+│   layoutTransition.smooth  gesture.pan()  etc.               │
+└──────────────┬──────────────────┬──────────────────┬─────────┘
+               │                  │                  │
+       ┌───────▼───────┐  ┌──────▼──────┐  ┌───────▼───────┐
+       │   Tier 1       │  │   Tier 2     │  │   Tier 3      │
+       │  Reanimated 4  │  │  SwiftUI     │  │  Compose      │
+       │ (cross-plat)   │  │  Motion      │  │  Motion       │
+       │                │  │  (iOS)       │  │  (Android)    │
+       └───────────────┘  └─────────────┘  └───────────────┘
+       Always available    @expo/ui/        @expo/ui/
+       JS-only runtime     swift-ui         jetpack-compose
+                           optional peer    optional peer
+```
+
+#### Tier 1 — Reanimated Cross-Platform Base (Required)
 
 APIs:
 
@@ -867,23 +890,101 @@ motion.spring()
 motion.bouncy()
 motion.snappy()
 motion.easeInOut({ duration })
+transition.opacity
+transition.slide
+transition.scale
+layoutTransition.smooth
 useAgentTransition()
 LayoutTransitionPreset
 ```
+
+Preset mapping:
+
+| Agent UI Preset | Reanimated Primitive | Config | Reduced Motion |
+|---|---|---|---|
+| `motion.spring()` | `withSpring` | Duration ~420ms, dampingRatio: 1 | Snap to final |
+| `motion.bouncy()` | `withSpring` | Physics spring, lower damping | Snap or short fade |
+| `motion.snappy()` | `withSpring` / `withTiming` | 220–280ms spring | Very short opacity |
+| `motion.easeInOut()` | `withTiming` | 250–300ms, ease-in-out curve | Snap or approved fade |
+| `transition.opacity` | Entering/exiting fade | 150–250ms timing | Snap |
+| `transition.slide` | Entering/exiting slide | 250–350ms with opacity | Opacity-only |
+| `transition.scale` | Entering/exiting zoom | 0.96→1 scale + opacity | Disable scale |
+| `layoutTransition.smooth` | `LinearTransition` | 250ms, ReduceMotion.System | Skip layout motion |
 
 Rules:
 
 - Use Reanimated shared values and animation helpers.
 - Prefer transform and opacity.
-- Provide reduced motion behavior.
-- Emit semantic animation events for agents when useful.
+- Provide reduced motion behavior with `ReduceMotion.System` default.
+- Emit coarse semantic animation events: `animation_started`, `animation_completed`,
+  `animation_interrupted`, `gesture_committed`, `transition_committed`.
 - Avoid layout-thrashing animations.
+- Use Gesture Handler for pan/drag/swipe. Use Pressable for semantic taps.
+
+#### Tier 2 — Native iOS SwiftUI Motion Adapter (Optional)
+
+When `@expo/ui/swift-ui` is installed, Agent UI can delegate motion to native SwiftUI APIs.
+The adapter contract is defined in Stage 6; native implementation is Stage 7.
+
+| Agent UI Preset | SwiftUI API | Reduced Motion |
+|---|---|---|
+| `motion.spring()` | `.spring(response: 0.35, dampingFraction: 0.85)` | Branch `accessibilityReduceMotion` |
+| `motion.bouncy()` | `.spring(duration: 0.4, bounce: 0.2)` / `.bouncy` | Disable bounce |
+| `motion.snappy()` | `.spring(response: 0.25, dampingFraction: 0.7)` / `.snappy` | Very short easeOut |
+| `nativeMotion.symbolEffect` | `.symbolEffect(.bounce, value:)` | Static |
+| `nativeMotion.sensoryFeedback` | `SensoryFeedback(.success)` | System haptic prefs |
+| `nativeMotion.matchedGeometry` | `matchedGeometryEffect(id:in:)` | Crossfade |
+| `nativeMotion.keyframes` | `KeyframeAnimator(initialValue:trigger:)` | Skip or simplify |
+| `nativeMotion.phase` | `PhaseAnimator` | Skip |
+
+Falls back to Tier 1 when `@expo/ui/swift-ui` is not installed.
+
+#### Tier 3 — Native Android Jetpack Compose Motion Adapter (Optional)
+
+When `@expo/ui/jetpack-compose` is installed, Agent UI can delegate motion to native Compose APIs.
+The adapter contract is defined in Stage 6; native implementation is Stage 7.
+
+| Agent UI Preset | Compose API | Reduced Motion |
+|---|---|---|
+| `motion.spring()` | `spring(dampingRatio = NoBouncy, stiffness = Medium)` | Branch `LocalReduceMotion` |
+| `motion.bouncy()` | `spring(dampingRatio = 0.6f, stiffness = Low)` | Snap or short fade |
+| `motion.snappy()` | `spring(dampingRatio = 0.7f, stiffness = High)` | Snap |
+| `nativeMotion.animatedContent` | `AnimatedContent` + `ContentTransform` | Crossfade only |
+| `nativeMotion.sharedElement` | `SharedTransitionLayout` + `sharedElement()` | Crossfade |
+| `nativeMotion.graphicsLayer` | `Modifier.graphicsLayer { }` | Simplified |
+| `nativeMotion.infiniteTransition` | `rememberInfiniteTransition` | Reduce or stop |
+
+Falls back to Tier 1 when `@expo/ui/jetpack-compose` is not installed.
+
+#### Implementation Slices
+
+Slice 6.1 — Reanimated Cross-Platform Base:
+- Implement all Tier 1 presets and transitions.
+- Central reduced motion policy.
+- Gesture helper strategy.
+- Coarse semantic motion events.
+- Unit tests and example-app demo screen.
+
+Slice 6.2 — Native Motion Adapter Contracts:
+- Define `MotionAdapter` TypeScript interface with capability flags.
+- Implement Reanimated adapter as default.
+- Add SwiftUI and Compose adapter stubs.
+- Tier resolution logic (detect platform and installed adapters).
+- Adapter resolution and fallback tests.
+
+Slice 6.3 — Native Motion Mapping Documentation:
+- iOS SwiftUI motion preset mapping reference doc.
+- Android Compose motion preset mapping reference doc.
+- Update Reanimated 4 reference for three-tier strategy.
+- Native adapter mapping contract tests.
+- Motion adapter diagnostic in MCP diagnostics.
 
 Verification:
 
-- Unit tests for preset mapping.
-- Example app motion screen.
+- Unit tests for preset mapping, reduced motion, adapter resolution.
+- Example app motion screen with all Tier 1 presets.
 - Reduced motion test path.
+- Adapter fallback tests (native not installed → Tier 1).
 
 ### Stage 7 - Expo UI And Native Adapters
 

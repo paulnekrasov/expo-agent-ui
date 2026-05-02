@@ -15,7 +15,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
-    "test": "node -e \"console.log('@agent-ui/cli tests deferred until commands exist')\""
+    "test": "jest --config jest.config.js --runInBand"
   },
   "dependencies": {
     "@agent-ui/mcp-server": "0.0.0"

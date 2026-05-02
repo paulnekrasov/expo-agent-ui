@@ -2,6 +2,7 @@
 
 Status: inspiration only
 Product stage: Stage 2 - Component Primitives, Stage 7 - Expo UI Adapter
+Counterpart: `native/material-symbols-and-icons.md` (Material Symbols / Android)
 
 The retired renderer included SF Symbols research. Expo Agent UI should keep the semantic idea of
 icons without depending on Apple-only symbol rendering in core.

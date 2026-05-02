@@ -13,7 +13,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
-    "test": "tsc --noEmit -p tsconfig.json"
+    "test": "node -e \"require('child_process').execSync('tsc --noEmit -p tsconfig.json',{stdio:'inherit'})\" --"
   },
   "peerDependencies": {
     "expo": "~55.0.18",

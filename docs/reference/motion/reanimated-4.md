@@ -225,4 +225,37 @@ Stage 6 should implement a thin `packages/core/src/motion` layer over Reanimated
 
 The implementation should document two compatibility lanes. Expo-managed apps install through `npx expo install react-native-reanimated react-native-worklets` and rely on Expo's Babel preset. Bare/community apps must satisfy Reanimated 4 New Architecture requirements, install compatible Worklets, configure `react-native-worklets/plugin` last, and rebuild native dependencies. These lanes are not blockers; they are setup and doctor-check requirements.
 
+## Three-Tier Native Motion Adapter Strategy
+
+Stage 6 implements a three-tier architecture. Reanimated 4 (Tier 1) is the required
+cross-platform base. Two optional native motion adapters define additional tiers:
+
+- **Tier 2 — iOS SwiftUI motion adapter:** When `@expo/ui/swift-ui` is installed, Agent UI
+  motion presets can resolve to native SwiftUI `Animation`, `spring`, `transition`,
+  `symbolEffect`, `SensoryFeedback`, `matchedGeometryEffect`, `KeyframeAnimator`, and
+  `PhaseAnimator` instead of Reanimated approximations. The adapter contract (TypeScript
+  interface with capability flags) is defined in Stage 6; the native implementation is Stage 7.
+
+- **Tier 3 — Android Jetpack Compose motion adapter:** When `@expo/ui/jetpack-compose` is
+  installed, Agent UI motion presets can resolve to native Compose `animate*AsState`,
+  `AnimatedVisibility`, `SharedTransitionLayout`, `spring`, `graphicsLayer`, and
+  `infiniteTransition`. Same boundary: contract in Stage 6, implementation in Stage 7.
+
+Resolution logic at runtime:
+1. Check platform (iOS / Android / web).
+2. Check if the platform-specific native adapter is available (optional peer installed).
+3. If available, delegate to the native adapter for supported capabilities.
+4. If not available, or for unsupported capabilities, fall back to Tier 1 (Reanimated).
+
+Native adapters do not replace the semantic event layer. Semantic motion events
+(`animation_started`, `animation_completed`, `animation_interrupted`, `gesture_committed`,
+`transition_committed`) are always emitted from JavaScript wrappers regardless of which tier
+performs the actual animation.
+
+Native adapters require EAS development builds. Expo Go supports Tier 1 only.
+
+Reference docs for the native preset mappings:
+- `docs/reference/motion/native-ios-motion-mapping.md` (planned, Slice 6.3)
+- `docs/reference/motion/native-android-motion-mapping.md` (planned, Slice 6.3)
+
 DONE

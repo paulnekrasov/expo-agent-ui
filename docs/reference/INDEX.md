@@ -21,6 +21,7 @@ been removed from active context. Use this index as the complete router for curr
 | Work Area | Open First |
 |---|---|
 | Overall rebuild plan | `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md` |
+| Deep debugging autonomous loop | `docs/agents/DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT.md` |
 | Research completion status | `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
 | Package foundation and Expo SDK | `expo/package-foundation.md` |
 | Expo UI SwiftUI adapter | `expo/expo-ui-swift-ui.md` |
@@ -38,13 +39,27 @@ been removed from active context. Use this index as the complete router for curr
 | Navigation adapters | `react-native/navigation-adapters.md` |
 | Testing and devtools | `react-native/testing-and-devtools.md` |
 | SwiftUI-inspired layout DNA | `design/swiftui-layout-dna.md` |
+| Android / Material 3 layout DNA | `design/android-layout-dna.md` |
 | iOS-inspired tokens | `design/ios-tokens.md` |
+| Android / Material 3 tokens | `design/android-tokens.md` |
 | Control chrome guidance | `design/control-chrome.md` |
 | SwiftUI motion mapping | `motion/swiftui-motion-mapping.md` |
-| Symbols and icons | `native/symbols-and-icons.md` |
+| Compose / Material Motion mapping | `motion/compose-motion-mapping.md` |
+| Symbols and icons (iOS) | `native/symbols-and-icons.md` |
+| Material Symbols and icons (Android) | `native/material-symbols-and-icons.md` |
+| Native platform accessibility bridge | `react-native/native-accessibility-bridge.md` |
+| Motion design principles (cross-platform) | `design/motion-design-principles.md` |
+| Native architecture patterns (iOS + Android) | `native/native-architecture-patterns.md` |
+| Native concurrency contracts (Swift + Kotlin) | `native/native-concurrency.md` |
+| Native testing strategies (iOS + Android) | `native/native-testing-strategies.md` |
+| Expo Modules API and config plugins | `expo/expo-modules-and-plugins.md` |
+| Expo deployment, updates, and CI/CD | `expo/expo-deployment-and-updates.md` |
+| React Native performance patterns | `react-native/performance-patterns.md` |
+| React composition patterns | `react-native/composition-patterns.md` |
 | Cross-platform future adapters | `expo/cross-platform-adapters.md` |
 | Figma/design-system future import | `design/figma-design-system-import.md` |
 | Cloud flows and visual comparison | `agent/cloud-flows-visual-comparison.md` |
+| Serve-sim adapter (optional visual preview) | `agent/serve-sim-adapter.md` |
 
 ## Stage-To-Reference Map
 
@@ -52,15 +67,15 @@ been removed from active context. Use this index as the complete router for curr
 |---|---|
 | Stage 0 - Repo Reset | `docs/PROJECT_BRIEF.md`, this index, `docs/agents/EXPO_AGENT_SKILL_REBUILD_PLAN.md`, `docs/agents/research-prompts/expo-agent-ui/RESEARCH_STATUS.md` |
 | Stage 1 - Package Foundation | `expo/package-foundation.md` |
-| Stage 2 - Component Primitives | `react-native/accessibility-semantics.md`, `design/swiftui-layout-dna.md`, `design/ios-tokens.md`, `design/control-chrome.md`, `native/symbols-and-icons.md`, `expo/expo-ui-swift-ui.md` for optional adapter boundaries |
-| Stage 3 - Semantic Runtime | `react-native/accessibility-semantics.md`, `agent/security-privacy.md` |
+| Stage 2 - Component Primitives | `react-native/accessibility-semantics.md`, `design/swiftui-layout-dna.md`, `design/android-layout-dna.md`, `design/ios-tokens.md`, `design/android-tokens.md`, `design/control-chrome.md`, `native/symbols-and-icons.md`, `native/material-symbols-and-icons.md`, `react-native/composition-patterns.md`, `react-native/performance-patterns.md`, `expo/expo-ui-swift-ui.md` for optional adapter boundaries |
+| Stage 3 - Semantic Runtime | `react-native/accessibility-semantics.md`, `agent/security-privacy.md`, `react-native/composition-patterns.md` |
 | Stage 4 - Agent Tool Bridge | `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/navigation-adapters.md` when navigation tools are in scope |
 | Stage 5 - MCP Server | `agent/mcp-transport-architecture.md`, `agent/platform-skill-mcp-surface.md`, `agent/security-privacy.md`, `agent/maestro-semantic-flow-adapter.md` when external Maestro MCP interop is in scope |
-| Stage 6 - Motion Layer | `motion/reanimated-4.md`, `motion/swiftui-motion-mapping.md` |
-| Stage 7 - Expo UI Adapter | `expo/expo-ui-swift-ui.md`, `expo/expo-ui-jetpack-compose.md`, `expo/cross-platform-adapters.md`, `expo/eas-native-preview.md` for native preview and build boundaries |
-| Stage 8 - Agent Skill | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `docs/agents/research-prompts/expo-agent-ui/README.md`, `react-native/accessibility-semantics.md`, `agent/mcp-transport-architecture.md`, `agent/maestro-semantic-flow-adapter.md` for flow-generation guidance |
-| Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/testing-and-devtools.md`, `agent/cloud-flows-visual-comparison.md`, `agent/maestro-semantic-flow-adapter.md`, `expo/eas-native-preview.md` |
-| Stage 10 - Publish Readiness | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `expo/package-foundation.md`, `expo/eas-native-preview.md`, all compatibility and install decisions from research status |
+| Stage 6 - Motion Layer | `motion/reanimated-4.md`, `motion/swiftui-motion-mapping.md`, `motion/compose-motion-mapping.md`, `design/motion-design-principles.md`, `react-native/performance-patterns.md` (animation section) |
+| Stage 7 - Expo UI Adapter | `expo/expo-ui-swift-ui.md`, `expo/expo-ui-jetpack-compose.md`, `expo/cross-platform-adapters.md`, `expo/expo-modules-and-plugins.md`, `native/native-architecture-patterns.md`, `native/native-concurrency.md`, `native/native-testing-strategies.md`, `expo/eas-native-preview.md` for native preview and build boundaries, `react-native/native-accessibility-bridge.md` for platform accessibility adapter contracts |
+| Stage 8 - Agent Skill | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `docs/agents/research-prompts/expo-agent-ui/README.md`, `react-native/accessibility-semantics.md`, `agent/mcp-transport-architecture.md`, `agent/maestro-semantic-flow-adapter.md` for flow-generation guidance, `expo/expo-modules-and-plugins.md` |
+| Stage 9 - Flow Runner, Patch Proposals, And Native Preview Comparison | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `agent/mcp-transport-architecture.md`, `agent/security-privacy.md`, `react-native/testing-and-devtools.md`, `native/native-testing-strategies.md`, `agent/cloud-flows-visual-comparison.md`, `agent/maestro-semantic-flow-adapter.md`, `expo/eas-native-preview.md`, `agent/serve-sim-adapter.md` |
+| Stage 10 - Publish Readiness | `agent/platform-skill-routing.md`, `agent/platform-skill-mcp-surface.md`, `agent/platform-skills/INDEX.md`, `expo/package-foundation.md`, `expo/eas-native-preview.md`, `expo/expo-deployment-and-updates.md`, all compatibility and install decisions from research status |
 | Cross-stage bug, test failure, or blocked verification | `agent/platform-skills/systematic-debugging/SKILL.md`, plus the active stage references above |
 
 ## MVP Decisions From Research
@@ -120,11 +135,20 @@ been removed from active context. Use this index as the complete router for curr
 The retired parser/reference tree was intentionally cleaned up after the Expo Agent UI pivot.
 Reusable ideas were compressed into:
 
-- `design/swiftui-layout-dna.md`
-- `design/ios-tokens.md`
+- `design/swiftui-layout-dna.md` ↔ `design/android-layout-dna.md`
+- `design/ios-tokens.md` ↔ `design/android-tokens.md`
 - `design/control-chrome.md`
-- `motion/swiftui-motion-mapping.md`
-- `native/symbols-and-icons.md`
+- `design/motion-design-principles.md` (cross-platform motion design DNA)
+- `motion/swiftui-motion-mapping.md` ↔ `motion/compose-motion-mapping.md`
+- `native/symbols-and-icons.md` ↔ `native/material-symbols-and-icons.md`
+- `native/native-architecture-patterns.md` (iOS + Android architecture)
+- `native/native-concurrency.md` (Swift concurrency + Kotlin coroutines)
+- `native/native-testing-strategies.md` (cross-platform native testing)
+- `react-native/native-accessibility-bridge.md` (bridges RN semantics to native platforms)
+- `react-native/performance-patterns.md` (RN performance rules)
+- `react-native/composition-patterns.md` (compound components + state lifting)
+- `expo/expo-modules-and-plugins.md` (Expo Modules API + config plugins)
+- `expo/expo-deployment-and-updates.md` (EAS builds, OTA updates, CI/CD)
 
 Do not recreate old parser, resolver, VS Code extension, WASM, or Canvas renderer references unless
 the user explicitly asks for historical archive analysis.

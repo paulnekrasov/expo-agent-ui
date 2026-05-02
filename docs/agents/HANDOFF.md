@@ -1,89 +1,54 @@
 # HANDOFF NOTE
-From: scheduled-run coordinator
-To: next Stage 4 implementer
-Session date: 2026-05-01
+From: scheduled-run coordinator + Stage 10 completion session
+To: next agent
+Session date: 2026-05-02
 
 ## What I Did
 
-- Ran the scheduled automation loop for the first Stage 4 bridge task.
-- Confirmed current-run verification was available:
-  - direct Node child-process probe exited `0`,
-  - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- Used the repo-local context-prompt-engineering reference for task/state/prompt status updates.
-- Used the repo-local systematic-debugging adapter for the focused red tests and stale declaration
-  typecheck failure.
-- Added `packages/core/src/bridge.ts` with bridge protocol version, capability, transport-mode,
-  execution-environment, config, gate-result, and result-code contracts.
-- Added `createAgentUIBridgeGate(config?, options?)` as a pure JS fail-closed gate.
-- Required explicit bridge enablement, development mode, known non-standalone execution
-  environment, pairing token, valid WebSocket URL, and accepted URL/transport policy before bridge
-  control enables.
-- Kept LAN behind explicit `unsafeAllowLAN` and rejected tunnel mode for v0 semantic control.
-- Exposed the resolved bridge gate through `AgentUIProvider` and `useAgentUIBridge()` without
-  opening sockets or serializing semantic snapshots.
-- Exported the bridge constants, types, and gate function from `@agent-ui/core`.
-- Added focused tests in `packages/example-app/app/agent-ui-bridge.test.tsx`.
-- Updated `ROADMAP_CHECKLIST.md` to mark bridge protocol and development-only runtime gate done.
+### Stage 10 — Publish Readiness (COMPLETE)
 
-## Debugging Evidence
+Implemented via 4 parallel agents:
 
-- Red: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  failed with six expected `createAgentUIBridgeGate is not a function` /
-  `useAgentUIBridge is not a function` failures.
-- Green: adding the bridge module, provider hook, and exports made the same focused Jest command
-  pass with 7 tests.
-- Red: `cmd /c npm.cmd run typecheck --workspaces --if-present` failed because the example app
-  resolved stale built `@agent-ui/core` declarations without the new bridge exports and provider
-  prop.
-- Green: `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated declarations, and the
-  same workspace typecheck command passed.
+- **Agent 1 — README.md**: Complete rewrite (1405 lines, 21 sections). Covers installation, all 19 primitives, semantic runtime, motion layer, bridge, MCP server (15 tools), agent skill, flow runner, Maestro YAML export, patch proposals, native adapters (SwiftUI + Compose), native preview comparison, platform skills, security model, compatibility, and troubleshooting.
 
-## Verification Completed
+- **Agent 2 — COMPATIBILITY.md + INSTALL.md + MCP_CONFIG.md**:
+  - `docs/COMPATIBILITY.md` (75 lines): Version matrix, package interop table, platform support, EAS compatibility.
+  - `docs/INSTALL.md` (194 lines): Prerequisites, 7-step install, per-package instructions, managed/bare workflow, monorepo path.
+  - `docs/MCP_CONFIG.md` (480 lines): MCP architecture, Claude/Codex/generic config snippets, CLI flags, tool authorization model, session lifecycle, 9 example tool invocations.
 
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
-  exited `0`; 7 tests passed.
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 4 suites and 31 tests passed.
-- `git diff --check` exited `0`.
-- A PowerShell forbidden-import scan of `packages/core/src` found no `expo-constants`, `@expo/ui`,
-  Expo Router, React Navigation, MCP SDK, native modules, old parser assets, tree-sitter, WASM, VS
-  Code, or Canvas renderer code.
+- **Agent 3 — TROUBLESHOOTING.md + RELEASE_CHECKLIST.md**:
+  - `docs/TROUBLESHOOTING.md` (434 lines): 12 categories, 18 error codes, workflow-specific guidance.
+  - `docs/RELEASE_CHECKLIST.md` (369 lines): 7 verification gates, version bump, publish order (core → mcp-server → cli → expo-plugin), post-release smoke test.
 
-## Known Concerns
+- **Agent 4 — Deep Debugging Audit**: 8 findings (1 High, 3 Medium, 4 Low). Fixed 4: trailing whitespace in TASK.md, stale core manifest stage/capabilities, stale CLI manifest stage, phase state sync. 4 Low deferred.
 
-- This task did not implement WebSocket transport, pairing handshake, origin validation, sessions,
-  heartbeat, event log, or audit logging.
-- Core intentionally does not import Expo Constants. The future app/adapter bridge layer must pass
-  trustworthy `executionEnvironment` evidence into the gate.
-- LAN mode is structurally gated with `unsafeAllowLAN`, but the future Node bridge listener still
-  must bind loopback by default and implement token/origin checks.
+### Bug Fixes (from deep audit)
+
+- Core manifest stage updated from "agent-bridge" to "flow-runner" with 7 capabilities (flow-runner, patch-proposals added)
+- CLI manifest stage updated from "mcp-server" to "flow-runner"
+- Trailing whitespace removed from TASK.md
+- PHASE_STATE.md, TASK.md, ROADMAP_CHECKLIST.md synced to Phase 10
+
+## Verification
+
+- typecheck: 5/5
+- build: 5/5 (incl. copy-skills 125 files + Android export)
+- test: 473 total (380 example-app + 71 mcp-server + 22 cli)
+- audit: 0 vulns
+- git diff: clean
+- skill validate: 0 errors, 0 warnings
 
 ## What The Next Agent Must Do First
 
-1. Read `docs/PROJECT_BRIEF.md`.
-2. Read `docs/reference/INDEX.md`.
-3. Read `docs/agents/TASK.md`.
-4. Read `docs/reference/agent/mcp-transport-architecture.md`.
-5. Read `docs/reference/agent/security-privacy.md`.
-6. Check `git status --short --branch`.
-7. Use `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` before fixing any bug,
-   failed command, blocked verification, runner environment issue, bridge/MCP failure, or flaky
-   async behavior, and apply its TTD/TDD red-green rule.
+1. Read `docs/PROJECT_BRIEF.md` and `docs/reference/INDEX.md`
+2. All product stages 0-10 are COMPLETE.
+3. Next: post-v0 enhancements, native module verification, user-requested tasks, or publish to npm.
 
-## Suggested Next Target
+## Known Concerns
 
-- Create the next bounded Stage 4 task for the loopback-first app bridge session model: session
-  ids, hello/heartbeat envelopes, pairing-token validation shape, and in-memory event log contract.
-  Keep MCP tools separate until Stage 5.
-
-## What The Next Agent Must Not Do
-
-- Do not implement MCP tools yet.
-- Do not add `@modelcontextprotocol/sdk` until Stage 5 server code imports it.
-- Do not add native modules or config-plugin mutations for this JS-only bridge path.
-- Do not make Expo Router, React Navigation, `@expo/ui`, or Expo Constants mandatory imports in
-  `packages/core`.
-- Do not fallback to screenshots or coordinates as the primary control model.
-- Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas
-  renderer assets.
+- No `@expo/ui` or native modules installed — all adapter/detection tests use stubs.
+- `compareNativePreviews` returns placeholder; needs 2+ connected runtime sessions for real diff.
+- `runMaestroFlow` returns MAESTRO_UNAVAILABLE; Maestro CLI not installed.
+- Bridge-level step dispatch (individual tap/input/scroll execution against registry) deferred.
+- Automatic source patching intentionally deferred per project brief.
+- `example-app` Jest "did not exit" warning is pre-existing.

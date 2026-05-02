@@ -39,11 +39,29 @@ agent tool bridge, MCP server, and reusable agent skill.
 - Maestro semantic flow adapter: `docs/reference/agent/maestro-semantic-flow-adapter.md`
 - Systematic debugging adapter: `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md`
 - Scheduled automation loop prompt: `docs/agents/SCHEDULED_AUTOMATION_LOOP_PROMPT.md`
+- Deep debugging autonomous loop prompt: `docs/agents/DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT.md`
+- Ecosystem research autonomous loop prompt: `docs/agents/ECOSYSTEM_RESEARCH_AUTONOMOUS_AGENT_LOOP_PROMPT.md`
 - Navigation adapters: `docs/reference/react-native/navigation-adapters.md`
 - Testing and devtools: `docs/reference/react-native/testing-and-devtools.md`
 - SwiftUI-inspired layout DNA: `docs/reference/design/swiftui-layout-dna.md`
+- Android / Material 3 layout DNA: `docs/reference/design/android-layout-dna.md`
 - iOS-inspired tokens: `docs/reference/design/ios-tokens.md`
+- Android / Material 3 tokens: `docs/reference/design/android-tokens.md`
 - Control chrome guidance: `docs/reference/design/control-chrome.md`
+- SwiftUI motion mapping: `docs/reference/motion/swiftui-motion-mapping.md`
+- Compose / Material Motion mapping: `docs/reference/motion/compose-motion-mapping.md`
+- Symbols and icons (iOS): `docs/reference/native/symbols-and-icons.md`
+- Material Symbols and icons (Android): `docs/reference/native/material-symbols-and-icons.md`
+- Native platform accessibility bridge: `docs/reference/react-native/native-accessibility-bridge.md`
+- Motion design principles (cross-platform): `docs/reference/design/motion-design-principles.md`
+- Native architecture patterns (iOS + Android): `docs/reference/native/native-architecture-patterns.md`
+- Native concurrency contracts (Swift + Kotlin): `docs/reference/native/native-concurrency.md`
+- Native testing strategies (iOS + Android): `docs/reference/native/native-testing-strategies.md`
+- Expo Modules API and config plugins: `docs/reference/expo/expo-modules-and-plugins.md`
+- Expo deployment, updates, and CI/CD: `docs/reference/expo/expo-deployment-and-updates.md`
+- React Native performance patterns: `docs/reference/react-native/performance-patterns.md`
+- React composition patterns: `docs/reference/react-native/composition-patterns.md`
+- Serve-sim adapter (optional visual preview): `docs/reference/agent/serve-sim-adapter.md`
 
 ## Active Product Stages
 
