@@ -24,7 +24,7 @@ import {
   resetAgentUIReducedMotionCache,
   resolveAgentUIMotionAdapter,
   resolveAgentUIReducedMotion
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 beforeEach(() => {
   jest.restoreAllMocks();

@@ -1,7 +1,7 @@
 # MCP Configuration
 
 Last updated: 2026-05-02
-Applies to: @agent-ui/mcp-server v0.0.0
+Applies to: @expo-agent-ui/mcp-server v0.1.0
 
 ## How The MCP Server Works
 
@@ -49,7 +49,7 @@ Add the following to your Claude Desktop configuration file (`claude_desktop_con
       "command": "npx",
       "args": [
         "-y",
-        "@agent-ui/mcp-server",
+        "@expo-agent-ui/mcp-server",
         "--host",
         "127.0.0.1",
         "--port",
@@ -91,7 +91,7 @@ mcp_servers:
     command: npx
     args:
       - -y
-      - '@agent-ui/mcp-server'
+      - '@expo-agent-ui/mcp-server'
       - '--host'
       - '127.0.0.1'
       - '--port'
@@ -123,7 +123,7 @@ Any MCP-compatible agent host that supports stdio subprocess spawning can use th
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["-y", "@agent-ui/mcp-server"],
+      "args": ["-y", "@expo-agent-ui/mcp-server"],
       "env": {
         "AGENT_UI_PAIRING_TOKEN": "auto"
       }

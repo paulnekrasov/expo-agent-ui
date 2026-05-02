@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "react-native",
     "noEmit": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["jest"]
   },
   "include": ["App.tsx", "app/**/*.ts", "app/**/*.tsx"]
 }

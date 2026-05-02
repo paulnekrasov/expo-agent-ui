@@ -113,8 +113,8 @@ Adapter-specific surface:
 - Web-only semantic HTML choices and ARIA edge cases.
 
 Recommended architecture:
-- Keep `@agent-ui/expo` core independent of `@expo/ui`.
-- Add explicit subpath adapters such as `@agent-ui/expo/swift-ui`, `@agent-ui/expo/jetpack-compose`, and later `@agent-ui/expo/web`.
+- Keep `@expo-agent-ui/expo` core independent of `@expo/ui`.
+- Add explicit subpath adapters such as `@expo-agent-ui/expo/swift-ui`, `@expo-agent-ui/expo/jetpack-compose`, and later `@expo-agent-ui/expo/web`.
 - Let adapters consume the same semantic registration hooks and expose explicit capability flags.
 - Return structured `UNSUPPORTED_PLATFORM`, `UNSUPPORTED_COMPONENT`, or `HOST_REQUIRED` diagnostics when a semantic component cannot use the requested native adapter.
 - Treat adapter switching as a per-runtime capability. On iOS, switch between React Native

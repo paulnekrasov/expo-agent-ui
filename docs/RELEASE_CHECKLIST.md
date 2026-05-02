@@ -38,11 +38,11 @@ cmd /c npm.cmd run build --workspaces --if-present
 
 | Package | Build Output | Key Files |
 |---|---|---|
-| `@agent-ui/core` | `dist/` | `index.js`, `index.d.ts` |
-| `@agent-ui/mcp-server` | `dist/` | `cli.js`, `index.js`, `dist/skills/` (125 files) |
-| `@agent-ui/cli` | `dist/` | `cli.js`, commands directory |
-| `@agent-ui/expo-plugin` | `dist/` | `index.js`, `app.plugin.js` (at package root) |
-| `@agent-ui/example-app` | `.tmp-review/android-export` | Android export artifacts |
+| `@expo-agent-ui/core` | `dist/` | `index.js`, `index.d.ts` |
+| `@expo-agent-ui/mcp-server` | `dist/` | `cli.js`, `index.js`, `dist/skills/` (125 files) |
+| `@expo-agent-ui/cli` | `dist/` | `cli.js`, commands directory |
+| `@expo-agent-ui/expo-plugin` | `dist/` | `index.js`, `app.plugin.js` (at package root) |
+| `@expo-agent-ui/example-app` | `.tmp-review/android-export` | Android export artifacts |
 
 ### 1.3 Tests (All Workspaces)
 
@@ -53,10 +53,10 @@ cmd /c npm.cmd test --workspaces --if-present
 **Expected:** Exit code `0`, all tests pass across all packages that define a `test` script.
 
 **What this checks:**
-- `@agent-ui/example-app`: ~380 tests (semantic runtime, primitives, bridge, motion, native adapters, flows, patching)
-- `@agent-ui/mcp-server`: ~55 tests (listener, server, platform skills, tools, native preview)
-- `@agent-ui/cli`: ~22 tests (export-maestro, maestro-run, maestro-heal)
-- `@agent-ui/core` and `@agent-ui/expo-plugin`: typecheck-only (no runtime test script defined)
+- `@expo-agent-ui/example-app`: ~380 tests (semantic runtime, primitives, bridge, motion, native adapters, flows, patching)
+- `@expo-agent-ui/mcp-server`: ~55 tests (listener, server, platform skills, tools, native preview)
+- `@expo-agent-ui/cli`: ~22 tests (export-maestro, maestro-run, maestro-heal)
+- `@expo-agent-ui/core` and `@expo-agent-ui/expo-plugin`: typecheck-only (no runtime test script defined)
 
 ### 1.4 Security Audit
 
@@ -106,10 +106,10 @@ cmd /c npm.cmd ls --all --include-workspace-root
 **Expected:** Exit code `0`, correct dependency graph.
 
 **Verify:**
-- `@agent-ui/mcp-server` depends on `@agent-ui/core`
-- `@agent-ui/cli` depends on `@agent-ui/mcp-server`
-- `@agent-ui/example-app` depends on `@agent-ui/core`
-- `@agent-ui/expo-plugin` has no inter-package dependencies
+- `@expo-agent-ui/mcp-server` depends on `@expo-agent-ui/core`
+- `@expo-agent-ui/cli` depends on `@expo-agent-ui/mcp-server`
+- `@expo-agent-ui/example-app` depends on `@expo-agent-ui/core`
+- `@expo-agent-ui/expo-plugin` has no inter-package dependencies
 
 ---
 
@@ -125,7 +125,7 @@ Follow semver strictly for each package independently:
 | New features (new components, new MCP tools, new CLI commands) | Minor |
 | Bug fixes, docs, internal refactors | Patch |
 
-**Current status:** All packages are at version `0.0.0` and have not been published. The first publish should use `0.1.0` for all packages (pre-1.0, breaking changes allowed in minor bumps).
+**Current status:** All packages are at version `0.1.0` and have been published.
 
 ### 2.2 Per-Package Version Bump
 
@@ -133,22 +133,22 @@ Each package's `version` field must be updated individually:
 
 | Package | File | Current |
 |---|---|---|
-| `@agent-ui/core` | `packages/core/package.json` | `"0.0.0"` |
-| `@agent-ui/mcp-server` | `packages/mcp-server/package.json` | `"0.0.0"` |
-| `@agent-ui/cli` | `packages/cli/package.json` | `"0.0.0"` |
-| `@agent-ui/expo-plugin` | `packages/expo-plugin/package.json` | `"0.0.0"` |
+| `@expo-agent-ui/core` | `packages/core/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/mcp-server` | `packages/mcp-server/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/cli` | `packages/cli/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/expo-plugin` | `packages/expo-plugin/package.json` | `"0.1.0"` |
 
 **Inter-package dependency versions:** When bumping, update the `dependencies` field in dependents:
-- `packages/mcp-server/package.json`: `"@agent-ui/core": "0.1.0"`
-- `packages/cli/package.json`: `"@agent-ui/mcp-server": "0.1.0"`
-- `packages/example-app/package.json`: `"@agent-ui/core": "0.1.0"`
+- `packages/mcp-server/package.json`: `"@expo-agent-ui/core": "0.1.0"`
+- `packages/cli/package.json`: `"@expo-agent-ui/mcp-server": "0.1.0"`
+- `packages/example-app/package.json`: `"@expo-agent-ui/core": "0.1.0"`
 
 **Comment format for version commits:**
 ```text
-Stage 10 (Publish): bump @agent-ui/core to 0.1.0
-Stage 10 (Publish): bump @agent-ui/mcp-server to 0.1.0
-Stage 10 (Publish): bump @agent-ui/cli to 0.1.0
-Stage 10 (Publish): bump @agent-ui/expo-plugin to 0.1.0
+Stage 10 (Publish): bump @expo-agent-ui/core to 0.1.0
+Stage 10 (Publish): bump @expo-agent-ui/mcp-server to 0.1.0
+Stage 10 (Publish): bump @expo-agent-ui/cli to 0.1.0
+Stage 10 (Publish): bump @expo-agent-ui/expo-plugin to 0.1.0
 ```
 
 ---
@@ -170,17 +170,17 @@ Create or update `CHANGELOG.md` at the repo root. For each released version:
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
-- `@agent-ui/core`: 19 SwiftUI-inspired component primitives with semantic registration
-- `@agent-ui/core`: semantic runtime with tree inspection, state snapshots, redacted values
-- `@agent-ui/core`: local agent tool bridge (WebSocket, pairing token, dev gate)
-- `@agent-ui/core`: Reanimated motion presets (spring, timing, transitions, gestures)
-- `@agent-ui/core`: native adapter contracts (SwiftUI tier 2, Compose tier 3)
-- `@agent-ui/core`: flow runner engine (7 step types, timeout, approval gates)
-- `@agent-ui/core`: patch proposal types (5 change kinds)
-- `@agent-ui/mcp-server`: stdio MCP server (13 tools, 13 resources, 6 prompts)
-- `@agent-ui/mcp-server`: platform skill resources (125 files in dist/skills/)
-- `@agent-ui/cli`: Maestro YAML export, run, heal commands
-- `@agent-ui/expo-plugin`: Expo config plugin shell
+- `@expo-agent-ui/core`: 19 SwiftUI-inspired component primitives with semantic registration
+- `@expo-agent-ui/core`: semantic runtime with tree inspection, state snapshots, redacted values
+- `@expo-agent-ui/core`: local agent tool bridge (WebSocket, pairing token, dev gate)
+- `@expo-agent-ui/core`: Reanimated motion presets (spring, timing, transitions, gestures)
+- `@expo-agent-ui/core`: native adapter contracts (SwiftUI tier 2, Compose tier 3)
+- `@expo-agent-ui/core`: flow runner engine (7 step types, timeout, approval gates)
+- `@expo-agent-ui/core`: patch proposal types (5 change kinds)
+- `@expo-agent-ui/mcp-server`: stdio MCP server (13 tools, 13 resources, 6 prompts)
+- `@expo-agent-ui/mcp-server`: platform skill resources (125 files in dist/skills/)
+- `@expo-agent-ui/cli`: Maestro YAML export, run, heal commands
+- `@expo-agent-ui/expo-plugin`: Expo config plugin shell
 - `skills/expo-agent-ui/`: reusable agent skill with 5 references, 2 examples, flow.json
 
 ### Known Issues
@@ -196,10 +196,10 @@ Create or update `CHANGELOG.md` at the repo root. For each released version:
 
 Publish order is critical: core first, then dependents.
 
-### 4.1 Publish `@agent-ui/core`
+### 4.1 Publish `@expo-agent-ui/core`
 
 ```sh
-cmd /c npm.cmd publish --access public --workspace=@agent-ui/core
+cmd /c npm.cmd publish --access public --workspace=@expo-agent-ui/core
 ```
 
 **Pre-flight checks for core:**
@@ -208,10 +208,10 @@ cmd /c npm.cmd publish --access public --workspace=@agent-ui/core
 - `peerDependencies` are correct: expo `~55.0.18`, react `19.2.0`, react-native `0.83.6`, react-native-reanimated `^4.0.0`, react-native-worklets `^0.8.0`.
 - `peerDependenciesMeta` marks reanimated and worklets as optional.
 
-### 4.2 Publish `@agent-ui/mcp-server`
+### 4.2 Publish `@expo-agent-ui/mcp-server`
 
 ```sh
-cmd /c npm.cmd publish --access public --workspace=@agent-ui/mcp-server
+cmd /c npm.cmd publish --access public --workspace=@expo-agent-ui/mcp-server
 ```
 
 **Pre-flight checks for mcp-server:**
@@ -223,24 +223,24 @@ cmd /c npm.cmd publish --access public --workspace=@agent-ui/mcp-server
   Should report at least 125 files.
 - `bin` entry `agent-ui-mcp` points to `dist/cli.js`.
 - `files` includes both `dist` and `dist/skills`.
-- Dependency `@agent-ui/core` version matches the published core version.
+- Dependency `@expo-agent-ui/core` version matches the published core version.
 
-### 4.3 Publish `@agent-ui/cli`
+### 4.3 Publish `@expo-agent-ui/cli`
 
 ```sh
-cmd /c npm.cmd publish --access public --workspace=@agent-ui/cli
+cmd /c npm.cmd publish --access public --workspace=@expo-agent-ui/cli
 ```
 
 **Pre-flight checks for cli:**
 - `packages/cli/dist/` exists and is current.
 - `bin` entry `agent-ui` points to `dist/cli.js`.
-- Dependency `@agent-ui/mcp-server` version matches the published mcp-server version.
+- Dependency `@expo-agent-ui/mcp-server` version matches the published mcp-server version.
 - Commands subdirectory included in dist.
 
-### 4.4 Publish `@agent-ui/expo-plugin`
+### 4.4 Publish `@expo-agent-ui/expo-plugin`
 
 ```sh
-cmd /c npm.cmd publish --access public --workspace=@agent-ui/expo-plugin
+cmd /c npm.cmd publish --access public --workspace=@expo-agent-ui/expo-plugin
 ```
 
 **Pre-flight checks for expo-plugin:**
@@ -249,11 +249,11 @@ cmd /c npm.cmd publish --access public --workspace=@agent-ui/expo-plugin
 - `files` includes both `dist`, `src`, and `app.plugin.js`.
 - `peerDependencies` declare `expo: ^55.0.0`.
 
-### 4.5 Do Not Publish `@agent-ui/example-app`
+### 4.5 Do Not Publish `@expo-agent-ui/example-app`
 
 The example app is `"private": true` and must not be published. Verify:
 ```sh
-cmd /c npm.cmd publish --dry-run --workspace=@agent-ui/example-app
+cmd /c npm.cmd publish --dry-run --workspace=@expo-agent-ui/example-app
 ```
 Should exit with error (private package cannot be published).
 
@@ -265,17 +265,17 @@ Before publishing each package, verify these files exist:
 
 | Package | Required Files |
 |---|---|
-| `@agent-ui/core` | `dist/index.js`, `dist/index.d.ts`, `package.json`, `src/` |
-| `@agent-ui/mcp-server` | `dist/index.js`, `dist/cli.js`, `dist/skills/` (125 files), `package.json`, `src/` |
-| `@agent-ui/cli` | `dist/index.js`, `dist/cli.js`, `dist/commands/` (3 files), `package.json`, `src/` |
-| `@agent-ui/expo-plugin` | `dist/index.js`, `dist/index.d.ts`, `app.plugin.js`, `package.json`, `src/` |
+| `@expo-agent-ui/core` | `dist/index.js`, `dist/index.d.ts`, `package.json`, `src/` |
+| `@expo-agent-ui/mcp-server` | `dist/index.js`, `dist/cli.js`, `dist/skills/` (125 files), `package.json`, `src/` |
+| `@expo-agent-ui/cli` | `dist/index.js`, `dist/cli.js`, `dist/commands/` (3 files), `package.json`, `src/` |
+| `@expo-agent-ui/expo-plugin` | `dist/index.js`, `dist/index.d.ts`, `app.plugin.js`, `package.json`, `src/` |
 
 **Check command for each package:**
 ```sh
-cmd /c npm.cmd pack --dry-run --workspace=@agent-ui/core
-cmd /c npm.cmd pack --dry-run --workspace=@agent-ui/mcp-server
-cmd /c npm.cmd pack --dry-run --workspace=@agent-ui/cli
-cmd /c npm.cmd pack --dry-run --workspace=@agent-ui/expo-plugin
+cmd /c npm.cmd pack --dry-run --workspace=@expo-agent-ui/core
+cmd /c npm.cmd pack --dry-run --workspace=@expo-agent-ui/mcp-server
+cmd /c npm.cmd pack --dry-run --workspace=@expo-agent-ui/cli
+cmd /c npm.cmd pack --dry-run --workspace=@expo-agent-ui/expo-plugin
 ```
 
 ---
@@ -311,10 +311,10 @@ Expo Agent UI v0.1.0
 
 | Package | Version | npm |
 |---|---|---|
-| `@agent-ui/core` | 0.1.0 | `npm install @agent-ui/core` |
-| `@agent-ui/mcp-server` | 0.1.0 | `npm install @agent-ui/mcp-server` |
-| `@agent-ui/cli` | 0.1.0 | `npm install @agent-ui/cli` |
-| `@agent-ui/expo-plugin` | 0.1.0 | `npm install @agent-ui/expo-plugin` |
+| `@expo-agent-ui/core` | 0.1.0 | `npm install @expo-agent-ui/core` |
+| `@expo-agent-ui/mcp-server` | 0.1.0 | `npm install @expo-agent-ui/mcp-server` |
+| `@expo-agent-ui/cli` | 0.1.0 | `npm install @expo-agent-ui/cli` |
+| `@expo-agent-ui/expo-plugin` | 0.1.0 | `npm install @expo-agent-ui/expo-plugin` |
 
 ## Highlights
 
@@ -331,8 +331,8 @@ Expo Agent UI v0.1.0
 ## Quick Install
 
 ```sh
-npx expo install @agent-ui/core react-native-reanimated react-native-worklets
-npx @agent-ui/cli init
+npx expo install @expo-agent-ui/core react-native-reanimated react-native-worklets
+npx @expo-agent-ui/cli init
 ```
 
 ## MCP Setup
@@ -342,7 +342,7 @@ npx @agent-ui/cli init
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["@agent-ui/mcp-server"]
+      "args": ["@expo-agent-ui/mcp-server"]
     }
   }
 }
@@ -368,21 +368,21 @@ See [CHANGELOG.md](./CHANGELOG.md) for full details.
 
 ```sh
 mkdir /tmp/agent-ui-smoke-test && cmd /c cd /tmp/agent-ui-smoke-test && npm init -y
-npm install @agent-ui/core @agent-ui/mcp-server @agent-ui/cli @agent-ui/expo-plugin
+npm install @expo-agent-ui/core @expo-agent-ui/mcp-server @expo-agent-ui/cli @expo-agent-ui/expo-plugin
 ```
 
 ### 8.2 Smoke Test — Core
 
 ```sh
-node -e "const core = require('@agent-ui/core'); console.log('Core loaded:', core.agentUICorePackage);"
+node -e "const core = require('@expo-agent-ui/core'); console.log('Core loaded:', core.agentUICorePackage);"
 ```
 
-**Expected:** Prints `Core loaded: @agent-ui/core`.
+**Expected:** Prints `Core loaded: @expo-agent-ui/core`.
 
 ### 8.3 Smoke Test — MCP Server
 
 ```sh
-node -e "const mcp = require('@agent-ui/mcp-server'); console.log('MCP loaded:', typeof mcp.createAgentUIMcpServer);"
+node -e "const mcp = require('@expo-agent-ui/mcp-server'); console.log('MCP loaded:', typeof mcp.createAgentUIMcpServer);"
 ```
 
 **Expected:** Prints `MCP loaded: function`.
@@ -407,8 +407,8 @@ npx agent-ui --help
 node -e "
 const path = require('path');
 const fs = require('fs');
-const pkg = require('@agent-ui/mcp-server/package.json');
-const skillsDir = path.join(path.dirname(require.resolve('@agent-ui/mcp-server')), 'skills');
+const pkg = require('@expo-agent-ui/mcp-server/package.json');
+const skillsDir = path.join(path.dirname(require.resolve('@expo-agent-ui/mcp-server')), 'skills');
 const count = fs.readdirSync(skillsDir, { recursive: true }).length;
 console.log('Skills bundled:', count, 'files');
 "

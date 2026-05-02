@@ -5,7 +5,7 @@ The Agent UI MCP server exposes two categories of tools: runtime-control and ski
 ## Server Startup
 
 ```bash
-npx @agent-ui/mcp-server --token YOUR_PAIRING_TOKEN
+npx @expo-agent-ui/mcp-server --token YOUR_PAIRING_TOKEN
 ```
 
 The server runs over stdio. Pairing info and errors go to stderr. MCP protocol on stdout.

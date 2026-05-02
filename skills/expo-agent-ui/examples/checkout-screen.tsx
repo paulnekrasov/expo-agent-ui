@@ -8,7 +8,7 @@ import {
   TextField,
   SecureField,
   Button,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 export default function CheckoutScreen() {
   const [name, setName] = useState("");
@@ -25,7 +25,7 @@ export default function CheckoutScreen() {
 
   return (
     <Screen id="checkout" title="Checkout">
-      <VStack spacing={16} padding="screen">
+      <VStack spacing={16} style={{ padding: 16 }}>
         <Section id="checkout.shipping" title="Shipping">
           <TextField
             id="checkout.shipping.name"

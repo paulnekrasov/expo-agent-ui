@@ -4,8 +4,8 @@ import {
   validatePatchProposal,
   createPatchProposal,
   mergePatchProposals,
-} from "@agent-ui/core";
-import type { PatchChange, PatchProposal } from "@agent-ui/core";
+} from "@expo-agent-ui/core";
+import type { PatchChange, PatchProposal } from "@expo-agent-ui/core";
 
 describe("patching", () => {
   describe("isValidPatchChangeKind", () => {

@@ -88,7 +88,7 @@ packages/
 
 1.  **Install Library**
     ```sh
-    npx expo install @agent-ui/core react-native-reanimated react-native-worklets
+    npx expo install @expo-agent-ui/core react-native-reanimated react-native-worklets
     ```
     *Action:* Injects the core semantic runtime into the target app. Reanimated and Worklets are explicitly installed as peer requirements [cite: 5].
 
@@ -138,6 +138,6 @@ packages/
 - **[cite: 30]** *@expo/ui NPM metadata* - https://www.npmjs.com/package/@expo/ui (Accessed 2026-04-27) - Supports current `@expo/ui` package version facts.
 
 ## Final Recommendation
-**Proceed immediately to Stage 1.** The target stack is fully stabilized. Expo SDK 55 officially deprecates the Legacy Architecture, guaranteeing standard execution. Reanimated 4 and React Native 0.83 provide high-fidelity hooks necessary for the framework. Because the JS-Only implementation is validated for core state and introspection routines, construct the npm workspaces ensuring `@agent-ui/core` is strictly decoupled from `@agent-ui/expo-plugin`.
+**Proceed immediately to Stage 1.** The target stack is fully stabilized. Expo SDK 55 officially deprecates the Legacy Architecture, guaranteeing standard execution. Reanimated 4 and React Native 0.83 provide high-fidelity hooks necessary for the framework. Because the JS-Only implementation is validated for core state and introspection routines, construct the npm workspaces ensuring `@expo-agent-ui/core` is strictly decoupled from `@expo-agent-ui/expo-plugin`.
 
 DONE

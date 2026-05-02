@@ -91,7 +91,7 @@ Agent skill + hidden context backend
 ### 1. Install the core package
 
 ```bash
-npm install @agent-ui/core
+npm install @expo-agent-ui/core
 ```
 
 ### 2. Install motion peer dependencies
@@ -103,19 +103,19 @@ npx expo install react-native-reanimated react-native-worklets
 ### 3. Install the MCP server (developer machine only)
 
 ```bash
-npm install -g @agent-ui/mcp-server
+npm install @expo-agent-ui/mcp-server --save-dev
 ```
 
 ### 4. Install the CLI (developer machine only)
 
 ```bash
-npm install -g @agent-ui/cli
+npm install @expo-agent-ui/cli --save-dev
 ```
 
 ### 5. Add the Expo config plugin (if using native adapters)
 
 ```bash
-npm install @agent-ui/expo-plugin
+npx expo install @expo-agent-ui/expo-plugin
 ```
 
 Then add to your `app.json`:
@@ -124,7 +124,7 @@ Then add to your `app.json`:
 {
   "expo": {
     "plugins": [
-      "@agent-ui/expo-plugin"
+      "@expo-agent-ui/expo-plugin"
     ]
   }
 }
@@ -135,7 +135,7 @@ Then add to your `app.json`:
 ### Wrap your app with AgentUIProvider
 
 ```tsx
-import { AgentUIProvider } from '@agent-ui/core'
+import { AgentUIProvider } from '@expo-agent-ui/core'
 import { App } from './App'
 
 export default function Root() {
@@ -168,7 +168,7 @@ import {
   Slider,
   Form,
   Section
-} from '@agent-ui/core'
+} from '@expo-agent-ui/core'
 
 function LoginScreen() {
   return (
@@ -229,7 +229,7 @@ Configure your agent host (Claude Desktop example):
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["@agent-ui/mcp-server"],
+      "args": ["@expo-agent-ui/mcp-server"],
       "env": {
         "AGENT_UI_PAIRING_TOKEN": "agentui_your_token_here"
       }
@@ -240,7 +240,7 @@ Configure your agent host (Claude Desktop example):
 
 ## Component Primitives
 
-`@agent-ui/core` exports 19 React Native-first components. Every component registers a semantic node with the runtime and emits accessibility properties. Components follow a 2-space indent, single-quote, no-semicolon TypeScript style. Props are typed with interfaces. Components use `React.memo`.
+`@expo-agent-ui/core` exports 19 React Native-first components. Every component registers a semantic node with the runtime and emits accessibility properties. Components follow a 2-space indent, single-quote, no-semicolon TypeScript style. Props are typed with interfaces. Components use `React.memo`.
 
 ### Layout
 
@@ -249,7 +249,7 @@ Configure your agent host (Claude Desktop example):
 Root view for a logical screen. Registers a `screen` semantic node.
 
 ```tsx
-import { Screen } from '@agent-ui/core'
+import { Screen } from '@expo-agent-ui/core'
 
 <Screen
   id='home'
@@ -268,7 +268,7 @@ import { Screen } from '@agent-ui/core'
 Vertical stack layout (`flexDirection: 'column'`).
 
 ```tsx
-import { VStack } from '@agent-ui/core'
+import { VStack } from '@expo-agent-ui/core'
 
 <VStack spacing={12} alignment='start'>
   <Text>Item 1</Text>
@@ -283,7 +283,7 @@ import { VStack } from '@agent-ui/core'
 Horizontal stack layout (`flexDirection: 'row'`).
 
 ```tsx
-import { HStack } from '@agent-ui/core'
+import { HStack } from '@expo-agent-ui/core'
 
 <HStack spacing={8} alignment='center'>
   <Icon name='star' />
@@ -298,7 +298,7 @@ import { HStack } from '@agent-ui/core'
 Overlay stack. Children are layered on top of each other.
 
 ```tsx
-import { ZStack } from '@agent-ui/core'
+import { ZStack } from '@expo-agent-ui/core'
 
 <ZStack fill>
   <Image source={{ uri: 'bg.png' }} />
@@ -313,7 +313,7 @@ import { ZStack } from '@agent-ui/core'
 Flexible space that pushes adjacent content apart.
 
 ```tsx
-import { Spacer } from '@agent-ui/core'
+import { Spacer } from '@expo-agent-ui/core'
 
 <VStack>
   <Text>Top</Text>
@@ -329,7 +329,7 @@ import { Spacer } from '@agent-ui/core'
 Scrollable container wrapping `ScrollView`. Registers `scroll` and `observe` actions.
 
 ```tsx
-import { Scroll } from '@agent-ui/core'
+import { Scroll } from '@expo-agent-ui/core'
 
 <Scroll id='feed-scroll' contentSpacing={12}>
   <Text>Long content...</Text>
@@ -345,7 +345,7 @@ import { Scroll } from '@agent-ui/core'
 Semantic list container with `accessibilityRole='list'`. Registers `observe` action.
 
 ```tsx
-import { List } from '@agent-ui/core'
+import { List } from '@expo-agent-ui/core'
 
 <List id='items' spacing={8}>
   <Label>Item 1</Label>
@@ -360,7 +360,7 @@ import { List } from '@agent-ui/core'
 Grouped content with header, body, and footer.
 
 ```tsx
-import { Section } from '@agent-ui/core'
+import { Section } from '@expo-agent-ui/core'
 
 <Section
   id='account-section'
@@ -379,7 +379,7 @@ import { Section } from '@agent-ui/core'
 Semantic form container. Registers `observe` action.
 
 ```tsx
-import { Form } from '@agent-ui/core'
+import { Form } from '@expo-agent-ui/core'
 
 <Form id='checkout-form' spacing={16}>
   <Section title='Shipping' spacing={8}>
@@ -398,7 +398,7 @@ import { Form } from '@agent-ui/core'
 Typographic primitive with variant support.
 
 ```tsx
-import { Text } from '@agent-ui/core'
+import { Text } from '@expo-agent-ui/core'
 
 <Text variant='body'>Hello World</Text>
 <Text variant='title'>Page Title</Text>
@@ -413,7 +413,7 @@ import { Text } from '@agent-ui/core'
 Renders an image with accessibility metadata.
 
 ```tsx
-import { Image } from '@agent-ui/core'
+import { Image } from '@expo-agent-ui/core'
 
 <Image
   source={{ uri: 'https://example.com/photo.jpg' }}
@@ -429,7 +429,7 @@ import { Image } from '@agent-ui/core'
 Icon primitive. Decorative by default. When informative, provide an `accessibilityLabel`.
 
 ```tsx
-import { Icon } from '@agent-ui/core'
+import { Icon } from '@expo-agent-ui/core'
 
 <Icon name='star' size={24} color='#FFD700' decorative />
 <Icon name='warning' accessibilityLabel='Warning: low battery' decorative={false} />
@@ -442,7 +442,7 @@ import { Icon } from '@agent-ui/core'
 Row layout with optional leading icon and text children.
 
 ```tsx
-import { Label } from '@agent-ui/core'
+import { Label } from '@expo-agent-ui/core'
 
 <Label icon='person' spacing={8} accessibilityLabel='John Doe'>
   John Doe
@@ -460,7 +460,7 @@ Every control requires a non-empty stable `id`. Controls register action handler
 Tappable control. Registers `activate` and `tap` actions.
 
 ```tsx
-import { Button } from '@agent-ui/core'
+import { Button } from '@expo-agent-ui/core'
 
 <Button
   id='save-btn'
@@ -480,7 +480,7 @@ import { Button } from '@agent-ui/core'
 Text input control. Registers `focus`, `input`, `clear`, `submit` actions.
 
 ```tsx
-import { TextField } from '@agent-ui/core'
+import { TextField } from '@expo-agent-ui/core'
 
 <TextField
   id='email'
@@ -500,7 +500,7 @@ import { TextField } from '@agent-ui/core'
 Password / secure text input. Identical to `TextField` but renders with `secureTextEntry`. Semantic value is redacted by default.
 
 ```tsx
-import { SecureField } from '@agent-ui/core'
+import { SecureField } from '@expo-agent-ui/core'
 
 <SecureField
   id='password'
@@ -519,7 +519,7 @@ import { SecureField } from '@agent-ui/core'
 Boolean switch control. Registers `toggle` and `activate` actions.
 
 ```tsx
-import { Toggle } from '@agent-ui/core'
+import { Toggle } from '@expo-agent-ui/core'
 
 <Toggle
   id='notifications'
@@ -537,7 +537,7 @@ import { Toggle } from '@agent-ui/core'
 Range input control. Renders as an adjustable `Pressable` with track, fill, and thumb. Registers `increment`, `decrement`, and `set_value` actions.
 
 ```tsx
-import { Slider } from '@agent-ui/core'
+import { Slider } from '@expo-agent-ui/core'
 
 <Slider
   id='volume'
@@ -558,7 +558,7 @@ import { Slider } from '@agent-ui/core'
 Radio group for selecting one option from a list. Registers `select` action.
 
 ```tsx
-import { Picker } from '@agent-ui/core'
+import { Picker } from '@expo-agent-ui/core'
 
 const options = [
   { id: 'light', label: 'Light', value: 'light' },
@@ -582,7 +582,7 @@ const options = [
 Numeric increment/decrement control. Registers `increment`, `decrement`, and `set_value` actions.
 
 ```tsx
-import { Stepper } from '@agent-ui/core'
+import { Stepper } from '@expo-agent-ui/core'
 
 <Stepper
   id='quantity'
@@ -682,7 +682,7 @@ import {
   resolveAgentUIMotionAdapter,
   resolveAgentUIReducedMotion,
   effectiveAgentUIReducedMotion
-} from '@agent-ui/core'
+} from '@expo-agent-ui/core'
 
 // Get the best available motion adapter for the current platform
 const adapter = resolveAgentUIMotionAdapter('ios')
@@ -786,12 +786,12 @@ The bridge maintains an event log (capped at 1000 entries by default). Events tr
 
 ## MCP Server
 
-`@agent-ui/mcp-server` exposes a local stdio MCP server with 15 tools, MCP resources, and 6 prompts. It connects to the app via the WebSocket listener on port 9721 (configurable).
+`@expo-agent-ui/mcp-server` exposes a local stdio MCP server with 15 tools, MCP resources, and 6 prompts. It connects to the app via the WebSocket listener on port 9721 (configurable).
 
 ### Starting the server
 
 ```bash
-npx @agent-ui/mcp-server
+npx @expo-agent-ui/mcp-server
 ```
 
 Or configure in your MCP client configuration file.
@@ -858,7 +858,7 @@ Or configure in your MCP client configuration file.
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["@agent-ui/mcp-server"],
+      "args": ["@expo-agent-ui/mcp-server"],
       "env": {
         "AGENT_UI_PAIRING_TOKEN": "agentui_your_token_here"
       }
@@ -873,7 +873,7 @@ Or configure in your MCP client configuration file.
 mcp_servers:
   agent-ui:
     command: npx
-    args: ["@agent-ui/mcp-server"]
+    args: ["@expo-agent-ui/mcp-server"]
     env:
       AGENT_UI_PAIRING_TOKEN: "agentui_your_token_here"
 ```
@@ -898,7 +898,7 @@ The skill is a repo-local file. Agent hosts that support skill loading can point
 
 ## Flow Runner
 
-The flow runner executes repeatable semantic flows against the connected app. It is defined in `@agent-ui/core` and dispatched via the bridge's `runFlow` command.
+The flow runner executes repeatable semantic flows against the connected app. It is defined in `@expo-agent-ui/core` and dispatched via the bridge's `runFlow` command.
 
 ### Flow schema
 
@@ -977,7 +977,7 @@ Agent UI semantic flows can be exported to Maestro YAML through the CLI.
 
 ### CLI commands
 
-The `@agent-ui/cli` package provides 6 commands:
+The `@expo-agent-ui/cli` package provides 6 commands:
 
 | Command | Description |
 |---|---|
@@ -1089,7 +1089,7 @@ Agent UI provides two native adapter lanes: SwiftUI for iOS (Tier 2) and Jetpack
 **Detection:**
 
 ```ts
-import { detectAgentUISwiftUINativeModule, refreshAgentUISwiftUIAdapter } from '@agent-ui/core'
+import { detectAgentUISwiftUINativeModule, refreshAgentUISwiftUIAdapter } from '@expo-agent-ui/core'
 
 const available = detectAgentUISwiftUINativeModule() // lazy, cached
 
@@ -1120,7 +1120,7 @@ Each factory returns a `React.FC` wrapped in `React.memo`. When the native rende
 **Detection:**
 
 ```ts
-import { detectAgentUIComposeNativeModule, refreshAgentUIComposeAdapter } from '@agent-ui/core'
+import { detectAgentUIComposeNativeModule, refreshAgentUIComposeAdapter } from '@expo-agent-ui/core'
 
 const available = detectAgentUIComposeNativeModule() // lazy, cached
 
@@ -1138,14 +1138,14 @@ Detection checks `Platform.OS === 'android'` and attempts a dynamic `require('@e
 
 ### Adapter registry
 
-The combined registry is exported from the root `@agent-ui/core`:
+The combined registry is exported from the root `@expo-agent-ui/core`:
 
 ```ts
 import {
   agentUINativeAdapters,       // readonly array
   listAgentUINativeAdapters,   // filter by platform
   resolveAgentUINativeAdapter  // resolve by platform
-} from '@agent-ui/core'
+} from '@expo-agent-ui/core'
 
 // List all adapters
 const all = listAgentUINativeAdapters()
@@ -1306,10 +1306,10 @@ The MCP listener uses `Buffer.from(token)` and `timingSafeEqual` with zero-padde
 
 | Package | Version |
 |---|---|
-| `@agent-ui/core` | 0.0.0 |
-| `@agent-ui/expo-plugin` | 0.0.0 |
-| `@agent-ui/mcp-server` | 0.0.0 |
-| `@agent-ui/cli` | 0.0.0 |
+| `@expo-agent-ui/core` | 0.1.0 |
+| `@expo-agent-ui/expo-plugin` | 0.1.0 |
+| `@expo-agent-ui/mcp-server` | 0.1.0 |
+| `@expo-agent-ui/cli` | 0.1.0 |
 
 ### Node.js
 
@@ -1317,7 +1317,7 @@ Requires Node.js >= 20.19.4.
 
 ### MCP SDK
 
-`@agent-ui/mcp-server` depends on `@modelcontextprotocol/sdk` ^1.29.0.
+`@expo-agent-ui/mcp-server` depends on `@modelcontextprotocol/sdk` ^1.29.0.
 
 ### Runtime environments
 

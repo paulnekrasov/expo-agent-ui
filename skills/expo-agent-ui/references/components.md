@@ -1,6 +1,6 @@
 # Component Reference — Expo Agent UI
 
-All components import from `@agent-ui/core`. Every component accepts accessibility props
+All components import from `@expo-agent-ui/core`. Every component accepts accessibility props
 (`accessibilityLabel`, `testID`) and semantic props (`id`, `intent`).
 
 ## Provider
@@ -359,14 +359,14 @@ values appear as `"[redacted]"` in semantic snapshots and MCP responses.
 
 ## Native Adapters (Optional)
 
-Import from `@agent-ui/core` (type-only for contracts; requires `@expo/ui` for native rendering):
+Import from `@expo-agent-ui/core` (type-only for contracts; requires `@expo/ui` for native rendering):
 
 ```tsx
 // iOS SwiftUI adapter (requires @expo/ui/swift-ui)
-import { createAgentUISwiftUIButton } from "@agent-ui/core";
+import { createAgentUISwiftUIButton } from "@expo-agent-ui/core";
 
 // Android Compose adapter (requires @expo/ui/jetpack-compose)
-import { createAgentUIComposeButton } from "@agent-ui/core";
+import { createAgentUIComposeButton } from "@expo-agent-ui/core";
 ```
 
 Native adapters fall back to React Native primitives when `@expo/ui` is not installed.

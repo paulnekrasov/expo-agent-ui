@@ -460,11 +460,13 @@ describe("Agent UI MCP listener", () => {
 
     await listener.start();
 
-    const { ws } = await connectAndHello(p, {
+    const { ws, welcome } = await connectAndHello(p, {
       protocolVersion: 1,
       pairingToken: TEST_TOKEN,
       capabilities: ["inspectTree"]
     });
+
+    const testSessionId = welcome.sessionId;
 
     await sleep(300);
 
@@ -498,6 +500,7 @@ describe("Agent UI MCP listener", () => {
             JSON.stringify({
               type: "inspectTree",
               requestId: obj.requestId,
+              sessionId: testSessionId,
               tree: { ok: true, children: [] },
               timestamp: Date.now()
             })

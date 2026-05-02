@@ -4,12 +4,12 @@ import {
   validateFlow,
   stepRequiresApproval,
   createFlowRunner
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import type {
   SemanticFlow,
   SemanticFlowStep,
   WaitCondition
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 describe("Flow runner types", () => {
   describe("isValidFlowStepType", () => {

@@ -75,4 +75,4 @@ git diff --check
 
 ## Status
 
-DONE — All Stage 10 deliverables created via 4 parallel agents. Deep debugging audit found 8 findings (1 High, 3 Medium fixed, 4 Low deferred). All 473 tests pass. All verification gates green.
+DONE — All Stage 10 deliverables created via 4 parallel agents. Deep debugging audit found 8 findings (1 High, 3 Medium fixed, 4 Low deferred). Version reporting fix applied: MCP server reads version from package.json, CLI has --version/-v flags. All verification gates green.

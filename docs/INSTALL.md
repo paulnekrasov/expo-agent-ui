@@ -1,7 +1,7 @@
 # Installation Guide
 
 Last updated: 2026-05-02
-Applies to: Expo Agent UI v0.0.0
+Applies to: Expo Agent UI v0.1.0
 
 ## Prerequisites
 
@@ -24,10 +24,10 @@ cd my-app
 The core package provides the semantic runtime, component primitives, and agent tool bridge.
 
 ```sh
-npx expo install @agent-ui/core
+npx expo install @expo-agent-ui/core
 ```
 
-This installs `@agent-ui/core` and verifies compatibility with Expo SDK 55 peer dependencies.
+This installs `@expo-agent-ui/core` and verifies compatibility with Expo SDK 55 peer dependencies.
 
 ## Step 2: Install Motion Dependencies
 
@@ -63,7 +63,7 @@ npx expo start --clear
 The CLI validates peer dependencies, adds required Babel plugins if not already present, and generates a baseline configuration.
 
 ```sh
-npx @agent-ui/cli init
+npx @expo-agent-ui/cli init
 ```
 
 This command:
@@ -76,7 +76,7 @@ This command:
 The MCP server runs locally in Node.js and bridges your app's semantic runtime to AI agent hosts.
 
 ```sh
-npm install @agent-ui/mcp-server --save-dev
+npm install @expo-agent-ui/mcp-server --save-dev
 ```
 
 This installs the stdio server, the `agent-ui-mcp` binary, and its dependencies (`@modelcontextprotocol/sdk`, `ws`).
@@ -86,7 +86,7 @@ This installs the stdio server, the `agent-ui-mcp` binary, and its dependencies 
 Import and wrap your root component in `AgentUIProvider`. This activates the semantic runtime, component registry, and development-only agent bridge.
 
 ```tsx
-import { AgentUIProvider, Screen, VStack, Text, Button } from '@agent-ui/core'
+import { AgentUIProvider, Screen, VStack, Text, Button } from '@expo-agent-ui/core'
 
 export default function App() {
   return (
@@ -147,18 +147,18 @@ Open the app on a simulator or device. The development tools sidebar shows conne
 
 ## Per-Package Install
 
-### @agent-ui/core
+### @expo-agent-ui/core
 
 ```sh
-npx expo install @agent-ui/core
+npx expo install @expo-agent-ui/core
 ```
 
 Required in every app. The JS-only runtime. No native modules.
 
-### @agent-ui/expo-plugin
+### @expo-agent-ui/expo-plugin
 
 ```sh
-npx expo install @agent-ui/expo-plugin
+npx expo install @expo-agent-ui/expo-plugin
 ```
 
 Add to `app.json` plugins array:
@@ -166,17 +166,17 @@ Add to `app.json` plugins array:
 ```json
 {
   "expo": {
-    "plugins": ["@agent-ui/expo-plugin"]
+    "plugins": ["@expo-agent-ui/expo-plugin"]
   }
 }
 ```
 
 Run `npx expo prebuild` to apply native mutations. Defer this package unless your stage requires `AndroidManifest.xml` or `Info.plist` changes.
 
-### @agent-ui/mcp-server
+### @expo-agent-ui/mcp-server
 
 ```sh
-npm install @agent-ui/mcp-server --save-dev
+npm install @expo-agent-ui/mcp-server --save-dev
 ```
 
 Add an npm script for convenience:
@@ -189,10 +189,10 @@ Add an npm script for convenience:
 }
 ```
 
-### @agent-ui/cli
+### @expo-agent-ui/cli
 
 ```sh
-npm install @agent-ui/cli --save-dev
+npm install @expo-agent-ui/cli --save-dev
 ```
 
 Available commands:
@@ -206,9 +206,9 @@ Available commands:
 | `agent-ui maestro-run` | Execute exported Maestro flows |
 | `agent-ui maestro-heal` | Generate self-healing proposals for failed flow selectors |
 
-### @agent-ui/example-app
+### @expo-agent-ui/example-app
 
-Consumers do not install `@agent-ui/example-app`. It is a development testing ground inside the monorepo. Use it as a reference implementation.
+Consumers do not install `@expo-agent-ui/example-app`. It is a development testing ground inside the monorepo. Use it as a reference implementation.
 
 ## Monorepo Install Path
 
@@ -218,7 +218,7 @@ If your project uses npm workspaces, add Agent UI packages to your workspace roo
 {
   "workspaces": [
     "packages/*",
-    "node_modules/@agent-ui/*"
+    "node_modules/@expo-agent-ui/*"
   ]
 }
 ```
@@ -226,8 +226,8 @@ If your project uses npm workspaces, add Agent UI packages to your workspace roo
 Then install as workspace dependencies:
 
 ```sh
-npm install @agent-ui/core --workspace=my-app
-npm install @agent-ui/mcp-server --save-dev --workspace=my-app
+npm install @expo-agent-ui/core --workspace=my-app
+npm install @expo-agent-ui/mcp-server --save-dev --workspace=my-app
 ```
 
 ## Dev Build vs Expo Go

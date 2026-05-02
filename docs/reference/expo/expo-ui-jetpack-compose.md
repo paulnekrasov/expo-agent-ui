@@ -167,16 +167,16 @@ Operational rules:
 
 Package boundary:
 
-- `@agent-ui/expo` contains React Native-first primitives, semantic registry, accessibility mapping,
+- `@expo-agent-ui/expo` contains React Native-first primitives, semantic registry, accessibility mapping,
   motion hooks, and tool bridge integration.
-- `@agent-ui/expo/swift-ui` contains all SwiftUI imports.
-- `@agent-ui/expo/jetpack-compose` contains all Jetpack Compose imports.
+- `@expo-agent-ui/expo/swift-ui` contains all SwiftUI imports.
+- `@expo-agent-ui/expo/jetpack-compose` contains all Jetpack Compose imports.
 - The root package must not import or re-export either native adapter entrypoint.
 
 Public imports:
 
-- Core app code imports stable primitives from `@agent-ui/expo`.
-- Android-native app code imports Compose-backed primitives from `@agent-ui/expo/jetpack-compose`.
+- Core app code imports stable primitives from `@expo-agent-ui/expo`.
+- Android-native app code imports Compose-backed primitives from `@expo-agent-ui/expo/jetpack-compose`.
 - Unsupported platforms, Expo Go, and missing `@expo/ui` must use React Native fallbacks with
   development warnings.
 
@@ -240,8 +240,8 @@ Implementation unknowns to verify:
 
 ## Final Recommendation
 
-Stage 7 should implement `@agent-ui/expo/jetpack-compose` as the Android-native peer to
-`@agent-ui/expo/swift-ui`. Keep core Agent UI React Native-first and semantic-first, but build the
+Stage 7 should implement `@expo-agent-ui/expo/jetpack-compose` as the Android-native peer to
+`@expo-agent-ui/expo/swift-ui`. Keep core Agent UI React Native-first and semantic-first, but build the
 Compose lane as a real adapter, not a future note. The adapter should wrap selected Material 3
 controls in `Host`, project stable semantic IDs through JavaScript registry metadata and
 Compose-supported test identifiers, mirror accessibility state where possible, and fall back to

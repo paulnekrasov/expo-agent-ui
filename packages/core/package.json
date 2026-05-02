@@ -1,6 +1,6 @@
 {
-  "name": "@agent-ui/core",
-  "version": "0.0.0",
+  "name": "@expo-agent-ui/core",
+  "version": "0.1.0",
   "description": "JS-only semantic runtime foundation for Expo Agent UI.",
   "license": "MIT",
   "main": "dist/index.js",

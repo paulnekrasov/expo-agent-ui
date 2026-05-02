@@ -4,7 +4,7 @@ import {
   AgentUIProvider,
   Button,
   useDeferredSemanticPrimitive
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 function SemanticProbe(): null {
   useDeferredSemanticPrimitive({

@@ -54,13 +54,13 @@ npx expo install react-native-reanimated@^4.0.0 react-native-worklets@^0.8.0
 npx expo --version
 ```
 
-The workspace pins Expo at `~55.0.18`. Any other major SDK version can cause `@agent-ui/core` typecheck failures.
+The workspace pins Expo at `~55.0.18`. Any other major SDK version can cause `@expo-agent-ui/core` typecheck failures.
 
 **Fix:** Update `expo` in your app to `~55.0.18` and install matching `jest-expo`, `babel-preset-expo`.
 
 ### npm Workspace Resolution
 
-**Symptom:** `npm install` inside an npm workspace that includes `@agent-ui/*` packages fails with "cannot find package" or links to workspace-local versions instead of the registry.
+**Symptom:** `npm install` inside an npm workspace that includes `@expo-agent-ui/*` packages fails with "cannot find package" or links to workspace-local versions instead of the registry.
 
 **Check:**
 ```sh
@@ -99,13 +99,13 @@ error TS7030: Not all code paths return a value.
 
 ### Missing Exports After Build
 
-**Symptom:** TypeScript in one workspace package cannot find exports that exist in `@agent-ui/core` source.
+**Symptom:** TypeScript in one workspace package cannot find exports that exist in `@expo-agent-ui/core` source.
 
 **Cause:** The consuming package resolves `dist/index.d.ts`, which is stale if `packages/core` was not rebuilt after source changes.
 
 **Fix:**
 ```sh
-cmd /c npm.cmd run build --workspace=@agent-ui/core
+cmd /c npm.cmd run build --workspace=@expo-agent-ui/core
 cmd /c npm.cmd run typecheck --workspaces --if-present
 ```
 
@@ -148,7 +148,7 @@ tasklist | findstr "node"
 **Cause:** `createAgentUIBridgeHelloEnvelope` or `createAgentUIBridgeConnection` received a token that does not match the server's `--pairing-token`.
 
 **Fix:**
-1. Generate a token: `node -e "console.log(require('@agent-ui/core').generateAgentUIPairingToken())"`
+1. Generate a token: `node -e "console.log(require('@expo-agent-ui/core').generateAgentUIPairingToken())"`
 2. Pass it to both the app bridge and the MCP server start command:
    ```sh
    node packages/mcp-server/dist/cli.js --pairing-token "generated-token"
@@ -339,7 +339,7 @@ This validates `examples/flow.json` against the step type enum.
 
 **Check:**
 ```ts
-import { detectAgentUISwiftUINativeModule, detectAgentUIComposeNativeModule } from "@agent-ui/core";
+import { detectAgentUISwiftUINativeModule, detectAgentUIComposeNativeModule } from "@expo-agent-ui/core";
 console.log("SwiftUI:", detectAgentUISwiftUINativeModule());
 console.log("Compose:", detectAgentUIComposeNativeModule());
 ```
@@ -372,7 +372,7 @@ console.log("Compose:", detectAgentUIComposeNativeModule());
 
 **Flush detection cache for testing:**
 ```ts
-import { refreshAgentUISwiftUIAdapter, refreshAgentUIComposeAdapter } from "@agent-ui/core";
+import { refreshAgentUISwiftUIAdapter, refreshAgentUIComposeAdapter } from "@expo-agent-ui/core";
 refreshAgentUISwiftUIAdapter();
 refreshAgentUIComposeAdapter();
 ```
@@ -474,7 +474,7 @@ This usually means that there are asynchronous operations that weren't stopped i
 
 **When to use:**
 ```sh
-cmd /c npm.cmd test --workspace=@agent-ui/mcp-server -- --runInBand
+cmd /c npm.cmd test --workspace=@expo-agent-ui/mcp-server -- --runInBand
 ```
 
 The `--forceExit` flag should only be added when Jest hangs after all tests pass. The standard approach is `--runInBand` with proper cleanup.
@@ -568,7 +568,7 @@ The root `package.json` scripts use `cmd /c npm.cmd` prefix for Windows compatib
 
 **Check:**
 ```ts
-import { agentUISwiftUIAdapter } from "@agent-ui/core";
+import { agentUISwiftUIAdapter } from "@expo-agent-ui/core";
 console.log("Expo Go:", agentUISwiftUIAdapter.isExpoGo()); // true => no native adapters
 ```
 
@@ -578,11 +578,11 @@ console.log("Expo Go:", agentUISwiftUIAdapter.isExpoGo()); // true => no native 
 
 **Requirements for native adapter availability:**
 1. Run `npx expo prebuild` to generate `ios/` and `android/` directories.
-2. Include `@agent-ui/expo-plugin` in the `plugins` array of `app.json`:
+2. Include `@expo-agent-ui/expo-plugin` in the `plugins` array of `app.json`:
    ```json
    {
      "expo": {
-       "plugins": ["@agent-ui/expo-plugin"]
+       "plugins": ["@expo-agent-ui/expo-plugin"]
      }
    }
    ```
@@ -604,7 +604,7 @@ EAS_GRADLE_CACHE=1 eas build --profile development --platform android
 
 ### Prebuild Requirements
 
-**Symptom:** `@agent-ui/expo-plugin` fails with "missing ios/ or android/ directory".
+**Symptom:** `@expo-agent-ui/expo-plugin` fails with "missing ios/ or android/ directory".
 
 **Fix:**
 ```sh

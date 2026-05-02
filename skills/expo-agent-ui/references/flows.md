@@ -272,4 +272,4 @@ Key patterns: `waitFor` after `navigate`; `$CARD_FIXTURE` for secure fields; con
 gated behind approval (carries `intent: "submit_order"`).
 
 Authoring workflow: Inspect → Draft → Validate → Dry-run → Export → Review. Validate with
-`npx @agent-ui/cli validate-flow <flow.json>`.
+`npx @expo-agent-ui/cli validate-flow <flow.json>`.

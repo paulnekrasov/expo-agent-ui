@@ -129,7 +129,7 @@ The first integration should use two MCP servers side by side:
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["-y", "@agent-ui/mcp-server"]
+      "args": ["-y", "@expo-agent-ui/mcp-server"]
     },
     "maestro": {
       "command": "maestro",

@@ -353,7 +353,7 @@ Run it from the relevant app package, usually `packages/example-app`.
 When MCP behavior is implicated:
 
 ```powershell
-cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand --forceExit
+cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand --forceExit
 ```
 
 Do not run native prebuild, EAS builds, app store submissions, or OTA publishes unless the user

@@ -5,7 +5,7 @@ import type {
   AgentUIBridgeHeartbeatAckEnvelope,
   AgentUIBridgeSessionId,
   AgentUIBridgeWelcomeEnvelope
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import type { IncomingMessage } from "node:http";
 import { timingSafeEqual } from "node:crypto";
 import type { WebSocket } from "ws";
@@ -190,6 +190,10 @@ function createAppSession(
       typeof obj.requestId === "string" &&
       typeof obj.timestamp === "number"
     ) {
+      if (typeof obj.sessionId !== "string" || obj.sessionId !== sessionId) {
+        return;
+      }
+
       const requestId = obj.requestId;
       const pendingReq = pending.get(requestId);
 
@@ -281,12 +285,22 @@ interface ListenerInternals {
   state: AgentUIMcpListenerState;
   wss: WebSocketServer | undefined;
   active: AgentUIMcpAppSession | undefined;
+  lastSessionEnd: number;
 }
 
 const STANDARD_SERVER_CAPABILITIES: readonly string[] = [
   "inspectTree",
-  "getState"
+  "getState",
+  "tap",
+  "input",
+  "observeEvents",
+  "waitFor",
+  "scroll",
+  "navigate",
+  "runFlow"
 ];
+
+const MIN_RECONNECT_COOLDOWN_MS = 500;
 
 export function createAgentUIMcpListener(
   config: AgentUIMcpListenerConfig
@@ -294,7 +308,8 @@ export function createAgentUIMcpListener(
   const internals: ListenerInternals = {
     state: "idle",
     wss: undefined,
-    active: undefined
+    active: undefined,
+    lastSessionEnd: 0
   };
 
   const port = config.port ?? DEFAULT_LISTENER_PORT;
@@ -371,7 +386,54 @@ export function createAgentUIMcpListener(
           reject(err);
         });
 
-        wss.on("connection", (ws: WebSocket, _req: IncomingMessage) => {
+        wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
+          const origin = req.headers.origin;
+
+          if (typeof origin === "string" && origin.length > 0) {
+            let originHostname: string;
+
+            try {
+              originHostname = new URL(origin).hostname;
+            } catch {
+              try {
+                ws.send(
+                  JSON.stringify({
+                    error: "INVALID_ORIGIN",
+                    message: "origin header must be a valid URL"
+                  })
+                );
+              } catch {
+                // ignore
+              }
+
+              ws.close(1008, "invalid origin");
+              return;
+            }
+
+            const allowedHostnames = new Set([
+              "localhost",
+              "127.0.0.1",
+              "::1",
+              host
+            ]);
+
+            if (!allowedHostnames.has(originHostname)) {
+              try {
+                ws.send(
+                  JSON.stringify({
+                    error: "ORIGIN_NOT_ALLOWED",
+                    message: `origin "${originHostname}" is not in the allowed origin set`
+                  })
+                );
+              } catch {
+                // ignore
+              }
+
+              ws.close(1008, "origin not allowed");
+              return;
+            }
+          }
+
           if (internals.active !== undefined) {
             try {
               ws.send(
@@ -385,6 +447,24 @@ export function createAgentUIMcpListener(
               // ignore
             }
 
+            return;
+          }
+
+          const now = Date.now();
+
+          if (now - internals.lastSessionEnd < MIN_RECONNECT_COOLDOWN_MS) {
+            try {
+              ws.send(
+                JSON.stringify({
+                  error: "RECONNECT_COOLDOWN",
+                  message: "reconnect too soon, wait before retrying"
+                })
+              );
+            } catch {
+              // ignore
+            }
+
+            ws.close(1008, "reconnect cooldown");
             return;
           }
 
@@ -473,9 +553,9 @@ export function createAgentUIMcpListener(
             }
 
             const sessionId =
-              `srv_${Date.now().toString(36)}_${Math.random()
-                .toString(36)
-                .slice(2, 10)}` as AgentUIBridgeSessionId;
+              `srv_${Date.now().toString(36)}_${require("node:crypto")
+                .randomBytes(8)
+                .toString("hex")}` as AgentUIBridgeSessionId;
 
             const epoch = 1;
             const welcome: AgentUIBridgeWelcomeEnvelope = {
@@ -510,6 +590,7 @@ export function createAgentUIMcpListener(
 
                 if (internals.active === session) {
                   internals.active = undefined;
+                  internals.lastSessionEnd = Date.now();
                 }
 
                 if (onSessionDisconnected) {
@@ -543,6 +624,7 @@ export function createAgentUIMcpListener(
       }
 
       internals.active = undefined;
+      internals.lastSessionEnd = Date.now();
 
       if (internals.wss) {
         return new Promise((resolve) => {

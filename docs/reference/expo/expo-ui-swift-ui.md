@@ -21,7 +21,7 @@
 - Custom SwiftUI modifiers are registered with Expo UI's native modifier registry and exposed to
   JavaScript through `createModifier`.
 - SwiftUI layout and React Native Yoga layout do not fully collapse into one model. `matchContents`, explicit `style`, `onLayoutContent`, and `useViewportSizeMeasurement` must be chosen per component.
-- Agent UI should keep `@expo/ui` optional and isolated behind `@agent-ui/expo/swift-ui` or an equivalent explicit adapter package/subpath.
+- Agent UI should keep `@expo/ui` optional and isolated behind `@expo-agent-ui/expo/swift-ui` or an equivalent explicit adapter package/subpath.
 - Core Agent UI primitives should remain React Native-first. The SwiftUI adapter should delegate only high-value native controls in v0 and fall back to core primitives on Android, web, Expo Go, or missing peer dependency.
 - Semantic metadata should be registered in the JavaScript wrapper layer, not inferred from opaque native SwiftUI internals. Accessibility props/modifiers should mirror the same labels and state for OS assistive technology.
 - Research is complete for Stage 7 architecture. Remaining work is implementation verification, especially simulator checks for hosted layout, focus behavior, and native presentation controls.
@@ -72,7 +72,7 @@ This creates two different responsibilities:
 - **Agent UI-owned SwiftUI extension:** if Agent UI adds its own native iOS components or
   modifiers, those additions must remain optional, fallback-backed, and adapter-scoped.
 
-This is an adapter capability, not a core-package requirement. The core `@agent-ui/expo` package
+This is an adapter capability, not a core-package requirement. The core `@expo-agent-ui/expo` package
 must still work as a React Native-first, JavaScript-only runtime without `@expo/ui`, native
 modules, or development-build-only assumptions.
 
@@ -160,24 +160,24 @@ Rules:
 | Separate adapter package or subpath | Cleanest architectural boundary. Users intentionally opt into SwiftUI/native build requirements. Core remains React Native-first. | More package/export management and docs burden. | Recommended for v0. |
 | Deferred integration | Avoids beta churn and native testing burden. | Loses a major Stage 7 value proposition and delays learning about hosted native controls. | Reject as default, but keep individual complex controls deferred. |
 
-Recommendation: ship the SwiftUI bridge as a separate adapter package or explicit export subpath, for example `@agent-ui/expo/swift-ui`. The adapter should declare `@expo/ui` as an optional peer dependency and keep all Expo UI imports out of the root `@agent-ui/expo` entrypoint. This makes the beta/no-Expo-Go/iOS-only constraints visible to adopters without blocking the core semantic runtime.
+Recommendation: ship the SwiftUI bridge as a separate adapter package or explicit export subpath, for example `@expo-agent-ui/expo/swift-ui`. The adapter should declare `@expo/ui` as an optional peer dependency and keep all Expo UI imports out of the root `@expo-agent-ui/expo` entrypoint. This makes the beta/no-Expo-Go/iOS-only constraints visible to adopters without blocking the core semantic runtime.
 
 ## Adapter Design Recommendation
 
 Package boundary:
 
-- `@agent-ui/expo` contains React Native-first primitives, the semantic registry, accessibility mapping, motion hooks, and tool bridge integration.
-- `@agent-ui/expo/swift-ui` contains all imports from `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`.
-- `@agent-ui/expo/jetpack-compose` contains all imports from `@expo/ui/jetpack-compose` and
+- `@expo-agent-ui/expo` contains React Native-first primitives, the semantic registry, accessibility mapping, motion hooks, and tool bridge integration.
+- `@expo-agent-ui/expo/swift-ui` contains all imports from `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`.
+- `@expo-agent-ui/expo/jetpack-compose` contains all imports from `@expo/ui/jetpack-compose` and
   `@expo/ui/jetpack-compose/modifiers`. Keep it separate from the SwiftUI adapter, but build it
   as the paired Android-native Stage 7 lane rather than deferring it below SwiftUI.
 
 Public imports:
 
-- Core app code imports stable primitives from `@agent-ui/expo`.
-- Apps that explicitly want native iOS SwiftUI controls import from `@agent-ui/expo/swift-ui`.
+- Core app code imports stable primitives from `@expo-agent-ui/expo`.
+- Apps that explicitly want native iOS SwiftUI controls import from `@expo-agent-ui/expo/swift-ui`.
 - Apps that explicitly want native Android Jetpack Compose controls import from
-  `@agent-ui/expo/jetpack-compose`.
+  `@expo-agent-ui/expo/jetpack-compose`.
 - The root package must not re-export native adapter components, because that would make root
   consumers vulnerable to missing `@expo/ui` resolution.
 
@@ -186,7 +186,7 @@ Fallback behavior:
 - iOS/tvOS development build with `@expo/ui` installed: render the SwiftUI adapter through `Host`.
 - Expo Go: use React Native fallback and warn in development that SwiftUI Expo UI requires a development build.
 - Android development build with `@expo/ui` installed: use the Jetpack Compose adapter from
-  `@agent-ui/expo/jetpack-compose`; otherwise use React Native fallback with a development warning.
+  `@expo-agent-ui/expo/jetpack-compose`; otherwise use React Native fallback with a development warning.
 - Web: use React Native Web/DOM-compatible fallback.
 - Missing `@expo/ui`: use fallback and emit a clear development warning from the adapter entrypoint or component boundary.
 - EAS-built iOS artifact: valid way to produce the native SwiftUI build from non-macOS
@@ -282,7 +282,7 @@ No unresolved research blocker remains for the adapter decision. These items bel
 
 ## Final Recommendation
 
-Stage 7 should implement paired native adapter lanes for SwiftUI and Jetpack Compose. Keep the core package React Native-first and semantic-first. Add an explicit `@agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
+Stage 7 should implement paired native adapter lanes for SwiftUI and Jetpack Compose. Keep the core package React Native-first and semantic-first. Add an explicit `@expo-agent-ui/expo/swift-ui` adapter path that peers on `@expo/ui`, imports only `@expo/ui/swift-ui` and `@expo/ui/swift-ui/modifiers`, wraps native controls in `Host`, and uses `RNHostView` only when React Native content is intentionally embedded back inside SwiftUI presentations or containers.
 
 The SwiftUI adapter should prioritize `Button`, `Toggle`, `TextField`, `SecureField`, `Slider`, `Picker`, and one or two presentation/list examples after smoke testing. Android Compose adapter component selection belongs in `docs/reference/expo/expo-ui-jetpack-compose.md`. Web, Expo Go, unsupported-platform, and missing-peer cases should fall back to core React Native components with development warnings. EAS should be supported as the preferred cloud build lane for iOS SwiftUI artifacts, but interactive side-by-side native preview should be handled by later multi-session editor work. Semantic registration remains in JavaScript and is mirrored to native accessibility modifiers; the native SwiftUI tree is not the source of truth for agent control.
 

@@ -4,7 +4,7 @@ The Agent UI MCP server exposes 13 tools split into two categories: **runtime-co
 
 ## Session Lifecycle
 
-1. **Server starts** over stdio: `npx @agent-ui/mcp-server`. The server opens a local WebSocket listener for app connections (default `127.0.0.1:9721`). Pairing info and errors go to stderr; MCP protocol messages go to stdout.
+1. **Server starts** over stdio: `npx @expo-agent-ui/mcp-server`. The server opens a local WebSocket listener for app connections (default `127.0.0.1:9721`). Pairing info and errors go to stderr; MCP protocol messages go to stdout.
 2. **App connects** — a development Expo app pairs with the server via WebSocket using the pairing token.
 3. **Session becomes active** — the server tracks `state` (`connecting` → `paired` → `disconnected`). Runtime tools require `state === "paired"`.
 4. **Runtime tools fail closed** — when no session is active (or the session is disconnected), every runtime tool returns `SESSION_NOT_CONNECTED`.

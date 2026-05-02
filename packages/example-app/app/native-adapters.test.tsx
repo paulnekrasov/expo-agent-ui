@@ -15,7 +15,7 @@ import {
   createAgentUIComposeSlider,
   listAgentUINativeAdapters,
   resolveAgentUINativeAdapter,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 // ---------------------------------------------------------------------------
 // SwiftUI Adapter
@@ -54,7 +54,7 @@ describe("agentUISwiftUIAdapter", () => {
   });
 
   it("isAvailable() returns false in test environment", () => {
-    const { refreshAgentUISwiftUIAdapter } = require("@agent-ui/core");
+    const { refreshAgentUISwiftUIAdapter } = require("@expo-agent-ui/core");
     refreshAgentUISwiftUIAdapter();
     expect(agentUISwiftUIAdapter.isAvailable()).toBe(false);
   });
@@ -233,7 +233,7 @@ describe("agentUIComposeAdapter", () => {
   });
 
   it("isAvailable() returns false in test environment", () => {
-    const { refreshAgentUIComposeAdapter } = require("@agent-ui/core");
+    const { refreshAgentUIComposeAdapter } = require("@expo-agent-ui/core");
     refreshAgentUIComposeAdapter();
     expect(agentUIComposeAdapter.isAvailable()).toBe(false);
   });
@@ -419,18 +419,18 @@ describe("resolveAgentUINativeAdapter", () => {
 
 describe("detectAgentUISwiftUINativeModule", () => {
   it("returns boolean", () => {
-    const { detectAgentUISwiftUINativeModule } = require("@agent-ui/core");
+    const { detectAgentUISwiftUINativeModule } = require("@expo-agent-ui/core");
     const result = detectAgentUISwiftUINativeModule();
     expect(typeof result).toBe("boolean");
   });
 
   it("returns false in Jest test environment (no @expo/ui installed)", () => {
-    const { detectAgentUISwiftUINativeModule } = require("@agent-ui/core");
+    const { detectAgentUISwiftUINativeModule } = require("@expo-agent-ui/core");
     expect(detectAgentUISwiftUINativeModule()).toBe(false);
   });
 
   it("does not throw when called repeatedly", () => {
-    const { detectAgentUISwiftUINativeModule } = require("@agent-ui/core");
+    const { detectAgentUISwiftUINativeModule } = require("@expo-agent-ui/core");
     expect(() => {
       detectAgentUISwiftUINativeModule();
       detectAgentUISwiftUINativeModule();
@@ -439,7 +439,7 @@ describe("detectAgentUISwiftUINativeModule", () => {
   });
 
   it("returns the same cached result on repeated calls", () => {
-    const { detectAgentUISwiftUINativeModule } = require("@agent-ui/core");
+    const { detectAgentUISwiftUINativeModule } = require("@expo-agent-ui/core");
     const first = detectAgentUISwiftUINativeModule();
     const second = detectAgentUISwiftUINativeModule();
     expect(second).toBe(first);
@@ -452,18 +452,18 @@ describe("detectAgentUISwiftUINativeModule", () => {
 
 describe("detectAgentUIComposeNativeModule", () => {
   it("returns boolean", () => {
-    const { detectAgentUIComposeNativeModule } = require("@agent-ui/core");
+    const { detectAgentUIComposeNativeModule } = require("@expo-agent-ui/core");
     const result = detectAgentUIComposeNativeModule();
     expect(typeof result).toBe("boolean");
   });
 
   it("returns false in Jest test environment (no @expo/ui installed)", () => {
-    const { detectAgentUIComposeNativeModule } = require("@agent-ui/core");
+    const { detectAgentUIComposeNativeModule } = require("@expo-agent-ui/core");
     expect(detectAgentUIComposeNativeModule()).toBe(false);
   });
 
   it("does not throw when called repeatedly", () => {
-    const { detectAgentUIComposeNativeModule } = require("@agent-ui/core");
+    const { detectAgentUIComposeNativeModule } = require("@expo-agent-ui/core");
     expect(() => {
       detectAgentUIComposeNativeModule();
       detectAgentUIComposeNativeModule();
@@ -472,7 +472,7 @@ describe("detectAgentUIComposeNativeModule", () => {
   });
 
   it("returns the same cached result on repeated calls", () => {
-    const { detectAgentUIComposeNativeModule } = require("@agent-ui/core");
+    const { detectAgentUIComposeNativeModule } = require("@expo-agent-ui/core");
     const first = detectAgentUIComposeNativeModule();
     const second = detectAgentUIComposeNativeModule();
     expect(second).toBe(first);
@@ -485,7 +485,7 @@ describe("detectAgentUIComposeNativeModule", () => {
 
 describe("refreshAgentUISwiftUIAdapter", () => {
   it("exists as a function", () => {
-    const { refreshAgentUISwiftUIAdapter } = require("@agent-ui/core");
+    const { refreshAgentUISwiftUIAdapter } = require("@expo-agent-ui/core");
     expect(typeof refreshAgentUISwiftUIAdapter).toBe("function");
   });
 
@@ -493,7 +493,7 @@ describe("refreshAgentUISwiftUIAdapter", () => {
     const {
       detectAgentUISwiftUINativeModule,
       refreshAgentUISwiftUIAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     const before = detectAgentUISwiftUINativeModule();
     refreshAgentUISwiftUIAdapter();
     const after = detectAgentUISwiftUINativeModule();
@@ -501,7 +501,7 @@ describe("refreshAgentUISwiftUIAdapter", () => {
   });
 
   it("does not throw", () => {
-    const { refreshAgentUISwiftUIAdapter } = require("@agent-ui/core");
+    const { refreshAgentUISwiftUIAdapter } = require("@expo-agent-ui/core");
     expect(() => {
       refreshAgentUISwiftUIAdapter();
       refreshAgentUISwiftUIAdapter();
@@ -511,7 +511,7 @@ describe("refreshAgentUISwiftUIAdapter", () => {
 
 describe("refreshAgentUIComposeAdapter", () => {
   it("exists as a function", () => {
-    const { refreshAgentUIComposeAdapter } = require("@agent-ui/core");
+    const { refreshAgentUIComposeAdapter } = require("@expo-agent-ui/core");
     expect(typeof refreshAgentUIComposeAdapter).toBe("function");
   });
 
@@ -519,7 +519,7 @@ describe("refreshAgentUIComposeAdapter", () => {
     const {
       detectAgentUIComposeNativeModule,
       refreshAgentUIComposeAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     const before = detectAgentUIComposeNativeModule();
     refreshAgentUIComposeAdapter();
     const after = detectAgentUIComposeNativeModule();
@@ -527,7 +527,7 @@ describe("refreshAgentUIComposeAdapter", () => {
   });
 
   it("does not throw", () => {
-    const { refreshAgentUIComposeAdapter } = require("@agent-ui/core");
+    const { refreshAgentUIComposeAdapter } = require("@expo-agent-ui/core");
     expect(() => {
       refreshAgentUIComposeAdapter();
     }).not.toThrow();
@@ -544,7 +544,7 @@ describe("isAvailable() uses detection", () => {
       agentUISwiftUIAdapter,
       detectAgentUISwiftUINativeModule,
       refreshAgentUISwiftUIAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUISwiftUIAdapter();
     const fromAdapter = agentUISwiftUIAdapter.isAvailable();
     const fromDetection = detectAgentUISwiftUINativeModule();
@@ -556,7 +556,7 @@ describe("isAvailable() uses detection", () => {
       agentUIComposeAdapter,
       detectAgentUIComposeNativeModule,
       refreshAgentUIComposeAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUIComposeAdapter();
     const fromAdapter = agentUIComposeAdapter.isAvailable();
     const fromDetection = detectAgentUIComposeNativeModule();
@@ -577,7 +577,7 @@ describe("capability flag mapping — SwiftUI", () => {
   it("all capability flags are false before detection", () => {
     const {
       refreshAgentUISwiftUIAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUISwiftUIAdapter();
     const caps = agentUISwiftUIAdapter.capabilities;
     expect(caps.button).toBe(false);
@@ -592,7 +592,7 @@ describe("capability flag mapping — SwiftUI", () => {
     const {
       detectAgentUISwiftUINativeModule,
       refreshAgentUISwiftUIAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUISwiftUIAdapter();
     detectAgentUISwiftUINativeModule();
     const caps = agentUISwiftUIAdapter.capabilities;
@@ -604,7 +604,7 @@ describe("capability flag mapping — SwiftUI", () => {
     const {
       detectAgentUISwiftUINativeModule,
       refreshAgentUISwiftUIAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     detectAgentUISwiftUINativeModule();
     refreshAgentUISwiftUIAdapter();
     const caps = agentUISwiftUIAdapter.capabilities;
@@ -621,7 +621,7 @@ describe("capability flag mapping — Compose", () => {
   it("all capability flags are false before detection", () => {
     const {
       refreshAgentUIComposeAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUIComposeAdapter();
     const caps = agentUIComposeAdapter.capabilities;
     expect(caps.button).toBe(false);
@@ -634,7 +634,7 @@ describe("capability flag mapping — Compose", () => {
     const {
       detectAgentUIComposeNativeModule,
       refreshAgentUIComposeAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     refreshAgentUIComposeAdapter();
     detectAgentUIComposeNativeModule();
     const caps = agentUIComposeAdapter.capabilities;
@@ -646,7 +646,7 @@ describe("capability flag mapping — Compose", () => {
     const {
       detectAgentUIComposeNativeModule,
       refreshAgentUIComposeAdapter,
-    } = require("@agent-ui/core");
+    } = require("@expo-agent-ui/core");
     detectAgentUIComposeNativeModule();
     refreshAgentUIComposeAdapter();
     const caps = agentUIComposeAdapter.capabilities;

@@ -15,8 +15,9 @@ import type {
   AgentUIBridgeRequestId,
   PatchChange,
   PatchProposal
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import { resolve as pathResolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import {
   createAgentUIMcpListener,
@@ -37,7 +38,19 @@ import type {
 } from "./native-preview.js";
 
 const SERVER_NAME = "agent-ui-mcp";
-const SERVER_VERSION = "0.0.0";
+
+function readServerVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(pathResolve(__dirname, "..", "package.json"), "utf8")
+    ) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+const SERVER_VERSION = readServerVersion();
 
 const PROPOSE_PATCH_SCHEMA = {
   type: "object" as const,
@@ -376,9 +389,7 @@ const RUN_FLOW_SCHEMA = {
 };
 
 function makeRequestId(): AgentUIBridgeRequestId {
-  return `mcp_${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}` as AgentUIBridgeRequestId;
+  return `mcp_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}` as AgentUIBridgeRequestId;
 }
 
 function generatePairingToken(): string {
@@ -449,6 +460,7 @@ export interface AgentUIMcpServerOptions {
   port?: number | undefined;
   pairingToken?: string | undefined;
   platformSkillsDir?: string | undefined;
+  quiet?: boolean | undefined;
 }
 
 export function createAgentUIMcpServer(
@@ -1993,9 +2005,15 @@ export async function startAgentUIMcpServer(
   process.stderr.write(
     `[agent-ui-mcp] starting listener on ${listener.host}:${listener.port}\n`
   );
-  process.stderr.write(
-    `[agent-ui-mcp] pairing token: ${pairingToken}\n`
-  );
+  if (options?.quiet) {
+    process.stderr.write(
+      `[agent-ui-mcp] pairing token generated (hidden: --quiet)\n`
+    );
+  } else {
+    process.stderr.write(
+      `[agent-ui-mcp] pairing token: ${pairingToken}\n`
+    );
+  }
 
   await listener.start();
 
@@ -2050,7 +2068,7 @@ if (isMain()) {
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     process.stdout.write("agent-ui-mcp: Expo Agent UI local MCP server\n");
     process.stdout.write(
-      "Start with: npx @agent-ui/mcp-server\n"
+      "Start with: npx @expo-agent-ui/mcp-server\n"
     );
     process.stdout.write(
       "The server starts an MCP stdio transport and a local WebSocket listener.\n"
@@ -2063,6 +2081,7 @@ if (isMain()) {
     process.stdout.write("  --port <port>          WebSocket listener port (default: 9721)\n");
     process.stdout.write("  --pairing-token <tok>  Pre-shared pairing token (default: auto-generated)\n");
     process.stdout.write("  --skills-dir <path>    Override platform skills directory (default: bundled)\n");
+    process.stdout.write("  --quiet                Suppress pairing token output on stderr\n");
     process.exit(0);
   }
 
@@ -2075,6 +2094,10 @@ if (isMain()) {
   }
 
   const cliOptions: AgentUIMcpServerOptions = {};
+
+  if (process.argv.includes("--quiet")) {
+    cliOptions.quiet = true;
+  }
 
   const host = parseFlag("--host");
   if (host) cliOptions.host = host;

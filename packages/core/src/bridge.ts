@@ -234,6 +234,17 @@ export function createAgentUIBridgeGate(
     isLoopbackHost(parsedUrl.hostname) || isAndroidEmulatorHost(parsedUrl.hostname);
 
   if (
+    !isLocalTransport &&
+    parsedUrl.protocol === "ws:"
+  ) {
+    return createBridgeGateResult({
+      code: "INVALID_BRIDGE_URL",
+      enabled: false,
+      message: "Non-loopback bridge URLs must use wss:// for encrypted transport."
+    });
+  }
+
+  if (
     (transportMode === "lan" || !isLocalTransport) &&
     config.unsafeAllowLAN !== true
   ) {
@@ -263,10 +274,13 @@ export type AgentUIBridgeSessionId = string & {
 };
 
 export function createAgentUIBridgeSessionId(): AgentUIBridgeSessionId {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).slice(2, 10);
+  const bytes = cryptoRandomBytes(8);
+  const hex = Array.from(
+    bytes,
+    (b) => b.toString(16).padStart(2, "0")
+  ).join("");
 
-  return `s_${timestamp}_${random}` as AgentUIBridgeSessionId;
+  return `s_${Date.now().toString(36)}_${hex}` as AgentUIBridgeSessionId;
 }
 
 export type AgentUIBridgeSessionState =
@@ -330,25 +344,15 @@ export interface AgentUIBridgeHeartbeatAckEnvelope {
 
 const MIN_PAIRING_TOKEN_LENGTH = 16;
 
-function cryptoRandomBytes(length: number): Uint8Array {
-  try {
-    const crypto = (globalThis as unknown as { crypto?: { getRandomValues: (arr: Uint8Array) => Uint8Array } })
-      .crypto;
+export function cryptoRandomBytes(length: number): Uint8Array {
+  const crypto = (globalThis as unknown as { crypto?: { getRandomValues: (arr: Uint8Array) => Uint8Array } })
+    .crypto;
 
-    if (crypto?.getRandomValues) {
-      return crypto.getRandomValues(new Uint8Array(length));
-    }
-  } catch {
-    // fall through to Math.random()
+  if (!crypto?.getRandomValues) {
+    throw new Error("crypto.getRandomValues is not available in this runtime");
   }
 
-  const bytes = new Uint8Array(length);
-
-  for (let i = 0; i < length; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
-  }
-
-  return bytes;
+  return crypto.getRandomValues(new Uint8Array(length));
 }
 
 export function generateAgentUIPairingToken(): string {
@@ -530,10 +534,13 @@ export type AgentUIBridgeRequestId = string & {
 };
 
 export function createAgentUIBridgeRequestId(): AgentUIBridgeRequestId {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).slice(2, 10);
+  const bytes = cryptoRandomBytes(8);
+  const hex = Array.from(
+    bytes,
+    (b) => b.toString(16).padStart(2, "0")
+  ).join("");
 
-  return `req_${timestamp}_${random}` as AgentUIBridgeRequestId;
+  return `req_${Date.now().toString(36)}_${hex}` as AgentUIBridgeRequestId;
 }
 
 // ---------------------------------------------------------------------------
@@ -1860,7 +1867,10 @@ export function createAgentUIBridgeCommandDispatcher(options: {
               }
 
               case "navigate": {
-                return { ok: true };
+                return {
+                  ok: false,
+                  error: "Flow-level navigation dispatch is deferred. Use individual tap/input/scroll steps instead."
+                };
               }
 
               case "waitFor":

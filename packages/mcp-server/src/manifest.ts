@@ -1,5 +1,5 @@
 export interface AgentUIMcpManifest {
-  packageName: "@agent-ui/mcp-server";
+  packageName: "@expo-agent-ui/mcp-server";
   transport: "stdio";
   implementedTools: string[];
   deferredTools: string[];
@@ -9,7 +9,7 @@ export interface AgentUIMcpManifest {
 
 export function getAgentUIMcpManifest(): AgentUIMcpManifest {
   return {
-    packageName: "@agent-ui/mcp-server",
+    packageName: "@expo-agent-ui/mcp-server",
     transport: "stdio",
     implementedTools: ["inspectTree", "getState", "tap", "input", "observeEvents", "waitFor", "scroll", "navigate", "runFlow", "proposePatch", "compareNativePreviews"],
     deferredTools: [],
