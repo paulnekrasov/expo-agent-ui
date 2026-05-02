@@ -1,7 +1,7 @@
 # Installation Guide
 
 Last updated: 2026-05-02
-Applies to: Expo Agent UI v0.0.0
+Applies to: Expo Agent UI v0.1.0
 
 ## Prerequisites
 

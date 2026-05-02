@@ -344,7 +344,7 @@ export interface AgentUIBridgeHeartbeatAckEnvelope {
 
 const MIN_PAIRING_TOKEN_LENGTH = 16;
 
-function cryptoRandomBytes(length: number): Uint8Array {
+export function cryptoRandomBytes(length: number): Uint8Array {
   const crypto = (globalThis as unknown as { crypto?: { getRandomValues: (arr: Uint8Array) => Uint8Array } })
     .crypto;
 

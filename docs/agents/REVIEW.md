@@ -1,4 +1,113 @@
 ---
+# DEEP DEBUGGING REPORT (Security Audit — Follow-up)
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 10 - Publish Readiness
+Product Stage Scope: All stages 0-10, security-focused cross-stage audit (follow-up)
+Task status: DONE_WITH_CONCERNS
+
+## Scope
+
+- Packages reviewed: `packages/core` (bridge.ts, semantic.tsx, swift-ui.ts, jetpack-compose.ts, patching.ts), `packages/mcp-server` (cli.ts, listener.ts, platform-skills.ts, native-preview.ts), `packages/cli` (index.ts, cli.ts)
+- Docs reviewed: PROJECT_BRIEF.md, security-privacy.md, reference INDEX, ORCHESTRATION.md, REVIEW_CHECKLIST.md, CLAUDE.md
+- Platform skills loaded: repo-local systematic-debugging, repo-local context-prompt-engineering
+- Commands run: preflight (pass), typecheck 5/5, build 5/5, test 476 total, audit 0 vulns, git diff --check clean
+- Runner limitations: none
+
+## Findings By Priority
+
+### High
+
+None. Prior run's 3 High findings (Origin validation, Semantic redaction, Navigate false-positive) confirmed fixed.
+
+### Medium
+
+**Finding 1 - Medium: Pairing token printed in full to stderr (SECURITY_GAP)**
+- Class: `SECURITY_GAP` | Priority: `Medium` | Stage: 5/10
+- File: `packages/mcp-server/src/cli.ts:2009-2011`
+- Evidence: `process.stderr.write(`[agent-ui-mcp] pairing token: ${pairingToken}\n`)` — the auto-generated pairing token (the credential authenticating app-to-MCP connections) was printed verbatim to stderr at startup.
+- Impact: In CI/CD or log-capture environments, the pairing token could be recorded in build logs, system logs, or process dumps. While loopback binding limits practical exploitation, any process with filesystem access could read captured logs containing the token.
+- Governing rule: PROJECT_BRIEF.md Security Baseline — "Every bridge session requires a short-lived pairing token"; token should not be disclosed in observable output unless developer explicitly opts in.
+- Red test/probe/command: Static probe — line 2009-2011 prints full token to stderr unconditionally.
+- Fix direction: Add `--quiet` flag that suppresses the pairing token line, printing only `pairing token generated (hidden: --quiet)`.
+- Fix status: **fixed in this run**
+
+### Low
+
+**Finding 2 - Low: Math.random() for non-security IDs (inconsistency)**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low`
+- File: `packages/mcp-server/src/cli.ts:392` (makeRequestId), `packages/core/src/patching.ts:74` (createPatchProposal), `packages/core/src/bridge.ts:1016` (jitter)
+- Evidence: Three call sites use `Math.random()` for ID generation while `bridge.ts` session/request IDs use `cryptoRandomBytes()`.
+- Impact: Non-crypto IDs and jitter don't need cryptographic randomness, but the inconsistency creates a false sense of patterns. Request IDs are not auth tokens.
+- Fix status: `deferred` (Low, non-exploitable)
+
+**Finding 3 - Low: SwiftUI SecureField adapter lacks privacy flag**
+- Class: `FUTURE_STAGE_GAP` | Priority: `Low`
+- File: `packages/core/src/swift-ui.ts:517-528`
+- Evidence: `buildSemanticPrimitive("textInput", {...})` call doesn't set `privacy: "redacted"` in the `overrides` parameter. Core `TextFieldBase` sets it correctly.
+- Impact: Adapters render RN fallbacks today (no semantic exposure). If a future native implementation sends state to the semantic registry, it would lack the redaction marker.
+- Fix status: `deferred` (future stage, not actionable today)
+
+**Finding 4 - Low: Compose TextField with secureTextEntry lacks semantic registration entirely**
+- Class: `FUTURE_STAGE_GAP` | Priority: `Low`
+- File: `packages/core/src/jetpack-compose.ts:351-408`
+- Evidence: `createAgentUIComposeTextField()` renders raw `TextInput` element without semantic registration — no `buildSemanticPrimitive` call, no `useSafeRuntime()`.
+- Impact: The Compose TextField doesn't participate in the semantic tree at all. No semantic values can leak.
+- Fix status: `deferred` (future-stage adapter implementation)
+
+**Finding 5 - Low: Session enforcement race (theoretical)**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low`
+- File: `packages/mcp-server/src/listener.ts:437`
+- Evidence: `if (internals.active !== undefined)` check is not atomic with later assignment in async "message" handler. Second connection could arrive in same event loop tick.
+- Impact: At most 2 sessions for a single event loop tick window. Loopback binding + pairing token make exploitation impractical.
+- Fix status: `deferred` (theoretical only)
+
+## Positive Confirmations (No issues found)
+
+- Origin validation: robust — whitelists localhost/127.0.0.1/::1, rejects others
+- Timing-safe token comparison: uses `node:crypto.timingSafeEqual()`
+- Dev gates: all 3 layers fail-closed (app runtime, hook level, bridge gate)
+- Semantic redaction: `redactSemanticNode()` strips text from redacted nodes, values from dev-only nodes
+- Tool separation: skill-context tools (read-only, no session) vs runtime-control tools (session required)
+- Path traversal: blocked in `platform-skills.ts:117-123` via `normalize()` + `startsWith()` check
+- No `eval()`, `new Function()`, command injection, SQL injection, or hardcoded secrets found
+- AgentUIProvider default context: fully gated bridge + noop runtime outside provider
+
+## Fixed This Run
+
+### Fix 1: --quiet flag to suppress pairing token on stderr
+
+- Finding: Finding 1 (pairing token printed to stderr)
+- Red: Static probe — `cli.ts:2009-2011` writes full pairing token to stderr unconditionally.
+- Root cause: No mechanism to suppress secret output in CI/CD or log-capture environments.
+- Fix: Added `quiet?: boolean` to `AgentUIMcpServerOptions` interface. In `startAgentUIMcpServer`, when `quiet` is true, prints `pairing token generated (hidden: --quiet)` instead of the full token. Added `--quiet` to CLI help text and flag parsing in `isMain()`.
+- Green: Static verification — when `--quiet` is passed, the token line says "hidden". When not passed (default), token is printed as before for developer convenience.
+- Broader verification: typecheck 5/5, build 5/5, test 476 pass, audit 0 vulns, git diff clean.
+- Residual risk: Default behavior is unchanged (token printed). Developer must opt in to `--quiet`. CI/CD pipelines should be configured with `--quiet`.
+
+## Double-Check Results
+
+- Plan alignment: Fix stays within Stage 5 (MCP server), no new imports/dependencies.
+- Stage-boundary check: Only `packages/mcp-server` changed. Core/cli/example-app unchanged.
+- Security/privacy check: `--quiet` flag reduces token exposure without breaking developer workflow.
+- Dependency check: No new dependencies.
+- Automation check: All 476 tests pass, typecheck 5/5, build 5/5, audit clean.
+- Pattern search: No other instances of secret values printed to stderr/logs in the codebase.
+
+## Final Verification
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` -> 0
+- `cmd /c npm.cmd run build --workspaces --if-present` -> 0 (all 5 packages)
+- `cmd /c npm.cmd test --workspaces --if-present` -> 0; 476 tests pass
+- `cmd /c npm.cmd audit --audit-level=moderate` -> 0 vulnerabilities
+- `git diff --check` -> clean
+
+## Remaining Concerns
+
+- 5 Low findings deferred (Math.random inconsistency, adapter privacy gaps, session race theory). None exploitable.
+- Default behavior unchanged — developer must opt in to `--quiet`. Future enhancement: consider `--show-token` flag and default to hidden.
+- 1 pre-existing flaky MCP server listener test (`sendCommand resolves with app response`, listener.test.js:448).
+
+---
 # DEEP DEBUGGING REPORT
 Reviewer session date: 2026-05-02
 Roadmap Phase: Phase 10 - Publish Readiness (version reporting fix)

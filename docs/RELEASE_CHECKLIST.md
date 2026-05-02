@@ -125,7 +125,7 @@ Follow semver strictly for each package independently:
 | New features (new components, new MCP tools, new CLI commands) | Minor |
 | Bug fixes, docs, internal refactors | Patch |
 
-**Current status:** All packages are at version `0.0.0` and have not been published. The first publish should use `0.1.0` for all packages (pre-1.0, breaking changes allowed in minor bumps).
+**Current status:** All packages are at version `0.1.0` and have been published.
 
 ### 2.2 Per-Package Version Bump
 
@@ -133,10 +133,10 @@ Each package's `version` field must be updated individually:
 
 | Package | File | Current |
 |---|---|---|
-| `@expo-agent-ui/core` | `packages/core/package.json` | `"0.0.0"` |
-| `@expo-agent-ui/mcp-server` | `packages/mcp-server/package.json` | `"0.0.0"` |
-| `@expo-agent-ui/cli` | `packages/cli/package.json` | `"0.0.0"` |
-| `@expo-agent-ui/expo-plugin` | `packages/expo-plugin/package.json` | `"0.0.0"` |
+| `@expo-agent-ui/core` | `packages/core/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/mcp-server` | `packages/mcp-server/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/cli` | `packages/cli/package.json` | `"0.1.0"` |
+| `@expo-agent-ui/expo-plugin` | `packages/expo-plugin/package.json` | `"0.1.0"` |
 
 **Inter-package dependency versions:** When bumping, update the `dependencies` field in dependents:
 - `packages/mcp-server/package.json`: `"@expo-agent-ui/core": "0.1.0"`

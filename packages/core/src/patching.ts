@@ -1,3 +1,5 @@
+import { cryptoRandomBytes } from "./bridge";
+
 type PatchChangeKind = "add_prop" | "remove_prop" | "change_prop" | "add_component" | "remove_component";
 
 type PatchChange = {
@@ -71,7 +73,9 @@ function createPatchProposal(
   changes: PatchChange[],
   overrides?: Partial<Pick<PatchProposal, "title" | "description">>
 ): PatchProposal {
-  const id = `patch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const bytes = cryptoRandomBytes(4);
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  const id = `patch-${Date.now()}-${hex}`;
   return {
     id,
     title: overrides?.title || `Patch proposal from ${source}`,

@@ -389,9 +389,7 @@ const RUN_FLOW_SCHEMA = {
 };
 
 function makeRequestId(): AgentUIBridgeRequestId {
-  return `mcp_${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}` as AgentUIBridgeRequestId;
+  return `mcp_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}` as AgentUIBridgeRequestId;
 }
 
 function generatePairingToken(): string {
@@ -462,6 +460,7 @@ export interface AgentUIMcpServerOptions {
   port?: number | undefined;
   pairingToken?: string | undefined;
   platformSkillsDir?: string | undefined;
+  quiet?: boolean | undefined;
 }
 
 export function createAgentUIMcpServer(
@@ -2006,9 +2005,15 @@ export async function startAgentUIMcpServer(
   process.stderr.write(
     `[agent-ui-mcp] starting listener on ${listener.host}:${listener.port}\n`
   );
-  process.stderr.write(
-    `[agent-ui-mcp] pairing token: ${pairingToken}\n`
-  );
+  if (options?.quiet) {
+    process.stderr.write(
+      `[agent-ui-mcp] pairing token generated (hidden: --quiet)\n`
+    );
+  } else {
+    process.stderr.write(
+      `[agent-ui-mcp] pairing token: ${pairingToken}\n`
+    );
+  }
 
   await listener.start();
 
@@ -2076,6 +2081,7 @@ if (isMain()) {
     process.stdout.write("  --port <port>          WebSocket listener port (default: 9721)\n");
     process.stdout.write("  --pairing-token <tok>  Pre-shared pairing token (default: auto-generated)\n");
     process.stdout.write("  --skills-dir <path>    Override platform skills directory (default: bundled)\n");
+    process.stdout.write("  --quiet                Suppress pairing token output on stderr\n");
     process.exit(0);
   }
 
@@ -2088,6 +2094,10 @@ if (isMain()) {
   }
 
   const cliOptions: AgentUIMcpServerOptions = {};
+
+  if (process.argv.includes("--quiet")) {
+    cliOptions.quiet = true;
+  }
 
   const host = parseFlag("--host");
   if (host) cliOptions.host = host;

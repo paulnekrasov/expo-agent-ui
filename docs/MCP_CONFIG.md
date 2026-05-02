@@ -1,7 +1,7 @@
 # MCP Configuration
 
 Last updated: 2026-05-02
-Applies to: @expo-agent-ui/mcp-server v0.0.0
+Applies to: @expo-agent-ui/mcp-server v0.1.0
 
 ## How The MCP Server Works
 

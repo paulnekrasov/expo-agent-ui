@@ -103,19 +103,19 @@ npx expo install react-native-reanimated react-native-worklets
 ### 3. Install the MCP server (developer machine only)
 
 ```bash
-npm install -g @expo-agent-ui/mcp-server
+npm install @expo-agent-ui/mcp-server --save-dev
 ```
 
 ### 4. Install the CLI (developer machine only)
 
 ```bash
-npm install -g @expo-agent-ui/cli
+npm install @expo-agent-ui/cli --save-dev
 ```
 
 ### 5. Add the Expo config plugin (if using native adapters)
 
 ```bash
-npm install @expo-agent-ui/expo-plugin
+npx expo install @expo-agent-ui/expo-plugin
 ```
 
 Then add to your `app.json`:
@@ -1306,10 +1306,10 @@ The MCP listener uses `Buffer.from(token)` and `timingSafeEqual` with zero-padde
 
 | Package | Version |
 |---|---|
-| `@expo-agent-ui/core` | 0.0.0 |
-| `@expo-agent-ui/expo-plugin` | 0.0.0 |
-| `@expo-agent-ui/mcp-server` | 0.0.0 |
-| `@expo-agent-ui/cli` | 0.0.0 |
+| `@expo-agent-ui/core` | 0.1.0 |
+| `@expo-agent-ui/expo-plugin` | 0.1.0 |
+| `@expo-agent-ui/mcp-server` | 0.1.0 |
+| `@expo-agent-ui/cli` | 0.1.0 |
 
 ### Node.js
 

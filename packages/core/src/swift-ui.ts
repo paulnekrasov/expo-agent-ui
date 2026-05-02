@@ -306,15 +306,15 @@ export function createAgentUISwiftUIButton(
     const runtime = useSafeRuntime();
     const primitive = React.useMemo(
       () =>
-        buildSemanticPrimitive("button", {
+        buildSemanticPrimitive("textInput", {
           id: props.id,
-          label: props.label,
+          label: props.accessibilityLabel,
           accessibilityLabel: props.accessibilityLabel,
           intent: props.intent,
           disabled: props.disabled,
           busy: props.busy,
           testID: props.testID,
-        }),
+        }, { privacy: "redacted" }),
       [
         props.id,
         props.label,

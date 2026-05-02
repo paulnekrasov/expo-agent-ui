@@ -1,13 +1,16 @@
 # PHASE STATE
 Updated: 2026-05-02
-Active Phase: Phase 10 - Publish Readiness (COMPLETE + all security findings resolved)
+Active Phase: Phase 10 - Publish Readiness (COMPLETE + all security findings resolved + --quiet flag added)
 Active Stage: Stage 10 - Publish Readiness (COMPLETE)
 Active File: docs/agents/TASK.md
 
 ## Completed This Session (2026-05-02)
 
-- [x] Deep Debugging Security Audit: 10 findings identified
+- [x] Deep Debugging Security Audit (run 1): 10 findings identified
 - [x] All 10 findings resolved (3 High fixed + 2 Medium fixed + 5 Low fixed/accepted)
+- [x] Deep Debugging Security Audit (run 2 — follow-up): 1 Medium finding fixed (--quiet flag), 5 Low documented
+- [x] Fix: Added --quiet flag to suppress pairing token on stderr (cli.ts)
+- [x] Fixes total across both runs: Origin validation, semantic redaction, navigate false-positive, per-message auth, reconnect cooldown, crypto IDs, removed Math.random fallback, wss:// enforcement, listener capabilities, --quiet flag
 - [x] Fixes: Origin validation, semantic redaction, navigate false-positive, per-message auth, reconnect cooldown, crypto session/request IDs, removed Math.random fallback, wss:// enforcement, listener capabilities
 
 ## Baseline Repo Status

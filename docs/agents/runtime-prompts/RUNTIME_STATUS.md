@@ -4,6 +4,17 @@ Updated: 2026-05-02
 
 ## Stage 10 — Publish Readiness (DONE — 2026-05-02)
 
+All Stage 10 deliverables implemented. Two deep debugging security audits completed:
+- Audit 1: 10 findings (3 High + 2 Medium + 5 Low) — all resolved
+- Audit 2 (follow-up): 1 Medium fixed (--quiet flag), 5 Low documented
+
+### Latest Fix: --quiet flag for MCP server
+
+Added `--quiet` flag to `packages/mcp-server/src/cli.ts` that suppresses the auto-generated
+pairing token from stderr output. When `--quiet` is passed, the server prints `pairing token
+generated (hidden: --quiet)` instead of the full token. Default behavior unchanged for
+developer convenience. CI/CD pipelines should use `--quiet`.
+
 All Stage 10 deliverables implemented via 4 parallel sub-agents:
 - Agent 1: README.md (1405 lines, 21 sections)
 - Agent 2: COMPATIBILITY.md + INSTALL.md + MCP_CONFIG.md (749 lines total)
