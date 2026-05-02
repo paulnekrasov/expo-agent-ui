@@ -17,6 +17,7 @@ import type {
   PatchProposal
 } from "@agent-ui/core";
 import { resolve as pathResolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import {
   createAgentUIMcpListener,
@@ -37,7 +38,19 @@ import type {
 } from "./native-preview.js";
 
 const SERVER_NAME = "agent-ui-mcp";
-const SERVER_VERSION = "0.0.0";
+
+function readServerVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(pathResolve(__dirname, "..", "package.json"), "utf8")
+    ) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+const SERVER_VERSION = readServerVersion();
 
 const PROPOSE_PATCH_SCHEMA = {
   type: "object" as const,

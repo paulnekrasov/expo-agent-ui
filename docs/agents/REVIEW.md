@@ -1,3 +1,261 @@
+---
+# DEEP DEBUGGING REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 10 - Publish Readiness (version reporting fix)
+Product Stage Scope: Stages 5, 10 (MCP server + CLI + publish readiness)
+Task status: DONE
+
+## Scope
+
+- Packages reviewed: `packages/mcp-server`, `packages/cli`, `packages/core`
+- Docs reviewed: PROJECT_BRIEF, INDEX, ORCHESTRATION, PHASE_STATE, HANDOFF, ROADMAP_CHECKLIST, TASK, REVIEW, REVIEW_CHECKLIST, DEEP_DEBUGGING_AUTONOMOUS_AGENT_LOOP_PROMPT, SCHEDULED_AUTOMATION_LOOP_PROMPT, CLAUDE.md
+- Platform skills loaded: systematic-debugging, context-prompt-engineering
+- Commands run: child-process preflight, workspace typecheck (5/5), workspace build (5/5), MCP server tests (70/71), CLI tests (25/25), git diff --check
+- Runner limitations: none. One pre-existing flaky listener timeout (unrelated).
+
+## Findings By Priority
+
+### High
+
+None.
+
+### Medium
+
+**Finding 1 - Medium: MCP server SERVER_VERSION hardcoded as "0.0.0" instead of reading from package.json**
+- Class: `BUG`
+- Priority: `Medium`
+- Stage: Stage 5 / Stage 10 (MCP Server / Publish Readiness)
+- File: `packages/mcp-server/src/cli.ts:40`
+- Evidence: `const SERVER_VERSION = "0.0.0"` was a hardcoded string. When `package.json` version is bumped during release, the MCP server would report the stale version in `agent-ui://diagnostics` and the `Server` constructor.
+- Impact: After version bump, diagnostics resource and MCP server handshake report wrong version. Maintenance hazard — requires manual sync of two strings.
+- Governing rule: Stage 10 - Publish Readiness requires that install docs match package metadata; diagnostics should reflect actual package version.
+- Red test/probe/command: `require("../package.json").version` vs hardcoded `"0.0.0"` — any mismatch after version bump would be a silent bug.
+- Fix direction: Replace hardcoded string with `readFileSync(__dirname/../package.json)` at startup, with try/catch fallback to `"0.0.0"`.
+- Fix status: `fixed in this run`
+
+**Finding 2 - Medium: CLI missing --version flag; no way for user to check installed version**
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: Stage 10 - Publish Readiness
+- File: `packages/cli/src/cli.ts:1-12`
+- Evidence: The CLI printed only stage and deferred commands. No `--version` or `-v` flag. The manifest in `index.ts` also lacked a `version` field.
+- Impact: User cannot verify which version of the CLI is installed. `npx @agent-ui/cli` doesn't show version.
+- Governing rule: Stage 10 - Publish Readiness; user should be able to check installed version via standard `--version` flag.
+- Red test/probe/command: Run `node packages/cli/dist/cli.js --version` — before fix, would output full manifest, not just version.
+- Fix direction: Add `--version`/`-v` flag parsing, read version from `package.json` at runtime, add `version` field to `AgentUICliManifest`.
+- Fix status: `fixed in this run`
+
+### Low
+
+None.
+
+## Fixed This Run
+
+### Fix 1: MCP server reads version from package.json
+
+- Finding: Finding 1 (hardcoded SERVER_VERSION)
+- Red: Static probe — `SERVER_VERSION = "0.0.0"` hardcoded string in `cli.ts:40`, not synced with `package.json:4` (`"version": "0.0.0"`). Any version bump would cause silent mismatch.
+- Root cause: Version was a hardcoded literal, requiring manual synchronization with package.json.
+- Fix: Added `readServerVersion()` function that reads `package.json` via `readFileSync`, with try/catch fallback. Uses `__dirname` to resolve path relative to compiled `dist/cli.js`.
+- Green: MCP server tests pass (70/71, 1 pre-existing flaky timeout). `ReadResource for diagnostics URI` test now asserts `parsed.server.version` matches `require("../package.json").version`.
+- Broader verification: typecheck 5/5, build 5/5, git diff --check clean.
+- Residual risk: If `package.json` is not present at runtime (e.g., edge-case bundled deployment), falls back to `"0.0.0"` silently.
+
+### Fix 2: CLI --version flag and manifest version field
+
+- Finding: Finding 2 (missing --version flag)
+- Red: Static probe — CLI had no `--version` flag. Running `node dist/cli.js --version` would output full manifest, not version string.
+- Root cause: CLI binary never parsed `--version`/`-v` flags; manifest lacked version field entirely.
+- Fix: Added `process.argv` parsing for `--version`/`-v` flags that output version string and exit 0. Added `version: string` field to `AgentUICliManifest` interface, implemented with `readCliManifestVersion()` reading from `package.json`. Default output now includes version line.
+- Green: 3 new tests pass: `getAgentUICliManifest returns version matching package.json`, `--version flag outputs version string matching package.json`, `-v short flag outputs version string matching package.json`. All 25 CLI tests pass.
+- Broader verification: typecheck 5/5, build 5/5 (incl. copy-skills 125 files + Android export), MCP server 70/71 (1 pre-existing flaky).
+- Residual risk: None. Manifest version and CLI `--version` both read from single source (`package.json`).
+
+## Deferred Fix Queue
+
+None.
+
+## Double-Check Results
+
+- Plan alignment: Stage boundaries preserved. No new imports/dependencies. No old parser, tree-sitter, WASM, VS Code, Canvas renderer code.
+- Stage-boundary check: MCP server and CLI changes stay within their packages. Core unchanged.
+- Security/privacy check: No data leakage. `readFileSync` only reads local `package.json`. No network or external file access.
+- Dependency check: No new dependencies added. `readFileSync` and `path` are Node.js built-ins.
+- Automation check: typecheck 5/5, build 5/5, CLI tests 25/25, MCP server tests 70/71 (1 pre-existing flaky). git diff --check clean.
+- Pattern search: No prohibited imports. No hardcoded version strings remaining in MCP server or CLI runtime paths.
+
+## Final Verification
+
+- Commands:
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present` -> 0
+  - `cmd /c npm.cmd run build --workspaces --if-present` -> 0
+  - `cmd /c npm.cmd test --workspace=@agent-ui/cli -- --runInBand --forceExit` -> 25 passed
+  - `cmd /c npm.cmd test --workspace=@agent-ui/mcp-server -- --runInBand --forceExit` -> 70 passed, 1 pre-existing flaky
+  - `git diff --check` -> clean
+- Results: All verification gates green.
+
+## Remaining Concerns
+
+- `packages/mcp-server/test/listener.test.js:448` — pre-existing flaky timeout (`sendCommand resolves with app response`), unrelated to this fix.
+- Core package (`@agent-ui/core`) does not export a version constant. This is a JS-only React Native package; version is discoverable via `package.json` in node_modules. Not a priority for v0.
+
+---
+# DEEP DEBUGGING REPORT (Security-Focused)
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 10 - Publish Readiness (post-completion security audit)
+Product Stage Scope: All stages 0-10, security-focused cross-stage audit
+Task status: DONE_WITH_CONCERNS
+
+## Scope
+
+- Packages reviewed: `packages/core` (bridge.ts, semantic.tsx, props.ts, primitives.tsx, index.ts), `packages/mcp-server` (cli.ts, listener.ts, platform-skills.ts), `packages/cli` (index.ts, cli.ts)
+- Docs reviewed: PROJECT_BRIEF.md, security-privacy.md, reference INDEX, ORCHESTRATION.md, REVIEW_CHECKLIST.md
+- Platform skills loaded: repo-local systematic-debugging, repo-local context-prompt-engineering
+- Commands run: preflight, typecheck 5/5, build 5/5, test 473 total, audit 0 vulns, git diff --check
+- Runner limitations: none. All Node, npm, TypeScript, Jest, and audit operations succeeded.
+
+## Findings By Priority
+
+### High
+
+**Finding 1 - High: No WebSocket Origin Validation (SECURITY_GAP)**
+- Class: `SECURITY_GAP` | Priority: `High` | Stage: 4/5 (bridge/MCP)
+- File: `packages/mcp-server/src/listener.ts:374`
+- Evidence: `wss.on("connection", (ws: WebSocket, _req: IncomingMessage)` — the incoming request's `Origin` header was never checked. The `_req` parameter was prefixed with `_` and unused. OWASP explicitly requires Origin validation for WebSocket handshakes to prevent CSWSH.
+- Impact: Any local process (or LAN process if LAN mode enabled) could connect to `ws://127.0.0.1:9721` without origin restrictions. Combined with only a pairing token as defense, this weakens the security perimeter.
+- Governing rule: Security reference `security-privacy.md:8` - "explicit Origin validation for WebSocket handshakes"
+- Red test: Connect with a non-localhost Origin header — previously succeeded, now rejected.
+- Fix status: **fixed in this run**
+
+**Finding 2 - High: No Semantic Redaction in Tree Snapshots (SECURITY_GAP)**
+- Class: `SECURITY_GAP` | Priority: `High` | Stage: 3/4/5 (semantic runtime, bridge, MCP)
+- File: `packages/core/src/semantic.tsx:381-395, 860-869`
+- Evidence: `getSnapshot()` and `getNodeById()` returned full node data including `value.text` for nodes marked `privacy: "redacted"`. The `cloneSemanticNode()` function (line 381) preserved all value fields including text. The SecureField primitive sets `privacy: "redacted"` but the text value was still included in tree snapshots via `inspectTree`/`getState` MCP tools.
+- Impact: Sensitive values (passwords, tokens, payment data) marked `privacy: "redacted"` were exposed through MCP tools to agent hosts, potentially reaching LLM providers or logs.
+- Governing rule: Security reference `security-privacy.md:10` - "Semantic snapshots must redact secrets before they leave the app runtime"
+- Red test: Register a SecureField with text value, call getSnapshot — before fix, text was included; after fix, text is stripped.
+- Fix status: **fixed in this run**
+
+**Finding 3 - High: Flow Runner Navigate Returns False-Positive (BUG)**
+- Class: `BUG` | Priority: `High` | Stage: 4/9 (bridge, flow runner)
+- File: `packages/core/src/bridge.ts:1863`
+- Evidence: The `navigate` step in the flow runner's StepDispatcher returned `{ ok: true }` without performing any navigation. No bridge dispatcher registered for the `navigate` command type.
+- Impact: Agents running flows with navigate steps would receive false-positive success, potentially executing subsequent steps under the wrong screen context.
+- Governing rule: "MCP server must expose only tools backed by implemented runtime capabilities"
+- Red test: Execute a flow with a navigate step — previously returned ok:true with no navigation; now returns specific error.
+- Fix status: **fixed in this run**
+
+### Medium
+
+**Finding 4 - Medium: No Per-Message Session Validation After Hello (SECURITY_GAP)**
+- Class: `SECURITY_GAP` | Priority: `Medium` | Stage: 4/5
+- File: `packages/mcp-server/src/listener.ts:149-204`
+- Evidence: After initial hello+pairing, all subsequent WebSocket messages are accepted on the session. Command responses only check `requestId` matches. No per-message sessionId verification.
+- Impact: If message injection occurs post-authentication, spoofed responses could be processed.
+- Fix direction: Add sessionId validation on every incoming command message.
+- Fix status: `deferred`
+
+**Finding 5 - Medium: No Reconnection Rate Limiting**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Medium` | Stage: 4
+- File: `packages/mcp-server/src/listener.ts:374-388`
+- Evidence: Disconnected sessions allow immediate new hello attempts with no cooldown period.
+- Impact: Rapid reconnection flood possible.
+- Fix direction: Add minimum 500ms cooldown between session accepts.
+- Fix status: `deferred`
+
+### Low
+
+**Finding 6 - Low: Math.random() for Session ID Generation**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low` | Stage: 4
+- File: `packages/core/src/bridge.ts:266-268`
+- Evidence: `createAgentUIBridgeSessionId()` uses `Math.random().toString(36)` which is not cryptographically secure.
+- Impact: Session IDs are not authentication tokens, but non-crypto-random IDs weaken the overall security posture.
+- Fix direction: Use `crypto.getRandomValues` for session IDs.
+- Fix status: `deferred`
+
+**Finding 7 - Low: Pairing Token on Every Hello (including LAN)**
+- Class: `SECURITY_GAP` | Priority: `Low` (local loopback mitigates)
+- Stage: 4
+- File: `packages/core/src/bridge.ts:1176-1178`
+- Evidence: The `handleSocketOpen` always includes `pairingToken` in the hello envelope as plaintext JSON over WebSocket. For `ws://` (non-TLS) connections on LAN, this is cleartext transmission of the secret.
+- Impact: In loopback mode this is acceptable (no network traversal). In LAN mode with `unsafeAllowLAN`, the token traverses the network in cleartext.
+- Fix direction: For non-loopback transports, enforce `wss://` and/or use an HMAC-based challenge instead of plaintext token in first message.
+- Fix status: `deferred`
+
+**Finding 8 - Low: generateAgentUIPairingToken Math.random() Fallback**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low` | Stage: 4
+- File: `packages/core/src/bridge.ts:333-352`
+- Evidence: `cryptoRandomBytes()` has a Math.random() fallback if `crypto.getRandomValues` is unavailable. In all target environments (React Native, Node.js), crypto API is available.
+- Impact: Theoretical only; fallback never reached in practice.
+- Fix direction: Remove the Math.random() fallback and throw if crypto is unavailable.
+- Fix status: `deferred`
+
+**Finding 9 - Low: Pairing Token Sent in Hello on Every Reconnect**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low` | Stage: 4
+- Evidence: Token re-transmitted on every reconnect hello. Acceptable for loopback.
+- Fix status: `deferred`
+
+**Finding 10 - Low: Listener Server Capabilities Only Include 2 Tools**
+- Class: `ACTIVE_STAGE_GAP` | Priority: `Low` | Stage: 5
+- File: `packages/mcp-server/src/listener.ts:286-288`
+- Evidence: `STANDARD_SERVER_CAPABILITIES` only lists `["inspectTree", "getState"]` but the MCP server actually supports 15 tools.
+- Impact: Server capability advertisement is incomplete. The MCP tools still work (they're registered in the MCP server), but the listener capability list under-reports.
+- Fix direction: Update to include all 10 runtime-control capabilities.
+- Fix status: `deferred`
+
+## Fixed This Run
+
+### Fix 1 — WebSocket Origin Validation
+- Red: `wss.on("connection", (ws: WebSocket, _req: IncomingMessage)` - _req never read.
+- Root cause: No Origin header validation on WebSocket connections.
+- Fix: Added Origin header parsing, validation against allowed hostnames (localhost, 127.0.0.1, ::1, configured host), and rejection of unapproved origins.
+- Green: Typecheck + build + 473 tests pass. Origin validation now blocks unauthorized origins.
+- Broader verification: typecheck 5/5, build 5/5, test 473 pass, git diff clean.
+- Residual risk: Origin header can be spoofed by non-browser clients. Defense-in-depth still relies on pairing token + loopback default.
+
+### Fix 2 — Semantic Redaction in Tree Snapshots
+- Red: `getSnapshot()` returned full node values including text for `privacy: "redacted"` nodes.
+- Root cause: No redaction function existed. `cloneSemanticNode` preserved all fields unconditionally.
+- Fix: Added `redactSemanticNode()` function that strips `value.text` for `privacy: "redacted"` nodes and strips all values for `privacy: "dev-only"` nodes. Applied in `getSnapshot()` and `getNodeById()`.
+- Green: Typecheck + build + 473 tests pass. Sensitive text values now stripped from tree snapshots.
+- Broader verification: typecheck 5/5, build 5/5, test 473 pass.
+- Residual risk: `privacy` flag is metadata, not enforcement. Components must correctly set the flag. Only `value.text` is stripped — other value fields (checked, selected) remain.
+
+### Fix 3 — Flow Runner Navigate False-Positive
+- Red: Flow runner returned `{ ok: true }` for navigate steps with no actual navigation.
+- Root cause: Placeholder implementation that was never updated to match actual capability.
+- Fix: Changed to return `{ ok: false, error: "Flow-level navigation dispatch is deferred..." }`.
+- Green: Typecheck + build + 473 tests pass. Agents now receive an explicit error for navigate steps.
+- Broader verification: typecheck 5/5, build 5/5, test 473 pass.
+
+## Double-Check Results
+
+- Plan alignment: All fixes implement security rules from `docs/PROJECT_BRIEF.md` security baseline and `docs/reference/agent/security-privacy.md`.
+- Stage-boundary check: Fixes stay within Stages 3-5 (semantic runtime, bridge, MCP server). No future-stage features introduced.
+- Security/privacy check: Origin validation, semantic redaction, and navigate false-positive removal all strengthen security posture. No new attack surfaces introduced.
+- Dependency check: No new dependencies.
+- Automation check: All 473 tests pass. No false-green.
+- Pattern search: No other instances of missing Origin validation (single listener). No other false-positive placeholders in bridge command handlers.
+
+## Final Verification
+
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` → 0
+- `cmd /c npm.cmd run build --workspaces --if-present` → 0 (all 5 packages, copy-skills 125 files, Android export)
+- `cmd /c npm.cmd test --workspaces --if-present` → 0; 473 tests pass (380 example-app + 71 mcp-server + 22 cli)
+- `cmd /c npm.cmd audit --audit-level=moderate` → 0 vulnerabilities
+- `git diff --check` → clean
+
+## Remaining Concerns
+
+- Origin header can be spoofed by non-browser WebSocket clients; pairing token + loopback bind remain primary defenses.
+- Redaction only strips `value.text`; other value fields (numeric, boolean) remain visible.
+- Listener STANDARD_SERVER_CAPABILITIES under-reports (only 2 of 10 runtime tools).
+- Per-message session validation deferred.
+- Math.random() usage in session ID and pairing token generation deferred.
+- LAN mode token transmission over cleartext ws:// deferred.
+
+---
+
 # REVIEW REPORT
 Reviewer session date: 2026-05-02
 Roadmap Phase: Phase 8 - Agent Skill

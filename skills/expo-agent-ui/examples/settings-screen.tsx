@@ -36,7 +36,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen id="settings" title="Settings">
-      <VStack spacing={16} padding="screen">
+      <VStack spacing={16} style={{ padding: 16 }}>
         <Section id="settings.general" title="General">
           <Toggle
             id="settings.general.notifications"
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
             label="Theme"
             selectedValue={theme}
             options={THEME_OPTIONS}
-            onValueChange={setTheme}
+            onValueChange={(value) => setTheme(String(value))}
           />
           <Slider
             id="settings.general.textsize"

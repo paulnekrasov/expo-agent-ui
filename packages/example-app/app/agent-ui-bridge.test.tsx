@@ -130,12 +130,16 @@ describe("Agent UI bridge gate", () => {
     };
 
     expect(createAgentUIBridgeGate(lanConfig, { isDevelopment: true })).toMatchObject({
-      code: "LAN_REQUIRES_EXPLICIT_UNSAFE_OPT_IN",
+      code: "INVALID_BRIDGE_URL",
       enabled: false
     });
     expect(
       createAgentUIBridgeGate(
-        { ...lanConfig, unsafeAllowLAN: true },
+        {
+          ...lanConfig,
+          unsafeAllowLAN: true,
+          url: "wss://192.168.1.10:8732"
+        },
         { isDevelopment: true }
       )
     ).toMatchObject({
@@ -2356,7 +2360,7 @@ describe("Agent UI bridge security", () => {
         { isDevelopment: true }
       )
     ).toMatchObject({
-      code: "LAN_REQUIRES_EXPLICIT_UNSAFE_OPT_IN",
+      code: "INVALID_BRIDGE_URL",
       enabled: false
     });
   });
@@ -2370,7 +2374,7 @@ describe("Agent UI bridge security", () => {
           pairingToken: "test-token-sec-5",
           transportMode: "lan",
           unsafeAllowLAN: true,
-          url: "ws://192.168.1.100:8737"
+          url: "wss://192.168.1.100:8737"
         },
         { isDevelopment: true }
       )

@@ -76,6 +76,7 @@ export type {
 export {
   AgentUIProvider,
   createAgentUISemanticRegistry,
+  redactSemanticNode,
   useAgentUIBridge,
   useAgentUIRuntime,
   useDeferredSemanticPrimitive

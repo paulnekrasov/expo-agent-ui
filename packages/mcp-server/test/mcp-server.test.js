@@ -1661,7 +1661,7 @@ describe("Agent UI MCP server", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.server).toBeDefined();
     expect(parsed.server.name).toBe("agent-ui-mcp");
-    expect(parsed.server.version).toBe("0.0.0");
+    expect(parsed.server.version).toBe(require("../package.json").version);
     expect(parsed.listener).toBeDefined();
     expect(parsed.listener.state).toBe("listening");
 

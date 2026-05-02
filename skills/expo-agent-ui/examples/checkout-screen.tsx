@@ -25,7 +25,7 @@ export default function CheckoutScreen() {
 
   return (
     <Screen id="checkout" title="Checkout">
-      <VStack spacing={16} padding="screen">
+      <VStack spacing={16} style={{ padding: 16 }}>
         <Section id="checkout.shipping" title="Shipping">
           <TextField
             id="checkout.shipping.name"

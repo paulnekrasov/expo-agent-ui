@@ -394,6 +394,44 @@ function cloneSemanticNode(node: AgentUISemanticNode): AgentUISemanticNode {
   };
 }
 
+export function redactSemanticNode(
+  node: AgentUISemanticNode
+): AgentUISemanticNode {
+  const privacy = node.privacy;
+
+  const redactedValue = node.value
+    ? (() => {
+        if (privacy === "dev-only") {
+          return undefined;
+        }
+
+        if (privacy === "redacted") {
+          const stripped = { ...node.value };
+
+          delete (stripped as Record<string, unknown>).text;
+
+          return stripped;
+        }
+
+        return { ...node.value };
+      })()
+    : undefined;
+
+  return {
+    actions: node.actions.map((action) => ({ ...action })),
+    children: node.children.map(redactSemanticNode),
+    id: node.id,
+    state: { ...node.state },
+    type: node.type,
+    ...(node.generated ? { generated: true } : {}),
+    ...(node.intent ? { intent: node.intent } : {}),
+    ...(node.label ? { label: node.label } : {}),
+    ...(privacy ? { privacy } : {}),
+    ...(node.screen ? { screen: node.screen } : {}),
+    ...(redactedValue ? { value: redactedValue } : {})
+  };
+}
+
 function shallowCloneSemanticNode(
   node: AgentUISemanticNode
 ): AgentUISemanticNode {
@@ -855,10 +893,11 @@ export function createAgentUISemanticRegistry(): AgentUISemanticRegistry {
 
       const matchedNode = matches[0];
 
-      return matchedNode ? cloneSemanticNode(matchedNode) : undefined;
+      return matchedNode ? redactSemanticNode(cloneSemanticNode(matchedNode)) : undefined;
     },
     getSnapshot(options) {
-      const nodes = buildSemanticTree(mountedRecords, options);
+      const rawNodes = buildSemanticTree(mountedRecords, options);
+      const nodes = rawNodes.map(redactSemanticNode);
 
       return {
         generatedNodeCount: Array.from(mountedRecords.values()).filter(

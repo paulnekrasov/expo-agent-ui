@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const { generateMaestroYaml, exportFlowToMastero, runMaestroFlow, generateHealProposals } = require("../dist/index");
+const { spawnSync } = require("node:child_process");
+const { generateMaestroYaml, exportFlowToMastero, runMaestroFlow, generateHealProposals, getAgentUICliManifest } = require("../dist/index");
 
 const checkoutFlow = {
   flow: {
@@ -263,5 +264,35 @@ describe("generateHealProposals", () => {
     expect(heal.proposals[0].reason).toContain("checkout.confirm");
     expect(heal.proposals[0].confidence).toBe(0);
     expect(heal.proposals[0].suggestedSelector).toBeUndefined();
+  });
+});
+
+describe("CLI version", () => {
+  const cliPkg = require("../package.json");
+  const cliPath = path.resolve(__dirname, "..", "dist", "cli.js");
+
+  it("getAgentUICliManifest returns version matching package.json", () => {
+    const manifest = getAgentUICliManifest();
+    expect(manifest).toBeDefined();
+    expect(manifest.version).toBe(cliPkg.version);
+    expect(manifest.packageName).toBe("@agent-ui/cli");
+  });
+
+  it("--version flag outputs version string matching package.json", () => {
+    const result = spawnSync(process.execPath, [cliPath, "--version"], {
+      encoding: "utf8"
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe(cliPkg.version);
+    expect(result.stderr).toBe("");
+  });
+
+  it("-v short flag outputs version string matching package.json", () => {
+    const result = spawnSync(process.execPath, [cliPath, "-v"], {
+      encoding: "utf8"
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe(cliPkg.version);
+    expect(result.stderr).toBe("");
   });
 });
