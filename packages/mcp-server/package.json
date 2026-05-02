@@ -1,6 +1,6 @@
 {
   "name": "@expo-agent-ui/mcp-server",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Local MCP server package shell for Expo Agent UI.",
   "license": "MIT",
   "main": "dist/index.js",
