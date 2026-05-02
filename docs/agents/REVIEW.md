@@ -39,7 +39,7 @@ None.
 - Stage: Stage 10 - Publish Readiness
 - File: `packages/cli/src/cli.ts:1-12`
 - Evidence: The CLI printed only stage and deferred commands. No `--version` or `-v` flag. The manifest in `index.ts` also lacked a `version` field.
-- Impact: User cannot verify which version of the CLI is installed. `npx @agent-ui/cli` doesn't show version.
+- Impact: User cannot verify which version of the CLI is installed. `npx @expo-agent-ui/cli` doesn't show version.
 - Governing rule: Stage 10 - Publish Readiness; user should be able to check installed version via standard `--version` flag.
 - Red test/probe/command: Run `node packages/cli/dist/cli.js --version` — before fix, would output full manifest, not just version.
 - Fix direction: Add `--version`/`-v` flag parsing, read version from `package.json` at runtime, add `version` field to `AgentUICliManifest`.
@@ -89,15 +89,15 @@ None.
 - Commands:
   - `cmd /c npm.cmd run typecheck --workspaces --if-present` -> 0
   - `cmd /c npm.cmd run build --workspaces --if-present` -> 0
-  - `cmd /c npm.cmd test --workspace=@agent-ui/cli -- --runInBand --forceExit` -> 25 passed
-  - `cmd /c npm.cmd test --workspace=@agent-ui/mcp-server -- --runInBand --forceExit` -> 70 passed, 1 pre-existing flaky
+  - `cmd /c npm.cmd test --workspace=@expo-agent-ui/cli -- --runInBand --forceExit` -> 25 passed
+  - `cmd /c npm.cmd test --workspace=@expo-agent-ui/mcp-server -- --runInBand --forceExit` -> 70 passed, 1 pre-existing flaky
   - `git diff --check` -> clean
 - Results: All verification gates green.
 
 ## Remaining Concerns
 
 - `packages/mcp-server/test/listener.test.js:448` — pre-existing flaky timeout (`sendCommand resolves with app response`), unrelated to this fix.
-- Core package (`@agent-ui/core`) does not export a version constant. This is a JS-only React Native package; version is discoverable via `package.json` in node_modules. Not a priority for v0.
+- Core package (`@expo-agent-ui/core`) does not export a version constant. This is a JS-only React Native package; version is discoverable via `package.json` in node_modules. Not a priority for v0.
 
 ---
 # DEEP DEBUGGING REPORT (Security-Focused)
@@ -357,7 +357,7 @@ No blocking findings for the Stage 7 Slice 7.3 implementation.
 - Class: `ACTIVE_STAGE_GAP`
 - Priority: `High`
 - Stage: Cross-stage (5/8/10 — MCP Server, Agent Skill, Publish Readiness)
-- Root cause: `createPlatformSkillResolver` default path resolved to `docs/reference/agent/` via a relative monorepo path (`../../../docs/reference/agent`). When `@agent-ui/mcp-server` is installed via npm, `__dirname` points to `node_modules/@agent-ui/mcp-server/dist/` and the relative path resolves nowhere. `getPlatformSkill` and platform skill MCP resources silently fail with `RESOURCE_READ_FAILED`.
+- Root cause: `createPlatformSkillResolver` default path resolved to `docs/reference/agent/` via a relative monorepo path (`../../../docs/reference/agent`). When `@expo-agent-ui/mcp-server` is installed via npm, `__dirname` points to `node_modules/@expo-agent-ui/mcp-server/dist/` and the relative path resolves nowhere. `getPlatformSkill` and platform skill MCP resources silently fail with `RESOURCE_READ_FAILED`.
 
 ### Red evidence
 - Test: `platform-skills-dist.test.js` — resolver pointed at nonexistent directory returns `RESOURCE_READ_FAILED` for both `readUri` and `getSkillContent`.
@@ -511,7 +511,7 @@ No blocking findings for the Stage 7 Slice 7.1 implementation.
 - Red: initial core typecheck failed on 6× TS2379 (exactOptionalPropertyTypes) + 6× TS7030 (noImplicitReturns in useEffect) + 5× duplicate type re-export collisions.
 - Fix: Changed buildSemanticPrimitive param types to `string | undefined` (not `string?`), added `return;` to all useEffect callbacks, removed duplicate `AgentUINativeAdapterTier`/`AgentUINativeAdapterPlatform` from swift-ui re-exports, removed duplicate registry exports from jetpack-compose.ts.
 - Red: example-app typecheck failed (TS2724/TS2305 missing exports) because core dist was stale.
-- Fix: rebuilt @agent-ui/core.
+- Fix: rebuilt @expo-agent-ui/core.
 - Red: 2 test failures — `typeof react.memo component` was `"object"`, not `"function"`.
 - Fix: changed test assertions to `expect(typeof Component).toBe("object")`.
 - Green: typecheck 5/5, build 5/5 (incl. Android export), 331 total tests (280 example-app + 51 mcp-server), 0 audit vulns, git diff --check clean.
@@ -571,7 +571,7 @@ No blocking findings for the Stage 6 Slice 6.3 implementation.
 ## TDD Red-Green Evidence
 
 - Red: initial typecheck failed on missing core exports (3 TS2724/TS2305) and implicit any (2 TS7006). Core needed rebuild.
-- Fix: rebuilt @agent-ui/core; added parameter types to map callbacks.
+- Fix: rebuilt @expo-agent-ui/core; added parameter types to map callbacks.
 - Green: typecheck 5/5, tests 301/301.
 
 ## Verification
@@ -633,7 +633,7 @@ No blocking findings for the Stage 6 Slice 6.2 implementation.
 ## TDD Red-Green Evidence
 
 - Red: initial typecheck failed — core needed rebuild before example-app could see new exports (6 TS2305 errors).
-- Fix: built @agent-ui/core first, reran typecheck.
+- Fix: built @expo-agent-ui/core first, reran typecheck.
 - Red: typecheck failed on readonly array index access — TS2532 "Object is possibly 'undefined'" on 16 lines in adapter tests.
 - Fix: added ! non-null assertions to all readonly array accesses.
 - Green: typecheck 5/5, tests 234/234.
@@ -807,7 +807,7 @@ No fixes applied. No High or actionable Medium findings were identified.
 - Commands:
   - `cmd /c npm.cmd run typecheck --workspaces --if-present` → 0
   - `cmd /c npm.cmd run build --workspaces --if-present` → 0 (incl. Android export)
-  - `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` → 50 passed
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand` → 50 passed
   - `cmd /c npm.cmd test --workspaces --if-present` → 201 passed (151 example-app + 50 mcp-server)
   - `cmd /c npm.cmd ci --dry-run` → 0
   - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate` → 0 vulns
@@ -1142,7 +1142,7 @@ build, and tests all passed.
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` exited `0`;
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand` exited `0`;
   23 tests passed (13 listener + 10 MCP server), without `--forceExit`.
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 174 total tests passing
   (151 example-app + 23 mcp-server).
@@ -1212,14 +1212,14 @@ Task status: done with concerns
 - Red: initial typecheck failed on `as AgentUIBridgeCommandRequest` cast without
   `as unknown as` intermediate cast; `AgentUIBridgeCommandRequest` was not imported.
 - Green: changed to `as unknown as AgentUIBridgeCommandRequest` and added
-  `AgentUIBridgeCommandRequest` to the type-only import from `@agent-ui/core`.
+  `AgentUIBridgeCommandRequest` to the type-only import from `@expo-agent-ui/core`.
   Typecheck passed.
 
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` exited `0`;
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand` exited `0`;
   22 tests passed (13 listener + 9 MCP server), without `--forceExit`.
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 172 total tests passing.
 - `git diff --check` exited `0`.
@@ -1298,7 +1298,7 @@ No blocking findings for the first Stage 5 MCP server slice.
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand --forceExit` exited `0`;
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand --forceExit` exited `0`;
   16 tests passed (11 listener + 5 MCP server).
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 166 total tests passing.
 - `git diff --check` exited `0`.
@@ -1307,7 +1307,7 @@ No blocking findings for the first Stage 5 MCP server slice.
 
 - MCP SDK v1.x main `require()` entry is broken (CJS path missing in npm tarball). Subpath
   exports with `.js` extension work correctly.
-- CLI cannot be spawned standalone because `@agent-ui/core` transitively requires `react-native`
+- CLI cannot be spawned standalone because `@expo-agent-ui/core` transitively requires `react-native`
   which uses ESM `import typeof` syntax incompatible with Node CJS. Jest moduleNameMapper
   handles this in test mode.
 - `tap`, `input`, `scroll`, `navigate`, `runFlow`, `observeEvents`, `waitFor` MCP tools remain
@@ -1346,7 +1346,7 @@ Task status: DONE_WITH_CONCERNS
 - Impact: the published `agent-ui-mcp` binary could not start as a standalone Node MCP server, which made the Stage 5 stdio entrypoint false-green under Jest's module mapper.
 - Governing rule: Stage 5 MCP server must run outside the app in Node and keep stdout protocol-clean; package boundaries must avoid React Native runtime imports in `packages/mcp-server`.
 - Red test/probe/command: `cmd /c node packages\mcp-server\dist\cli.js --help`.
-- Fix direction: remove runtime imports from `@agent-ui/core` in MCP server code; keep only erased type imports and generate pairing tokens with Node crypto.
+- Fix direction: remove runtime imports from `@expo-agent-ui/core` in MCP server code; keep only erased type imports and generate pairing tokens with Node crypto.
 - Fix status: `fixed in this run`.
 
 ### Medium
@@ -1370,10 +1370,10 @@ Task status: DONE_WITH_CONCERNS
 - Priority: `Medium`
 - Stage: `Stage 4 - Agent Tool Bridge`
 - File: `packages/mcp-server/src/listener.ts`
-- Evidence: `cmd /c npm.cmd run build --workspace @agent-ui/mcp-server && npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` timed out after adding cleanup tests; focused Jest later reported an open-handle warning after valid hello.
+- Evidence: `cmd /c npm.cmd run build --workspace @expo-agent-ui/mcp-server && npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand` timed out after adding cleanup tests; focused Jest later reported an open-handle warning after valid hello.
 - Impact: listener tests needed `--forceExit`, masking lifecycle leaks in the local bridge listener.
 - Governing rule: bridge/MCP tasks must include security-gate tests and clean runner verification; false-green automation must be treated as a bug.
-- Red test/probe/command: focused listener tests for active socket close and configured heartbeat, then `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand`.
+- Red test/probe/command: focused listener tests for active socket close and configured heartbeat, then `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand`.
 - Fix direction: add explicit app-session close, call it from `listener.close()`, and clear the hello timeout after the first message.
 - Fix status: `fixed in this run`.
 
@@ -1387,7 +1387,7 @@ Task status: DONE_WITH_CONCERNS
 
 - Finding: standalone MCP CLI imported React Native.
 - Red: `cmd /c node packages\mcp-server\dist\cli.js --help` exited `1` with React Native Flow syntax error.
-- Root cause: value imports from `@agent-ui/core` caused Node to load `dist/index.js`, which exports primitives and imports React Native.
+- Root cause: value imports from `@expo-agent-ui/core` caused Node to load `dist/index.js`, which exports primitives and imports React Native.
 - Fix: `packages/mcp-server/src/cli.ts` now uses Node `randomBytes()` for pairing tokens and keeps only type-only core imports; `packages/mcp-server/src/listener.ts` uses a local protocol-version constant with type-only core imports.
 - Green: same CLI help probe exited `0`; focused Jest CLI spawn test passed.
 - Broader verification: MCP package typecheck/build/test and full workspace typecheck/build/test passed.
@@ -1405,7 +1405,7 @@ Task status: DONE_WITH_CONCERNS
 - Red: focused test run timed out/open-handle warning before cleanup fixes.
 - Root cause: `listener.close()` attempted to call a non-existent private `_close`, and valid hello did not clear the 10-second hello timeout.
 - Fix: expose `session.close()`, call it from listener close, and clear the hello timeout on first message.
-- Green: `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` passed with 19 tests and no `--forceExit`.
+- Green: `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand` passed with 19 tests and no `--forceExit`.
 - Broader verification: workspace tests passed with 169 total tests.
 - Residual risk: future multi-session support should replace the polling `closedCheck` with event-driven cleanup.
 
@@ -1428,7 +1428,7 @@ Task status: DONE_WITH_CONCERNS
 - Security/privacy check: MCP server still fails closed without active session; CLI token generation now uses Node crypto; stdout help is only for `--help`, runtime logs remain stderr.
 - Dependency check: no dependency added; `npm ci --dry-run`, both audits, audit signatures, and package graph all passed.
 - Automation check: focused MCP suite now passes without `--forceExit`; workspace tests pass.
-- Pattern search: no remaining runtime `@agent-ui/core` imports in MCP source beyond erased type imports; no prohibited core imports found in the changed MCP runtime path.
+- Pattern search: no remaining runtime `@expo-agent-ui/core` imports in MCP source beyond erased type imports; no prohibited core imports found in the changed MCP runtime path.
 
 ## Final Verification
 
@@ -1436,7 +1436,7 @@ Task status: DONE_WITH_CONCERNS
   - `node -e "const r=require('child_process').spawnSync(process.execPath,['-e','process.exit(0)'],{encoding:'utf8'}); if(r.error){console.error(r.error.message); process.exit(2)} process.exit(r.status ?? 0)"`
   - `cmd /c npm.cmd run typecheck --workspaces --if-present`
   - `cmd /c npm.cmd run build --workspaces --if-present`
-  - `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand`
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand`
   - `cmd /c npm.cmd test --workspaces --if-present`
   - `cmd /c npm.cmd ci --dry-run`
   - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate`
@@ -1478,7 +1478,7 @@ No blocking findings for the Stage 4 pairing token flow and security tests slice
   - `onSessionConnected`/`onSessionDisconnected` callbacks.
   - Timer cleanup on disconnect.
   - Session `state` uses getter to reflect live changes.
-- `packages/mcp-server/package.json` has `@agent-ui/core`, `ws`, `@types/ws`, `ts-jest`.
+- `packages/mcp-server/package.json` has `@expo-agent-ui/core`, `ws`, `@types/ws`, `ts-jest`.
   No `@modelcontextprotocol/sdk` (deferred to Stage 5).
 - 26 new security tests added to `agent-ui-bridge.test.tsx`:
   - `__DEV__` false/absent → NOT_DEVELOPMENT.
@@ -1510,9 +1510,9 @@ No blocking findings for the Stage 4 pairing token flow and security tests slice
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
   exited `0`; 126 tests passed.
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand --forceExit` exited `0`;
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/mcp-server -- --runInBand --forceExit` exited `0`;
   11 tests passed.
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 161 total tests passing.
 - `git diff --check` exited `0`.
@@ -1622,7 +1622,7 @@ No blocking findings for the first Stage 2 primitive slice.
   development when actionable metadata is empty or unlabeled.
 - Semantic registration is a typed provider/runtime boundary whose default runtime is a no-op;
   full semantic registry behavior remains deferred to Stage 3.
-- The example app now renders a simple primitive screen through `@agent-ui/core`.
+- The example app now renders a simple primitive screen through `@expo-agent-ui/core`.
 
 ## Verification Commands
 
@@ -1771,10 +1771,10 @@ Task status: dependency blockers fixed with residual concerns
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
 - `cmd /c npx.cmd expo-doctor` in `packages/example-app` passed all 18 checks.
 - `cmd /c npx.cmd tsc --noEmit -p packages/example-app/tsconfig.json` exited `0`.
-- `cmd /c npm.cmd ls expo react react-native @types/react --workspace @agent-ui/example-app --depth=1`
+- `cmd /c npm.cmd ls expo react react-native @types/react --workspace @expo-agent-ui/example-app --depth=1`
   showed one deduplicated `react-native@0.83.6`, `expo@55.0.18`, `react@19.2.0`, and
   `@types/react@19.2.14`.
-- `cmd /c npm.cmd pack --dry-run --workspace @agent-ui/core` completed and included `dist`,
+- `cmd /c npm.cmd pack --dry-run --workspace @expo-agent-ui/core` completed and included `dist`,
   source, and `package.json`.
 - `git diff --check` exited `0`.
 
@@ -1853,7 +1853,7 @@ Task status: remaining P2/P3 findings fixed
    transitive resolutions. Fixed by adding workspace-root dev dependency anchors for
    `expo@~55.0.18` and `jest-expo@~55.0.16`, which are already workspace tooling packages, so npm
    records the override packages as explicit `overridden` resolutions.
-3. `SECURITY_GAP` / P3 / fixed: `@agent-ui/mcp-server` depended on `@modelcontextprotocol/sdk`
+3. `SECURITY_GAP` / P3 / fixed: `@expo-agent-ui/mcp-server` depended on `@modelcontextprotocol/sdk`
    before it implemented or imported MCP tools. Fixed by removing the unused runtime dependency
    from the package shell and updating package-foundation guidance to add the SDK in Stage 5 when
    server code imports it.
@@ -1874,7 +1874,7 @@ Task status: remaining P2/P3 findings fixed
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
 - `cmd /c npm.cmd test --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`.
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` exited `0`.
 - `cmd /c npx.cmd expo-doctor` in `packages/example-app` passed all 18 checks.
 - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate` exited `0` with
   `found 0 vulnerabilities`.
@@ -2013,9 +2013,9 @@ No blocking findings for the `Toggle`, `Slider`, `Picker`, and `Stepper` primiti
 
 ## TDD Red/Green Evidence
 
-- Red: workspace typecheck failed because the example app resolved `@agent-ui/core` through stale
+- Red: workspace typecheck failed because the example app resolved `@expo-agent-ui/core` through stale
   `dist` declarations that did not export the new controls.
-- Green: rebuilding `@agent-ui/core` regenerated package output, and the same workspace typecheck
+- Green: rebuilding `@expo-agent-ui/core` regenerated package output, and the same workspace typecheck
   passed.
 - Red: focused example tests failed because `Toggle` was not queryable by role without an explicit
   accessibility element boundary.
@@ -2117,19 +2117,19 @@ No blocking findings for the first Stage 3 semantic node schema and registry lif
 
 - Red: workspace typecheck failed because `packages/core/src/semantic.tsx` did not preserve
   TypeScript's optional `primitive.id` narrowing, and the example app still resolved
-  `@agent-ui/core` from stale `dist` declarations.
+  `@expo-agent-ui/core` from stale `dist` declarations.
 - Green: ID normalization now uses an explicitly narrowed `primitiveId`,
-  `cmd /c npm.cmd run build --workspace @agent-ui/core` regenerated declarations, and
+  `cmd /c npm.cmd run build --workspace @expo-agent-ui/core` regenerated declarations, and
   `cmd /c npm.cmd run typecheck --workspaces --if-present` passed.
 - Red: after adding busy-state metadata, workspace typecheck failed because the example app again
   saw stale `AgentUISemanticPrimitive` declarations.
-- Green: rebuilding `@agent-ui/core` regenerated declarations, and the same workspace typecheck
+- Green: rebuilding `@expo-agent-ui/core` regenerated declarations, and the same workspace typecheck
   passed.
 
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
   10 tests passed.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
   Android Expo export to `.tmp-review/android-export`.
@@ -2180,9 +2180,9 @@ No blocking findings for the Stage 3 parent-child tree snapshot and duplicate-ID
 
 - Red: workspace typecheck and the focused example test failed because `semantic.tsx` referenced
   `warnInDevelopment` without importing it, `Form` rendered a semantic boundary without a local
-  `mountKey`, and the example app saw stale `@agent-ui/core` declarations.
+  `mountKey`, and the example app saw stale `@expo-agent-ui/core` declarations.
 - Green: importing `warnInDevelopment`, assigning the missing `Form` mount key, and rebuilding
-  `@agent-ui/core` made the same commands pass.
+  `@expo-agent-ui/core` made the same commands pass.
 - Red: a cleanup patch accidentally removed `mountKey` assignments from `Screen` and then `Stack`;
   the same workspace typecheck and focused example test failed on the missing variables.
 - Green: restoring those assignments while leaving `Spacer` as a leaf registration made the same
@@ -2191,7 +2191,7 @@ No blocking findings for the Stage 3 parent-child tree snapshot and duplicate-ID
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
   14 tests passed.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
   Android Expo export to `.tmp-review/android-export`.
@@ -2240,14 +2240,14 @@ No blocking findings for the Stage 3 node lookup slice.
 - Green: adding the registry lookup API made the same focused Jest command pass with 3 suites and
   19 tests.
 - Red: workspace typecheck failed because strict indexed access kept `matches[0]` possibly
-  undefined and the example app resolved stale `@agent-ui/core` declarations.
-- Green: narrowing the matched node and rebuilding `@agent-ui/core` made the same workspace
+  undefined and the example app resolved stale `@expo-agent-ui/core` declarations.
+- Green: narrowing the matched node and rebuilding `@expo-agent-ui/core` made the same workspace
   typecheck pass.
 
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
   19 tests passed.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
   Android Expo export to `.tmp-review/android-export`.
@@ -2297,14 +2297,14 @@ No blocking findings for the Stage 3 runtime action dispatch slice.
 - Red: focused Jest failed with five expected `registry.dispatchAction is not a function` failures.
 - Green: adding the dispatch API and local handlers made the same focused Jest command pass with 3
   suites and 24 tests.
-- Red: workspace typecheck failed because the example app resolved stale built `@agent-ui/core`
+- Red: workspace typecheck failed because the example app resolved stale built `@expo-agent-ui/core`
   declarations without `dispatchAction` or `actionHandlers`.
-- Green: rebuilding `@agent-ui/core` made the same workspace typecheck pass.
+- Green: rebuilding `@expo-agent-ui/core` made the same workspace typecheck pass.
 
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` exited `0`; 3 suites and
   24 tests passed.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
   Android Expo export to `.tmp-review/android-export`.
@@ -2354,15 +2354,15 @@ No blocking findings for the first Stage 4 bridge protocol and runtime-gate slic
   `useAgentUIBridge is not a function` failures.
 - Green: adding the bridge module, provider hook, and exports made the same focused Jest command
   pass with 7 tests.
-- Red: workspace typecheck failed because the example app resolved stale built `@agent-ui/core`
+- Red: workspace typecheck failed because the example app resolved stale built `@expo-agent-ui/core`
   declarations without the new bridge exports and provider prop.
-- Green: rebuilding `@agent-ui/core` regenerated declarations, and the same workspace typecheck
+- Green: rebuilding `@expo-agent-ui/core` regenerated declarations, and the same workspace typecheck
   passed.
 
 ## Verification Commands
 
 - `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
+- `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- agent-ui-bridge.test.tsx --runInBand`
   exited `0`; 7 tests passed.
 - `cmd /c npm.cmd run build --workspaces --if-present` exited `0`; the example app completed an
   Android Expo export to `.tmp-review/android-export`.
@@ -2770,9 +2770,9 @@ None.
 
 - Commands:
   - tsc --noEmit -p packages/example-app/tsconfig.json --noUnusedLocals --noUnusedParameters
-  - cmd /c npm.cmd run typecheck --workspace @agent-ui/example-app
-  - cmd /c npm.cmd run build --workspace @agent-ui/example-app
-  - cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand
+  - cmd /c npm.cmd run typecheck --workspace @expo-agent-ui/example-app
+  - cmd /c npm.cmd run build --workspace @expo-agent-ui/example-app
+  - cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand
   - git diff --check
 - Results: all exited 0; 151 example-app tests pass
 
@@ -2807,7 +2807,7 @@ None
 
 ### Medium
 
-## Finding 1 - Medium Unused `zod` dependency in `@agent-ui/mcp-server`
+## Finding 1 - Medium Unused `zod` dependency in `@expo-agent-ui/mcp-server`
 
 - Class: `BUG`
 - Priority: `Medium`
@@ -2835,7 +2835,7 @@ None
 
 ### Low
 
-## Finding 3 - Low `@agent-ui/cli` manifest stage field is misleading
+## Finding 3 - Low `@expo-agent-ui/cli` manifest stage field is misleading
 
 - Class: `FUTURE_STAGE_GAP`
 - Priority: `Low`
@@ -2848,7 +2848,7 @@ None
 - Fix direction: change manifest stage to `"placeholder"` or `"stage-5-support"`
 - Fix status: `deferred`
 
-## Finding 4 - Low Placeholder test scripts in `@agent-ui/expo-plugin` and `@agent-ui/cli`
+## Finding 4 - Low Placeholder test scripts in `@expo-agent-ui/expo-plugin` and `@expo-agent-ui/cli`
 
 - Class: `FUTURE_STAGE_GAP`
 - Priority: `Low`
@@ -2870,7 +2870,7 @@ None
 
 ### Finding 1 - Unused zod dependency
 
-- Finding: `zod@^3.25.0` listed in `@agent-ui/mcp-server` dependencies but never imported
+- Finding: `zod@^3.25.0` listed in `@expo-agent-ui/mcp-server` dependencies but never imported
 - Red: grep confirmed zero `zod` imports in mcp-server `src/` and `test/`
 - Root cause: `zod` was added as a dependency during Stage 5 MCP server setup but schemas use plain TypeScript objects and handwritten validation instead
 - Fix: removed `"zod": "^3.25.0"` from `packages/mcp-server/package.json` dependencies
@@ -2896,7 +2896,7 @@ None
 - Security/privacy check: MCP server fails closed without active session (`SESSION_NOT_CONNECTED`); pairing token uses `constantTimeEqual` (Buffer + `timingSafeEqual`); bridge gate checks `__DEV__ === true`, standalone, token presence; listener binds to 127.0.0.1
 - Dependency check: 0 vulnerabilities in both production and all-deps audits; 820 verified registry signatures; 57 verified attestations; package graph clean; `npm ci --dry-run` succeeds
 - Automation check: all workspace typecheck/build/test pass without `--forceExit` or runner blockers; CLI standalone `--help` works; expo-doctor 17/18; git diff --check clean
-- Pattern search: no remaining runtime `@agent-ui/core` value imports in MCP server source beyond erased type imports; no prohibited imports in core
+- Pattern search: no remaining runtime `@expo-agent-ui/core` value imports in MCP server source beyond erased type imports; no prohibited imports in core
 
 ## Final Verification
 
@@ -2921,7 +2921,7 @@ None
 - `scroll`, `navigate`, `runFlow` MCP tools remain deferred (known Stage 5 gap)
 - Platform skill resources, prompts, and lookup tools remain deferred
 - `inspectTree` `includeBounds`/`rootId` accepted but not processed (known, documented)
-- `@agent-ui/cli` and `@agent-ui/expo-plugin` have placeholder test scripts (known, documented)
+- `@expo-agent-ui/cli` and `@expo-agent-ui/expo-plugin` have placeholder test scripts (known, documented)
 # REVIEW REPORT
 Reviewer session date: 2026-05-01
 Roadmap Phase: Phase 5 - MCP Server
@@ -3101,16 +3101,16 @@ Task status: DONE_WITH_CONCERNS
 - Priority: High
 - Stage: Cross-stage (workspace automation)
 - File: packages/core/package.json:16, packages/expo-plugin/package.json:16, packages/cli/package.json:18
-- Evidence: npm test --workspace @agent-ui/core -- --runInBand failed with TS5023 (tsc unknown option);
-  npm test --workspace @agent-ui/expo-plugin -- --runInBand failed with "node: bad option: --runInBand";
-  npm test --workspace @agent-ui/cli -- --runInBand failed with same error
+- Evidence: npm test --workspace @expo-agent-ui/core -- --runInBand failed with TS5023 (tsc unknown option);
+  npm test --workspace @expo-agent-ui/expo-plugin -- --runInBand failed with "node: bad option: --runInBand";
+  npm test --workspace @expo-agent-ui/cli -- --runInBand failed with same error
 - Impact: Workspace-level npm test --workspaces --if-present -- --runInBand was broken for 3 of 5
   packages. This is the canonical command used by all agents and automation loops. A false-green
   automation signal was created because focused per-package tests passed while the unified workspace
   command failed.
 - Governing rule: "Workspace typecheck, build, and test scripts prove something real" and
   "Test commands are deterministic and Windows-safe" (deep debugging audit scope §Automation)
-- Red test: cmd /c npm.cmd test --workspace @agent-ui/core -- --runInBand (TS5023),
+- Red test: cmd /c npm.cmd test --workspace @expo-agent-ui/core -- --runInBand (TS5023),
   same for expo-plugin and cli (bad option)
 - Fix direction: Add -- separator to node -e scripts so --runInBand is treated as positional args;
   wrap tsc in a node child_process shim with -- separator
@@ -3338,7 +3338,7 @@ Task status: DONE_WITH_CONCERNS
 - Evidence: After all 380 example-app tests pass, Jest prints: "Jest did not exit one second after the test run has completed. This usually means that there are asynchronous operations that weren't stopped in your tests."
 - Impact: `--forceExit` may be needed in CI. The warning makes test output noisy but does not cause test failures. Known concern since at least Stage 4.
 - Governing rule: Automation should be clean without force flags.
-- Red test/probe/command: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` — passes tests then prints "did not exit" warning.
+- Red test/probe/command: `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand` — passes tests then prints "did not exit" warning.
 - Fix direction: Run `--detectOpenHandles` to identify the leaking async resource. The HANDOFF.md suggests `example-app/app/script.tsx` may be the culprit.
 - Fix status: `deferred` (pre-existing, documented in HANDOFF.md)
 
@@ -3369,7 +3369,7 @@ Task status: DONE_WITH_CONCERNS
 - Class: `FUTURE_STAGE_GAP`
 - Priority: `Low`
 - Stage: Stage 1 - Package Foundation
-- Evidence: `@agent-ui/core` test is `tsc --noEmit` only (no behavioral tests). `@agent-ui/expo-plugin` test is a placeholder. Documented as deferred since Stage 1.
+- Evidence: `@expo-agent-ui/core` test is `tsc --noEmit` only (no behavioral tests). `@expo-agent-ui/expo-plugin` test is a placeholder. Documented as deferred since Stage 1.
 - Impact: Core behavioral correctness is tested indirectly via example-app tests. No direct unit tests for core primitives outside example-app harness.
 - Fix status: `deferred` (documented, example-app tests provide adequate coverage for current stages)
 
@@ -3409,7 +3409,7 @@ Task status: DONE_WITH_CONCERNS
 
 - Finding: example-app Jest "did not exit" warning (Finding 5).
 - Why deferred: Pre-existing since at least Stage 4; documented in HANDOFF.md. Requires `--detectOpenHandles` investigation.
-- Required red test/probe: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand --detectOpenHandles`
+- Required red test/probe: `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand --detectOpenHandles`
 - Suggested owner/stage: Any future automation hygiene pass.
 
 - Finding: Expo SDK version drift (Finding 7).

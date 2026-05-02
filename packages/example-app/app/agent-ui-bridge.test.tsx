@@ -18,12 +18,12 @@ import {
   useAgentUIBridge,
   validateAgentUIBridgeRequest,
   validateAgentUIPairingToken
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import type {
   AgentUIBridgeCommandDispatcher,
   AgentUIBridgeConnection,
   AgentUIBridgeRegistry
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 describe("Agent UI bridge gate", () => {
   const devGlobal = globalThis as typeof globalThis & {

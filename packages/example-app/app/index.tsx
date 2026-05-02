@@ -18,7 +18,7 @@ import {
   Text,
   TextField,
   Toggle
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import { useState } from "react";
 import { StyleSheet } from "react-native";
 

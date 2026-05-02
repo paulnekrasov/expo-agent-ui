@@ -250,7 +250,7 @@ Do not propose patches for:
 
 Before applying an approved patch:
 
-1. Run `npx @agent-ui/cli doctor` to confirm no duplicate IDs are introduced.
+1. Run `npx @expo-agent-ui/cli doctor` to confirm no duplicate IDs are introduced.
 2. Run the app's existing test suite to catch regressions.
 3. Re-run `inspectTree` to confirm new nodes appear with the expected IDs and roles.
 4. If flows reference the patched IDs, re-run those flows against the updated tree.

@@ -8,7 +8,7 @@ import {
   Section,
   createAgentUISemanticRegistry,
   useDeferredSemanticPrimitive
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 function PrimitiveProbe(): null {
   useDeferredSemanticPrimitive({

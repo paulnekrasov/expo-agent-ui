@@ -78,7 +78,7 @@ The phrase "drop-in" means adoption friction must be extremely low. The first in
 should look like:
 
 ```sh
-npx expo install @agent-ui/expo
+npx expo install @expo-agent-ui/expo
 ```
 
 Then, for apps that need agent tools:
@@ -1003,7 +1003,7 @@ Official Expo UI docs establish:
 
 Implementation:
 
-- `@agent-ui/expo/swift-ui` adapter exports components that wrap Expo UI when installed.
+- `@expo-agent-ui/expo/swift-ui` adapter exports components that wrap Expo UI when installed.
 - Core components remain usable without Expo UI.
 - Adapter code should be tree-shakeable and optional.
 - Android should degrade to React Native primitives or future Jetpack Compose adapter.

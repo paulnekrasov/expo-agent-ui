@@ -1,5 +1,5 @@
 {
-  "name": "@agent-ui/core",
+  "name": "@expo-agent-ui/core",
   "version": "0.0.0",
   "description": "JS-only semantic runtime foundation for Expo Agent UI.",
   "license": "MIT",

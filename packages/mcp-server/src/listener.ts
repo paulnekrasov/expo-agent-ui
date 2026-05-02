@@ -5,7 +5,7 @@ import type {
   AgentUIBridgeHeartbeatAckEnvelope,
   AgentUIBridgeSessionId,
   AgentUIBridgeWelcomeEnvelope
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import type { IncomingMessage } from "node:http";
 import { timingSafeEqual } from "node:crypto";
 import type { WebSocket } from "ws";

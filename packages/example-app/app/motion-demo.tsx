@@ -15,7 +15,7 @@ import {
   agentUIScaleTransition,
   agentUILayoutTransitionSmooth,
   getAgentUIPackageManifest
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import { StyleSheet } from "react-native";
 
 function PresetRow({

@@ -1,7 +1,7 @@
 export type AgentUICommand = "init" | "dev" | "doctor" | "export-maestro" | "maestro-run" | "maestro-heal";
 
 export interface AgentUICliManifest {
-  packageName: "@agent-ui/cli";
+  packageName: "@expo-agent-ui/cli";
   version: string;
   stage: "flow-runner";
   implementedCommands: AgentUICommand[];
@@ -24,7 +24,7 @@ function readCliManifestVersion(): string {
 
 export function getAgentUICliManifest(): AgentUICliManifest {
   return {
-    packageName: "@agent-ui/cli",
+    packageName: "@expo-agent-ui/cli",
     version: readCliManifestVersion(),
     stage: "flow-runner",
     implementedCommands: ["export-maestro", "maestro-run", "maestro-heal"],

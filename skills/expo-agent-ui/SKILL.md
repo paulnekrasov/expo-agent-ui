@@ -29,15 +29,15 @@ SwiftUI-inspired, agent-controllable mobile environments.
 ### 1. Install
 
 ```sh
-npx expo install @agent-ui/core react-native-reanimated react-native-worklets
-npx @agent-ui/cli init
+npx expo install @expo-agent-ui/core react-native-reanimated react-native-worklets
+npx @expo-agent-ui/cli init
 ```
 
 ### 2. Wrap Your App
 
 ```tsx
 // app/_layout.tsx or App.tsx
-import { AgentUIProvider } from "@agent-ui/core";
+import { AgentUIProvider } from "@expo-agent-ui/core";
 
 export default function App() {
   return (
@@ -53,7 +53,7 @@ export default function App() {
 Every component the agent should interact with needs a stable `id` prop:
 
 ```tsx
-import { Screen, VStack, Text, Button, TextField } from "@agent-ui/core";
+import { Screen, VStack, Text, Button, TextField } from "@expo-agent-ui/core";
 
 <Screen id="checkout" title="Checkout">
   <VStack spacing={16} padding="screen">
@@ -80,7 +80,7 @@ import { Screen, VStack, Text, Button, TextField } from "@agent-ui/core";
 ### 4. Start the MCP Server
 
 ```sh
-npx @agent-ui/mcp-server
+npx @expo-agent-ui/mcp-server
 # Outputs a pairing token — use this in your app's bridge config
 ```
 
@@ -93,7 +93,7 @@ npx @agent-ui/mcp-server
     "agent-ui": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@agent-ui/mcp-server"]
+      "args": ["@expo-agent-ui/mcp-server"]
     }
   }
 }
@@ -162,7 +162,7 @@ Load skills via `getPlatformSkill` with the skill name as shown above.
 
 ## Component Primitives
 
-All primitives import from `@agent-ui/core`. See `references/components.md` for the full API
+All primitives import from `@expo-agent-ui/core`. See `references/components.md` for the full API
 table with props, semantic roles, and accessibility defaults.
 
 | Category | Components |
@@ -171,7 +171,7 @@ table with props, semantic roles, and accessibility defaults.
 | Containers | `Screen`, `VStack`, `HStack`, `ZStack`, `Spacer`, `Scroll`, `List`, `Section`, `Form` |
 | Content | `Text`, `Image`, `Icon`, `Label` |
 | Controls | `Button`, `TextField`, `SecureField`, `Toggle`, `Slider`, `Picker`, `Stepper` |
-| Native adapters | `@agent-ui/core/swift-ui`, `@agent-ui/core/jetpack-compose` (optional, explicit imports) |
+| Native adapters | `@expo-agent-ui/core/swift-ui`, `@expo-agent-ui/core/jetpack-compose` (optional, explicit imports) |
 
 ## Flow and Patch Proposals
 
@@ -189,7 +189,7 @@ self-healing selector patterns, and generated YAML examples.
 ## Verification
 
 Before declaring work done:
-1. Run `npx @agent-ui/cli doctor` — checks peer dependencies, babel config, semantic ID validity.
+1. Run `npx @expo-agent-ui/cli doctor` — checks peer dependencies, babel config, semantic ID validity.
 2. Confirm all actionable nodes have stable semantic IDs.
 3. Confirm `__DEV__` gating for agent control.
 4. Run the app's test suite with `npm test`.

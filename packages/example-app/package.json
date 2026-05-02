@@ -1,5 +1,5 @@
 {
-  "name": "@agent-ui/example-app",
+  "name": "@expo-agent-ui/example-app",
   "version": "0.0.0",
   "private": true,
   "description": "Expo SDK 55 example app shell for Expo Agent UI.",
@@ -10,7 +10,7 @@
     "test": "jest --runInBand"
   },
   "dependencies": {
-    "@agent-ui/core": "0.0.0",
+    "@expo-agent-ui/core": "0.0.0",
     "expo": "~55.0.18",
     "expo-asset": "~55.0.16",
     "react": "19.2.0",

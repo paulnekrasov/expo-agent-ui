@@ -8,7 +8,7 @@ import {
   TextField,
   SecureField,
   Button,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 export default function CheckoutScreen() {
   const [name, setName] = useState("");

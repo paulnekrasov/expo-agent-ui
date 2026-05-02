@@ -15,7 +15,7 @@ import type {
   AgentUIBridgeRequestId,
   PatchChange,
   PatchProposal
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 import { resolve as pathResolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
@@ -2063,7 +2063,7 @@ if (isMain()) {
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     process.stdout.write("agent-ui-mcp: Expo Agent UI local MCP server\n");
     process.stdout.write(
-      "Start with: npx @agent-ui/mcp-server\n"
+      "Start with: npx @expo-agent-ui/mcp-server\n"
     );
     process.stdout.write(
       "The server starts an MCP stdio transport and a local WebSocket listener.\n"

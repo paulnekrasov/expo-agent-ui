@@ -7,7 +7,7 @@
   "packageManager": "npm@11.9.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/paulnekrasov/swiftui-parser.git"
+    "url": "git+https://github.com/paulnekrasov/expo-agent-ui.git"
   },
   "engines": {
     "node": ">=20.19.4"
@@ -22,7 +22,10 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
   "overrides": {
     "@expo/metro-config@55.0.17": {
@@ -36,10 +39,16 @@
     }
   },
   "devDependencies": {
+    "@babel/runtime": "^7.29.2",
+    "@changesets/cli": "^2.31.0",
     "@types/node": "^20.19.0",
     "@types/react": "^19.2.14",
     "expo": "~55.0.18",
     "jest-expo": "~55.0.16",
+    "react-native": "^0.83.6",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }

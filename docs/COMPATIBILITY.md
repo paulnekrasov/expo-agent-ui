@@ -22,11 +22,11 @@ Applies to: Expo Agent UI v0.0.0
 
 | Package | Depends On | Required For |
 |---|---|---|
-| @agent-ui/core | expo, react, react-native, react-native-reanimated, react-native-worklets | All Agent UI usage. The JS-only semantic runtime. |
-| @agent-ui/expo-plugin | expo | Automated native app configuration. Required only if later stages add native module mutations. |
-| @agent-ui/mcp-server | @agent-ui/core, @modelcontextprotocol/sdk, ws | Local MCP stdio server. Runs in Node.js outside the app. |
-| @agent-ui/cli | @agent-ui/mcp-server | CLI tools: init, dev, doctor, maestro export/run/heal. |
-| @agent-ui/example-app | @agent-ui/core | Development testing and E2E validation. |
+| @expo-agent-ui/core | expo, react, react-native, react-native-reanimated, react-native-worklets | All Agent UI usage. The JS-only semantic runtime. |
+| @expo-agent-ui/expo-plugin | expo | Automated native app configuration. Required only if later stages add native module mutations. |
+| @expo-agent-ui/mcp-server | @expo-agent-ui/core, @modelcontextprotocol/sdk, ws | Local MCP stdio server. Runs in Node.js outside the app. |
+| @expo-agent-ui/cli | @expo-agent-ui/mcp-server | CLI tools: init, dev, doctor, maestro export/run/heal. |
+| @expo-agent-ui/example-app | @expo-agent-ui/core | Development testing and E2E validation. |
 
 ## Workflow Support
 
@@ -36,7 +36,7 @@ Fully supported. Install with `npx expo install` which resolves compatible Expo 
 
 ### Bare Workflow
 
-Fully supported. Requires `npx expo prebuild` after installation to regenerate native projects. Config plugins fire during prebuild when `@agent-ui/expo-plugin` is present in the plugins array. Without CNG, native mutations must be applied manually.
+Fully supported. Requires `npx expo prebuild` after installation to regenerate native projects. Config plugins fire during prebuild when `@expo-agent-ui/expo-plugin` is present in the plugins array. Without CNG, native mutations must be applied manually.
 
 ## Platform Support
 
@@ -82,9 +82,9 @@ JS-only primitives via React Native Web. Semantic runtime, tree inspection, and 
 
 | Adapter | Platform | Import Path | Development Build Required | @expo/ui Required |
 |---|---|---|---|---|
-| SwiftUI | iOS | @agent-ui/core/swift-ui | Yes | Yes (^55.0.0) |
-| Jetpack Compose | Android | @agent-ui/core/jetpack-compose | Yes | Yes (^55.0.0) |
-| React Native fallback | Cross-platform | @agent-ui/core | No | No |
+| SwiftUI | iOS | @expo-agent-ui/core/swift-ui | Yes | Yes (^55.0.0) |
+| Jetpack Compose | Android | @expo-agent-ui/core/jetpack-compose | Yes | Yes (^55.0.0) |
+| React Native fallback | Cross-platform | @expo-agent-ui/core | No | No |
 
 Native adapters detect availability via dynamic require at runtime. Detection is lazy and memoized. If `@expo/ui` is not installed, adapters report `available: false` and primitives fall back to React Native implementations with development warnings.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@agent-ui/mcp-server",
+  "name": "@expo-agent-ui/mcp-server",
   "version": "0.0.0",
   "description": "Local MCP server package shell for Expo Agent UI.",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "test": "jest --runInBand"
   },
   "dependencies": {
-    "@agent-ui/core": "*",
+    "@expo-agent-ui/core": "*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "ws": "^8.18.0"
   },

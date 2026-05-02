@@ -45,7 +45,7 @@
 - Prompts: MCP prompts are user-controlled templates discoverable by clients. Agent UI should expose prompts only when their backing skill docs exist, starting with `build_screen`, `debug_flow`, `improve_semantics`, `patch_screen`, `plan_task`, `review_stage`, and `resume_handoff`.
 - Error handling: the MCP tools spec distinguishes protocol errors from tool execution errors. Agent UI should reserve JSON-RPC protocol errors for malformed MCP requests and unknown tools; semantic/runtime failures should return tool results with `isError: true`, a stable error code, a human-readable message, and candidates or remediation context when available.
 - Structured outputs: the latest tools spec supports `structuredContent` and optional `outputSchema`. Agent UI should return structured JSON for agents and include serialized text content for backward compatibility.
-- npx packaging: `packages/mcp-server` should publish a Node CLI with a `bin` entry, ESM build output, Node `>=18`, no stdout logging, and launch compatibility through commands such as `npx -y @agent-ui/mcp-server`. If a root CLI package is added later, it can wrap the same server binary as a subcommand.
+- npx packaging: `packages/mcp-server` should publish a Node CLI with a `bin` entry, ESM build output, Node `>=18`, no stdout logging, and launch compatibility through commands such as `npx -y @expo-agent-ui/mcp-server`. If a root CLI package is added later, it can wrap the same server binary as a subcommand.
 - Source URLs: SDK v1 docs at https://ts.sdk.modelcontextprotocol.io/ and https://ts.sdk.modelcontextprotocol.io/documents/server.html; SDK source README at https://github.com/modelcontextprotocol/typescript-sdk; package metadata at https://www.npmjs.com/package/%40modelcontextprotocol/sdk and https://www.npmjs.com/package/%40modelcontextprotocol/server.
 
 ## Proposed Agent UI Tool Surface
@@ -148,7 +148,7 @@ Do not require a custom Expo module for v0. Do not depend on Expo MCP for semant
 
 - [x] Research blocker review: no unresolved research blockers remain for Stage 4/Stage 5 planning.
 - [ ] Implementation constraint: choose the physical-device host discovery UX, such as manual URL, QR/deep link, Expo host inference, generated config, or a combination.
-- [ ] Implementation constraint: choose package naming, either a standalone `@agent-ui/mcp-server` package, a root CLI subcommand, or both.
+- [ ] Implementation constraint: choose package naming, either a standalone `@expo-agent-ui/mcp-server` package, a root CLI subcommand, or both.
 - [ ] Implementation constraint: decide whether `scroll` enters v0 based on whether Stage 2 ships a stable semantic scroll wrapper.
 - [ ] Implementation constraint: define how much Expo Router metadata can be collected without making Expo Router a hard dependency.
 - [ ] Implementation constraint: choose whether sessions are primarily exposed through `agent-ui://sessions`, a diagnostics tool, or both.

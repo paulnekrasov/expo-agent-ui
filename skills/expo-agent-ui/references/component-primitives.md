@@ -9,7 +9,7 @@ accessibility props, and registers itself in the semantic tree when rendered ins
 ### AgentUIProvider
 
 ```tsx
-import { AgentUIProvider } from "@agent-ui/core";
+import { AgentUIProvider } from "@expo-agent-ui/core";
 
 export default function App() {
   return (
@@ -185,7 +185,7 @@ Optional native adapters provide platform-specific rendering when `@expo/ui` is 
 import {
   agentUISwiftUIAdapter,
   createAgentUISwiftUIButton,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 if (agentUISwiftUIAdapter.isAvailable()) {
   const NativeButton = createAgentUISwiftUIButton();
@@ -202,7 +202,7 @@ if (agentUISwiftUIAdapter.isAvailable()) {
 import {
   agentUIComposeAdapter,
   createAgentUIComposeButton,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 if (agentUIComposeAdapter.isAvailable()) {
   const NativeButton = createAgentUIComposeButton();

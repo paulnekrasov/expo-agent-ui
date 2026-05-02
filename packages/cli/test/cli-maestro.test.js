@@ -275,7 +275,7 @@ describe("CLI version", () => {
     const manifest = getAgentUICliManifest();
     expect(manifest).toBeDefined();
     expect(manifest.version).toBe(cliPkg.version);
-    expect(manifest.packageName).toBe("@agent-ui/cli");
+    expect(manifest.packageName).toBe("@expo-agent-ui/cli");
   });
 
   it("--version flag outputs version string matching package.json", () => {

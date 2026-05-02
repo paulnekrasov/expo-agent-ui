@@ -1,4 +1,4 @@
-export const agentUICorePackage = "@agent-ui/core" as const;
+export const agentUICorePackage = "@expo-agent-ui/core" as const;
 export const agentUICoreStage = "flow-runner" as const;
 
 import { agentUISwiftUIAdapter } from "./swift-ui";

@@ -8,7 +8,7 @@ import {
   Picker,
   Slider,
   Button,
-} from "@agent-ui/core";
+} from "@expo-agent-ui/core";
 
 const THEME_OPTIONS = [
   { id: "light",  label: "Light",  value: "light" },
