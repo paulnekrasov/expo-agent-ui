@@ -1,4 +1,6 @@
 import { isDevelopmentRuntime } from "./props";
+import { validateFlow, createFlowRunner } from "./flows";
+import type { SemanticFlow } from "./flows";
 
 export const AGENT_UI_BRIDGE_PROTOCOL_VERSION = 1 as const;
 
@@ -26,7 +28,8 @@ export type AgentUIBridgeCapability =
   | "tap"
   | "input"
   | "observeEvents"
-  | "waitFor";
+  | "waitFor"
+  | "runFlow";
 
 export type AgentUIBridgeGateResultCode =
   | "BRIDGE_DISABLED"
@@ -64,7 +67,7 @@ export interface AgentUIBridgeGateResult {
 }
 
 export const DEFAULT_AGENT_UI_BRIDGE_CAPABILITIES: readonly AgentUIBridgeCapability[] =
-  ["inspectTree", "getState", "tap", "input", "observeEvents", "waitFor"];
+  ["inspectTree", "getState", "tap", "input", "observeEvents", "waitFor", "runFlow"];
 
 function createBridgeGateResult(options: {
   capabilities?: readonly AgentUIBridgeCapability[] | undefined;
@@ -519,7 +522,8 @@ export type AgentUIBridgeCommandType =
   | "tap"
   | "input"
   | "waitFor"
-  | "observeEvents";
+  | "observeEvents"
+  | "runFlow";
 
 export type AgentUIBridgeRequestId = string & {
   readonly __agentUIBridgeRequestId: unique symbol;
@@ -672,6 +676,35 @@ export interface AgentUIBridgeObserveEventsResponse {
 }
 
 // ---------------------------------------------------------------------------
+// runFlow
+// ---------------------------------------------------------------------------
+
+export interface AgentUIBridgeRunFlowRequest {
+  type: "runFlow";
+  requestId: AgentUIBridgeRequestId;
+  flow: SemanticFlow;
+  options?: {
+    timeoutMs?: number | undefined;
+  } | undefined;
+}
+
+export interface AgentUIBridgeRunFlowResponse {
+  type: "runFlow";
+  requestId: AgentUIBridgeRequestId;
+  result: {
+    flowName: string;
+    completed: boolean;
+    totalSteps: number;
+    completedSteps: number;
+    failedStep?: number | undefined;
+    failedStepType?: string | undefined;
+    durationMs: number;
+    error?: string | undefined;
+  };
+  timestamp: number;
+}
+
+// ---------------------------------------------------------------------------
 // Command unions
 // ---------------------------------------------------------------------------
 
@@ -681,7 +714,8 @@ export type AgentUIBridgeCommandRequest =
   | AgentUIBridgeTapRequest
   | AgentUIBridgeInputRequest
   | AgentUIBridgeWaitForRequest
-  | AgentUIBridgeObserveEventsRequest;
+  | AgentUIBridgeObserveEventsRequest
+  | AgentUIBridgeRunFlowRequest;
 
 export type AgentUIBridgeCommandResponse =
   | AgentUIBridgeInspectTreeResponse
@@ -689,7 +723,8 @@ export type AgentUIBridgeCommandResponse =
   | AgentUIBridgeTapResponse
   | AgentUIBridgeInputResponse
   | AgentUIBridgeWaitForResponse
-  | AgentUIBridgeObserveEventsResponse;
+  | AgentUIBridgeObserveEventsResponse
+  | AgentUIBridgeRunFlowResponse;
 
 // ---------------------------------------------------------------------------
 // Status codes
@@ -761,6 +796,22 @@ export function validateAgentUIBridgeRequest(
 
     case "observeEvents":
       return true;
+
+    case "runFlow": {
+      const flow = (request as Record<string, unknown>).flow;
+
+      if (typeof flow !== "object" || flow === null || Array.isArray(flow)) {
+        return false;
+      }
+
+      const flowName = (flow as Record<string, unknown>).name;
+      const flowSteps = (flow as Record<string, unknown>).steps;
+
+      return typeof flowName === "string" &&
+        flowName.trim().length > 0 &&
+        Array.isArray(flowSteps) &&
+        flowSteps.length > 0;
+    }
 
     default:
       return false;
@@ -869,6 +920,20 @@ export function createAgentUIBridgeObserveEventsResponse(
     events: params.events,
     nextCursor: params.nextCursor,
     droppedCount: params.droppedCount,
+    timestamp: Date.now()
+  };
+}
+
+export function createAgentUIBridgeRunFlowResponse(
+  params: {
+    requestId: AgentUIBridgeRequestId;
+    result: AgentUIBridgeRunFlowResponse["result"];
+  }
+): AgentUIBridgeRunFlowResponse {
+  return {
+    type: "runFlow",
+    requestId: params.requestId,
+    result: params.result,
     timestamp: Date.now()
   };
 }
@@ -1724,6 +1789,170 @@ export function createAgentUIBridgeCommandDispatcher(options: {
           });
         }
 
+        case "runFlow": {
+          const flow = request.flow;
+          const validationError = validateFlow(flow);
+
+          if (validationError !== null) {
+            return createAgentUIBridgeRunFlowResponse({
+              requestId: request.requestId,
+              result: {
+                flowName: flow.name ?? "unknown",
+                completed: false,
+                totalSteps: flow.steps?.length ?? 0,
+                completedSteps: 0,
+                durationMs: 0,
+                error: validationError
+              }
+            });
+          }
+
+          const stepDispatch = async (
+            step: import("./flows").SemanticFlowStep
+          ): Promise<{ ok: boolean; error?: string | undefined }> => {
+            switch (step.type) {
+              case "tap": {
+                const tapResult = await registry.dispatchAction(
+                  step.targetId ?? "",
+                  "tap",
+                  {
+                    payload: undefined
+                  }
+                );
+
+                return {
+                  ok: tapResult.code === "ACTION_DISPATCHED",
+                  error: tapResult.ok ? undefined : tapResult.message
+                };
+              }
+
+              case "input": {
+                const inputResult = await registry.dispatchAction(
+                  step.targetId ?? "",
+                  "input",
+                  {
+                    payload: step.value
+                  }
+                );
+
+                return {
+                  ok: inputResult.code === "ACTION_DISPATCHED",
+                  error: inputResult.ok ? undefined : inputResult.message
+                };
+              }
+
+              case "scroll": {
+                const scrollResult = await registry.dispatchAction(
+                  step.targetId ?? "",
+                  "scroll",
+                  {
+                    payload: {
+                      direction: step.direction ?? "down",
+                      amount: step.amount ?? 0
+                    }
+                  }
+                );
+
+                return {
+                  ok: scrollResult.code === "ACTION_DISPATCHED",
+                  error: scrollResult.ok ? undefined : scrollResult.message
+                };
+              }
+
+              case "navigate": {
+                return { ok: true };
+              }
+
+              case "waitFor":
+              case "assert": {
+                if (!step.conditions || step.conditions.length === 0) {
+                  return {
+                    ok: false,
+                    error: `${step.type} requires conditions`
+                  };
+                }
+
+                const bridgeConditions = step.conditions.map((c) => ({
+                  kind: c.kind,
+                  nodeId: c.nodeId,
+                  expectedState: c.expected
+                }));
+
+                if (step.type === "assert") {
+                  let allSatisfied = true;
+                  let firstError: string | undefined;
+
+                  for (const c of bridgeConditions) {
+                    const satisfied = resolveWaitForCondition(
+                      c as AgentUIBridgeWaitCondition,
+                      registry
+                    );
+
+                    if (!satisfied) {
+                      allSatisfied = false;
+                      firstError = `condition ${c.kind} failed for "${c.nodeId}"`;
+                      break;
+                    }
+                  }
+
+                  return { ok: allSatisfied, error: firstError };
+                }
+
+                const pollResult = await pollWaitForConditions(
+                  registry,
+                  bridgeConditions as AgentUIBridgeWaitCondition[],
+                  request.options?.timeoutMs ?? DEFAULT_WAIT_FOR_TIMEOUT_MS,
+                  DEFAULT_WAIT_FOR_POLL_MS
+                );
+
+                return {
+                  ok: pollResult.satisfied,
+                  error: pollResult.satisfied
+                    ? undefined
+                    : `${pollResult.matchedConditions}/${pollResult.totalConditions} conditions satisfied`
+                };
+              }
+
+              case "observeEvents": {
+                const eventFilter = step.value
+                  ? step.value.split(",").map((s: string) => s.trim())
+                  : undefined;
+                const queryResult = eventLog.query(
+                  undefined,
+                  eventFilter as AgentUIBridgeEventType[] | undefined,
+                  undefined
+                );
+
+                return {
+                  ok: queryResult.events.length > 0,
+                  error:
+                    queryResult.events.length > 0
+                      ? undefined
+                      : "no matching events found"
+                };
+              }
+
+              default:
+                return {
+                  ok: false,
+                  error: `unknown step type: ${String(step.type)}`
+                };
+            }
+          };
+
+          const flowRunner = createFlowRunner();
+          const runnerResult = await flowRunner(flow, stepDispatch, {
+            ...(request.options?.timeoutMs !== undefined
+              ? { timeoutMs: request.options.timeoutMs }
+              : {})
+          });
+
+          return createAgentUIBridgeRunFlowResponse({
+            requestId: request.requestId,
+            result: runnerResult
+          });
+        }
+
         default: {
           const unknownReq = request as unknown as Record<string, unknown>;
 
@@ -1788,6 +2017,21 @@ export function createAgentUIBridgeCommandDispatcher(options: {
             events: [],
             nextCursor: 0,
             droppedCount: 0
+          });
+
+        case "runFlow":
+          return createAgentUIBridgeRunFlowResponse({
+            requestId: request.requestId,
+            result: {
+              flowName: "raw" in request && typeof (request as Record<string, unknown>).flow === "object"
+                ? String(((request as Record<string, unknown>).flow as Record<string, unknown>).name ?? "unknown")
+                : "unknown",
+              completed: false,
+              totalSteps: 0,
+              completedSteps: 0,
+              durationMs: 0,
+              error: message
+            }
           });
 
         default: {

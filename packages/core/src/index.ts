@@ -1,5 +1,10 @@
 export const agentUICorePackage = "@agent-ui/core" as const;
-export const agentUICoreStage = "agent-bridge" as const;
+export const agentUICoreStage = "flow-runner" as const;
+
+import { agentUISwiftUIAdapter } from "./swift-ui";
+import { agentUIComposeAdapter } from "./jetpack-compose";
+import type { AgentUISwiftUIAdapter } from "./swift-ui";
+import type { AgentUIComposeAdapter } from "./jetpack-compose";
 
 export {
   createAgentUIBridgeCommandDispatcher,
@@ -12,6 +17,7 @@ export {
   createAgentUIBridgeInputResponse,
   createAgentUIBridgeWaitForResponse,
   createAgentUIBridgeObserveEventsResponse,
+  createAgentUIBridgeRunFlowResponse,
   createAgentUIBridgeRequestId,
   createAgentUIBridgeSessionId,
   generateAgentUIPairingToken,
@@ -63,7 +69,9 @@ export type {
   AgentUIBridgeWaitCondition,
   AgentUIBridgeWaitForRequest,
   AgentUIBridgeWaitForResponse,
-  AgentUIBridgeWelcomeEnvelope
+  AgentUIBridgeWelcomeEnvelope,
+  AgentUIBridgeRunFlowRequest,
+  AgentUIBridgeRunFlowResponse
 } from "./bridge";
 export {
   AgentUIProvider,
@@ -150,12 +158,139 @@ export type {
   AgentUIPrimitiveProps,
   AgentUIViewProps
 } from "./props";
+export {
+  agentUIBouncy,
+  agentUIComposeMotionAdapter,
+  agentUIComposeMotionPresets,
+  agentUIEaseInOut,
+  agentUIGentle,
+  agentUIGestureConfig,
+  agentUILayoutTransitionSmooth,
+  agentUIMotionAdapters,
+  agentUINativeMotionMatrix,
+  agentUIOpacityTransition,
+  agentUIReanimatedAdapter,
+  agentUIScaleTransition,
+  agentUISlideTransition,
+  agentUISnappy,
+  agentUISpring,
+  agentUISwiftUIMotionAdapter,
+  agentUISwiftUIMotionPresets,
+  createAgentUIMotionEvent,
+  effectiveAgentUIReducedMotion,
+  isValidAgentUIMotionSpringConfig,
+  isValidAgentUIMotionTimingConfig,
+  listAgentUIMotionAdapters,
+  resetAgentUIReducedMotionCache,
+  resolveAgentUIMotionAdapter,
+  resolveAgentUIReducedMotion
+} from "./motion";
+export type {
+  AgentUIGestureConfig,
+  AgentUIGestureStrategy,
+  AgentUILayoutTransitionConfig,
+  AgentUIMotionAdapter,
+  AgentUIMotionAdapterCapabilities,
+  AgentUIMotionAdapterPlatform,
+  AgentUIMotionAdapterTier,
+  AgentUIMotionEasing,
+  AgentUIMotionEvent,
+  AgentUIMotionEventType,
+  AgentUIMotionNativePresetMapping,
+  AgentUIMotionPresetName,
+  AgentUIMotionSpringConfig,
+  AgentUIMotionTimingConfig,
+  AgentUIReducedMotion,
+  AgentUISlideEdge,
+  AgentUITransitionConfig
+} from "./motion";
+export {
+  agentUISwiftUIAdapter,
+  detectAgentUISwiftUINativeModule,
+  refreshAgentUISwiftUIAdapter,
+  createAgentUISwiftUIButton,
+  createAgentUISwiftUIToggle,
+  createAgentUISwiftUITextField,
+  createAgentUISwiftUISecureField,
+  createAgentUISwiftUISlider,
+  createAgentUISwiftUIPicker,
+} from "./swift-ui";
+export type {
+  AgentUISwiftUIAdapter,
+  AgentUISwiftUIAdapterCapabilities,
+  AgentUISwiftUIButtonProps,
+  AgentUISwiftUIToggleProps,
+  AgentUISwiftUITextFieldProps,
+  AgentUISwiftUISecureFieldProps,
+  AgentUISwiftUISliderProps,
+  AgentUISwiftUIPickerProps,
+  AgentUISwiftUIPickerOption,
+} from "./swift-ui";
+export {
+  agentUIComposeAdapter,
+  detectAgentUIComposeNativeModule,
+  refreshAgentUIComposeAdapter,
+  createAgentUIComposeButton,
+  createAgentUIComposeTextField,
+  createAgentUIComposeSwitch,
+  createAgentUIComposeSlider,
+} from "./jetpack-compose";
+export type {
+  AgentUIComposeAdapter,
+  AgentUIComposeAdapterCapabilities,
+  AgentUIComposeButtonProps,
+  AgentUIComposeTextFieldProps,
+  AgentUIComposeSwitchProps,
+  AgentUIComposeSliderProps,
+  AgentUIComposeColumnProps,
+  AgentUIComposeRowProps,
+  AgentUIComposeBoxProps,
+} from "./jetpack-compose";
+
+export type {
+  AgentUINativeAdapterTier,
+  AgentUINativeAdapterPlatform,
+} from "./swift-ui";
+
+export type {
+  WaitConditionKind,
+  WaitCondition,
+  SemanticFlowStepType,
+  SemanticFlowStep,
+  SemanticFlow,
+  FlowRunnerResult
+} from "./flows";
+export {
+  isValidFlowStepType,
+  validateFlowStep,
+  validateFlow,
+  stepRequiresApproval,
+  createFlowRunner
+} from "./flows";
+
+export {
+  VALID_CHANGE_KINDS,
+  isValidPatchChangeKind,
+  validatePatchChange,
+  validatePatchProposal,
+  createPatchProposal,
+  mergePatchProposals,
+} from "./patching";
+export type {
+  PatchChangeKind,
+  PatchChange,
+  PatchProposal,
+  PatchValidationResult,
+} from "./patching";
 
 export type AgentUICapability =
   | "component-primitives"
   | "semantic-runtime"
   | "agent-bridge"
-  | "motion-layer";
+  | "motion-layer"
+  | "expo-ui-adapter"
+  | "flow-runner"
+  | "patch-proposals";
 
 export interface AgentUIPackageManifest {
   packageName: typeof agentUICorePackage;
@@ -170,7 +305,32 @@ export function getAgentUIPackageManifest(): AgentUIPackageManifest {
     packageName: agentUICorePackage,
     stage: agentUICoreStage,
     jsOnly: true,
-    implementedCapabilities: ["component-primitives", "semantic-runtime", "agent-bridge"],
-    deferredCapabilities: ["motion-layer"]
+    implementedCapabilities: ["component-primitives", "semantic-runtime", "agent-bridge", "motion-layer", "expo-ui-adapter", "flow-runner", "patch-proposals"],
+    deferredCapabilities: []
   };
+}
+
+export type AgentUINativeAdapter = AgentUISwiftUIAdapter | AgentUIComposeAdapter;
+
+export const agentUINativeAdapters: readonly AgentUINativeAdapter[] = [
+  agentUISwiftUIAdapter,
+  agentUIComposeAdapter,
+];
+
+export function listAgentUINativeAdapters(options?: {
+  platform?: "ios" | "android";
+}): AgentUINativeAdapter[] {
+  const target = options?.platform;
+  return agentUINativeAdapters.filter((a) => {
+    if (!target) return true;
+    return a.platform === target;
+  });
+}
+
+export function resolveAgentUINativeAdapter(
+  platform?: "ios" | "android"
+): AgentUINativeAdapter {
+  if (platform === "ios") return agentUISwiftUIAdapter;
+  if (platform === "android") return agentUIComposeAdapter;
+  return agentUISwiftUIAdapter;
 }

@@ -1,86 +1,73 @@
 # TASK SPECIFICATION
 Created by: scheduled-run coordinator
-Date: 2026-05-01
-Roadmap Phase: Phase 5 - MCP Server
-Product Stage: Stage 5 - MCP Server (sixth slice - final Stage 5 items)
-Research Area: MCP transport architecture, platform skill MCP surface, security/privacy
+Date: 2026-05-02
+Roadmap Phase: Phase 10 - Publish Readiness
+Product Stage: Stage 10 - Publish Readiness
+Research Area: Platform skill routing, MCP surface, package foundation, EAS native preview, deployment/updates, compatibility decisions from research status
 
 ## Objective
 
-Complete all remaining Stage 5 MCP server items:
-- Register scroll, navigate, runFlow as MCP runtime-control tools.
-- Add read-only MCP resources for sessions and diagnostics.
-- Add MCP schema validation tests.
-- Mark Stage 5 as complete on the roadmap checklist.
+Produce every publish-readiness asset: a comprehensive README walkthrough, compatibility matrix, installation guide, MCP configuration snippets, troubleshooting guide, and release checklist.
 
 ## Acceptance Criteria
 
-- [x] Register scroll MCP tool in `packages/mcp-server/src/cli.ts`:
-  - Session required (fail-closed with SESSION_NOT_CONNECTED).
-  - Required `id` (string), optional `sessionId`, `direction`, `amount`, `targetId`, `timeoutMs`.
-  - Routes through `session.sendCommand()` with `type: "scroll"`.
-  - Error codes: `NODE_NOT_FOUND`, `NOT_SCROLL_CONTAINER`, `DIRECTION_UNSUPPORTED`, `COMMAND_FAILED`.
-- [x] Register navigate MCP tool in `packages/mcp-server/src/cli.ts`:
-  - Session required.
-  - Optional `sessionId`, `screen`, `route`, `params`, `replace`, `timeoutMs`.
-  - Routes through `session.sendCommand()` with `type: "navigate"`.
-  - Error codes: `NAVIGATION_UNAVAILABLE`, `ROUTE_NOT_FOUND`, `PARAMS_INVALID`, `COMMAND_FAILED`.
-- [x] Register runFlow MCP tool in `packages/mcp-server/src/cli.ts`:
-  - Session required.
-  - Optional `sessionId`, `name`, `steps` (array of flow steps), `stopOnFailure`, `timeoutMs`.
-  - Routes through `session.sendCommand()` with `type: "runFlow"`.
-  - Error codes: `FLOW_NOT_FOUND`, `STEP_FAILED`, `TIMEOUT`, `COMMAND_FAILED`.
-- [x] Add read-only MCP resources for sessions and diagnostics:
-  - `agent-ui://sessions` - current active session metadata.
-  - `agent-ui://diagnostics` - listener, bridge, and server diagnostics.
-  - Both return metadata even when no session is active (not error states).
-- [x] Update `packages/mcp-server/src/manifest.ts`:
-  - Moved `scroll`, `navigate`, `runFlow` from `deferredTools` to `implementedTools`.
-  - `deferredTools` is now empty. Stage 5 runtime-control tool surface is complete.
-- [x] Update `packages/mcp-server/test/mcp-server.test.js` (9 new tests):
-  - scroll returns SESSION_NOT_CONNECTED without session.
-  - navigate returns SESSION_NOT_CONNECTED without session.
-  - runFlow returns SESSION_NOT_CONNECTED without session.
-  - listTools returns 13 tools (9 runtime-control + 4 skill-context).
-  - All 13 tools have valid inputSchemas with type: "object".
-  - All 13 tools have non-empty descriptions.
-  - ListResources includes sessions and diagnostics URIs.
-  - ReadResource for sessions URI returns metadata even without session.
-  - ReadResource for diagnostics URI returns server metadata.
-- [x] No imports of `@expo/ui`, Expo Router, React Navigation, react, react-native, old parser
-  assets, tree-sitter, WASM, VS Code, or Canvas renderer code.
-- [x] Existing typecheck, build, and all tests continue to pass.
+### README.md (Comprehensive Walkthrough) — DONE
+- [x] Project identity, north star, and what this is / is not
+- [x] Full architecture diagram (ASCII)
+- [x] Step-by-step installation walkthrough
+- [x] Component catalog: all 19 primitives with usage examples
+- [x] Semantic runtime walkthrough
+- [x] Agent tool bridge
+- [x] MCP server: 15 tools, config snippets, CLI flags
+- [x] Agent skill
+- [x] Flow runner: 7 step types, approval gates
+- [x] Maestro YAML export
+- [x] Patch proposals
+- [x] Native preview comparison
+- [x] Motion layer: presets, transitions, adapter contracts
+- [x] Native adapters (SwiftUI + Jetpack Compose)
+- [x] Platform skills: routing, MCP tools
+- [x] Security model
+- [x] Full MCP tool reference table
+
+### Compatibility Matrix — DONE
+- [x] docs/COMPATIBILITY.md (75 lines)
+
+### Installation Guide — DONE
+- [x] docs/INSTALL.md (194 lines)
+
+### MCP Configuration — DONE
+- [x] docs/MCP_CONFIG.md (480 lines)
+
+### Troubleshooting Guide — DONE
+- [x] docs/TROUBLESHOOTING.md (434 lines)
+
+### Release Checklist — DONE
+- [x] docs/RELEASE_CHECKLIST.md (369 lines)
 
 ## File Allowlist
 
-- `packages/mcp-server/src/cli.ts`
-- `packages/mcp-server/src/manifest.ts`
-- `packages/mcp-server/test/mcp-server.test.js`
-- `docs/agents/TASK.md`
-- `docs/agents/PHASE_STATE.md`
-- `docs/agents/HANDOFF.md`
-- `docs/agents/REVIEW.md`
-- `docs/agents/ROADMAP_CHECKLIST.md`
-- `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
-- `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md`
-
-## Out Of Scope
-
-- Bridge-level scroll/navigate/runFlow implementation in `packages/core` (the MCP server delegates to
-  `sendCommand`; the bridge dispatcher handles the runtime behavior).
-- Processing `includeBounds` or `rootId` in `inspectTree` (deferred).
-- Dynamic sub-file template URIs for platform skills (deferred).
-- Dynamic INDEX.md parsing (deferred).
-- Expo SDK version bump (deferred to dedicated dependency pass).
-- Adding `@expo/ui`, Expo Router, React Navigation, native module, or config-plugin imports.
-- Old parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas renderer work.
+- `README.md` (rewritten — 1405 lines)
+- `docs/COMPATIBILITY.md` (created — 75 lines)
+- `docs/INSTALL.md` (created — 194 lines)
+- `docs/MCP_CONFIG.md` (created — 480 lines)
+- `docs/TROUBLESHOOTING.md` (created — 434 lines)
+- `docs/RELEASE_CHECKLIST.md` (created — 369 lines)
+- `packages/core/src/index.ts` (fixed stale manifest)
+- `packages/cli/src/index.ts` (fixed stale manifest)
+- `docs/agents/TASK.md` (this file)
+- `docs/agents/REVIEW.md` (updated — deep debugging report)
+- `docs/agents/HANDOFF.md` (updated)
+- `docs/agents/PHASE_STATE.md` (updated)
+- `docs/agents/ROADMAP_CHECKLIST.md` (updated)
+- `docs/agents/runtime-prompts/RUNTIME_STATUS.md` (updated)
+- `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` (updated)
 
 ## Verification Commands
 
 ```powershell
 cmd /c npm.cmd run typecheck --workspaces --if-present
 cmd /c npm.cmd run build --workspaces --if-present
-cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand
 cmd /c npm.cmd test --workspaces --if-present
 cmd /c npm.cmd audit --audit-level=moderate
 git diff --check
@@ -88,4 +75,4 @@ git diff --check
 
 ## Status
 
-DONE
+DONE — All Stage 10 deliverables created via 4 parallel agents. Deep debugging audit found 8 findings (1 High, 3 Medium fixed, 4 Low deferred). All 473 tests pass. All verification gates green.

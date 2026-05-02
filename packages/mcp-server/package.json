@@ -10,11 +10,12 @@
   },
   "files": [
     "dist",
+    "dist/skills",
     "src"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-skills.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

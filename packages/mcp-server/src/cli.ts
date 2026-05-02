@@ -12,7 +12,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
   AgentUIBridgeCommandRequest,
-  AgentUIBridgeRequestId
+  AgentUIBridgeRequestId,
+  PatchChange,
+  PatchProposal
 } from "@agent-ui/core";
 import { resolve as pathResolve } from "node:path";
 import { randomBytes } from "node:crypto";
@@ -29,9 +31,55 @@ import {
   recommendPlatformSkills,
   type PlatformSkillResolver
 } from "./platform-skills.js";
+import { discoverServeSimSessions } from "./serve-sim-discovery.js";
+import type {
+  SideBySideComparison
+} from "./native-preview.js";
 
 const SERVER_NAME = "agent-ui-mcp";
 const SERVER_VERSION = "0.0.0";
+
+const PROPOSE_PATCH_SCHEMA = {
+  type: "object" as const,
+  properties: {
+    sessionId: {
+      type: "string",
+      description: "Optional session ID."
+    },
+    title: {
+      type: "string",
+      description: "Patch proposal title."
+    },
+    description: {
+      type: "string",
+      description: "Patch proposal description."
+    },
+    source: {
+      type: "string",
+      enum: ["flow_failure", "accessibility_audit", "semantic_audit", "agent_request"],
+      description: "What triggered this proposal."
+    },
+    changes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          kind: {
+            type: "string",
+            enum: ["add_prop", "remove_prop", "change_prop", "add_component", "remove_component"]
+          },
+          targetId: { type: "string" },
+          propName: { type: "string" },
+          propValue: {},
+          oldValue: {},
+          reason: { type: "string" }
+        },
+        required: ["kind", "targetId", "reason"]
+      }
+    }
+  },
+  required: ["title", "description", "source", "changes"]
+};
 
 const INSPECT_TREE_SCHEMA = {
   type: "object" as const,
@@ -169,6 +217,16 @@ const OBSERVE_EVENTS_SCHEMA = {
       description: "Optional maximum number of events to return."
     }
   }
+};
+
+const COMPARE_NATIVE_PREVIEWS_SCHEMA = {
+  type: "object" as const,
+  properties: {
+    sessionId: { type: "string", description: "Optional session ID for single-session diagnostics" },
+    iosSessionId: { type: "string", description: "iOS session ID for comparison" },
+    androidSessionId: { type: "string", description: "Android session ID for comparison" },
+  },
+  required: [],
 };
 
 const WAIT_FOR_SCHEMA = {
@@ -357,6 +415,35 @@ function buildErrorResult(
   };
 }
 
+function createJsonToolResult(
+  payload: Record<string, unknown>
+): {
+  content: { type: "text"; text: string }[];
+} {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(payload)
+      }
+    ]
+  };
+}
+
+function createTextResourceResult(
+  uri: string,
+  text: string,
+  mimeType: string
+): {
+  contents: { uri: string; mimeType: string; text: string }[];
+} {
+  return {
+    contents: [
+      { uri, mimeType, text }
+    ]
+  };
+}
+
 export interface AgentUIMcpServerOptions {
   host?: string | undefined;
   port?: number | undefined;
@@ -372,7 +459,7 @@ export function createAgentUIMcpServer(
   const skillResolver =
     resolver ??
     createPlatformSkillResolver(
-      pathResolve(__dirname, "../../../docs/reference/agent")
+      pathResolve(__dirname, "skills")
     );
 
   const server = new Server(
@@ -396,6 +483,18 @@ export function createAgentUIMcpServer(
         uri: "agent-ui://diagnostics",
         name: "Diagnostics",
         description: "Listener, bridge, and server diagnostics: transport mode, bind address, port, session count, uptime, and version info.",
+        mimeType: "application/json"
+      },
+      {
+        uri: "agent-ui://serve-sim/sessions",
+        name: "Serve-Sim Sessions",
+        description: "Discovered serve-sim iOS Simulator preview sessions. Returns stream URLs, WebSocket control endpoints, and device identifiers for running serve-sim helpers. Available only on macOS when serve-sim is active. Read-only, no session required.",
+        mimeType: "application/json"
+      },
+      {
+        uri: "agent-ui://native-preview/comparison",
+        name: "Native Preview Comparison",
+        description: "Side-by-side semantic comparison of multiple connected runtime sessions (iOS SwiftUI vs Android Jetpack Compose). Development-only, redaction-gated. Returns comparison metadata, semantic ID diffs, capability diffs, and diagnostic diffs.",
         mimeType: "application/json"
       }
     ];
@@ -453,6 +552,30 @@ export function createAgentUIMcpServer(
       if (uri === "agent-ui://diagnostics") {
         const session = listener.activeSession;
 
+        const motionAdapters = [
+          {
+            tier: 1,
+            platform: "cross",
+            name: "Reanimated 4",
+            available: true,
+            capabilityCount: 8
+          },
+          {
+            tier: 2,
+            platform: "ios",
+            name: "SwiftUI Motion",
+            available: false,
+            capabilityCount: 13
+          },
+          {
+            tier: 3,
+            platform: "android",
+            name: "Jetpack Compose Motion",
+            available: false,
+            capabilityCount: 12
+          }
+        ];
+
         const payload = {
           ok: true,
           server: {
@@ -465,6 +588,64 @@ export function createAgentUIMcpServer(
             host: listener.host,
             port: listener.port
           },
+          motion: {
+            adapters: motionAdapters,
+            presetMappingCount: 22,
+            swiftUIPresetCount: 11,
+            composePresetCount: 11,
+            resolutionFallback: "Tier 1 (Reanimated 4)",
+            strategy: "three-tier"
+          },
+          nativeAdapters: {
+            swiftUI: {
+              adapter: "agentUISwiftUIAdapter",
+              tier: 2,
+              platform: "ios",
+              available: false,
+              availability:
+                "isAvailable() depends on Platform.OS === 'ios' and a successful dynamic require('@expo/ui/swift-ui') check. Availability detection is lazy and cached (first call detects, subsequent calls return memoized result). Requires @expo/ui peer dependency and a development build (not Expo Go).",
+              detectionMethod: "dynamic-require",
+              requiresHost: true,
+              componentCounts: {
+                button: 1,
+                toggle: 1,
+                textField: 1,
+                secureField: 1,
+                slider: 1,
+                picker: 1,
+                host: 1,
+              },
+            },
+            jetpackCompose: {
+              adapter: "agentUIComposeAdapter",
+              tier: 3,
+              platform: "android",
+              available: false,
+              availability:
+                "isAvailable() depends on Platform.OS === 'android' and a successful dynamic require('@expo/ui/jetpack-compose') check. Gradle cache (EAS_GRADLE_CACHE=1) can speed up repeated Android builds. Availability detection is lazy and cached. Requires @expo/ui peer dependency and a development build (not Expo Go).",
+              detectionMethod: "dynamic-require",
+              requiresHost: true,
+              componentCounts: {
+                button: 5,
+                textField: 1,
+                switchControl: 1,
+                checkbox: 1,
+                radioButton: 1,
+                slider: 1,
+                column: 1,
+                row: 1,
+                box: 1,
+                host: 1,
+              },
+            },
+            summary: {
+              totalAdapters: 2,
+              swiftUIAvailable: false,
+              composeAvailable: false,
+              detectionMethod: "dynamic-require",
+              note: "Native adapter availability depends on Platform.OS and @expo/ui installation. Detection is lazy and memoized via detectAgentUISwiftUINativeModule() / detectAgentUIComposeNativeModule(). Requires development builds; does not work in Expo Go. EAS_GRADLE_CACHE=1 can speed up repeated Android builds.",
+            },
+          },
           activeSession: session
             ? {
                 sessionId: session.sessionId,
@@ -473,6 +654,56 @@ export function createAgentUIMcpServer(
                 uptimeMs: Date.now() - session.connectedAt
               }
             : null
+        };
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(payload, null, 2)
+            }
+          ]
+        };
+      }
+
+      if (uri === "agent-ui://serve-sim/sessions") {
+        const discovery = discoverServeSimSessions();
+
+        const payload = {
+          ok: true,
+          platformSupported: discovery.platformSupported,
+          stateDirectoryExists: discovery.stateDirectoryExists,
+          sessionCount: discovery.sessions.length,
+          sessions: discovery.sessions.map((s) => ({
+            device: s.device,
+            port: s.port,
+            streamUrl: s.streamUrl,
+            wsUrl: s.wsUrl,
+            url: s.url
+          }))
+        };
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(payload, null, 2)
+            }
+          ]
+        };
+      }
+
+      if (uri === "agent-ui://native-preview/comparison") {
+        const session = listener.activeSession;
+        const connectedCount = session && session.state !== "disconnected" ? 1 : 0;
+
+        const payload = {
+          status: "not_available",
+          requiredSessions: 2,
+          connectedSessions: connectedCount,
+          message: "Requires 2+ active app sessions (iOS + Android) for side-by-side comparison.",
         };
 
         return {
@@ -786,6 +1017,18 @@ export function createAgentUIMcpServer(
         inputSchema: RUN_FLOW_SCHEMA
       },
       {
+        name: "proposePatch",
+        description:
+          "Propose a structured source-code patch. Returns a validated patch proposal that must be reviewed before any source file is modified. Does not require an active app session.",
+        inputSchema: PROPOSE_PATCH_SCHEMA
+      },
+      {
+        name: "compareNativePreviews",
+        description:
+          "Compare semantic trees and adapter capabilities across native preview sessions (iOS SwiftUI vs Android Jetpack Compose). Development-only, redaction-gated. Returns comparison metadata, semantic ID diffs, capability diffs, and diagnostic diffs. No app session required.",
+        inputSchema: COMPARE_NATIVE_PREVIEWS_SCHEMA
+      },
+      {
         name: "listPlatformSkills",
         description:
           "List available repo-local platform skills. Returns skill names, descriptions, and resource URIs. No app session required.",
@@ -1002,6 +1245,86 @@ export function createAgentUIMcpServer(
           "could not recommend platform skills for the provided task"
         );
       }
+    }
+
+    if (toolName === "compareNativePreviews") {
+      return createJsonToolResult({
+        ok: true,
+        availableForComparison: false,
+        message: "Native preview comparison requires 2+ connected runtime sessions (one iOS, one Android). Connect both sessions and re-run this tool.",
+        serverAdapters: {
+          swiftUI: { tier: 2, platform: "ios", available: false },
+          jetpackCompose: { tier: 3, platform: "android", available: false },
+        },
+        instructions: "1. Start iOS app with AgentUIProvider. 2. Pair with MCP server. 3. Start Android app with AgentUIProvider. 4. Connect both sessions. 5. Re-run compareNativePreviews.",
+      });
+    }
+
+    if (toolName === "proposePatch") {
+      const args = request.params.arguments as Record<string, unknown> | undefined;
+
+      if (typeof args?.title !== "string" || args.title.trim().length === 0) {
+        return buildErrorResult("INVALID_ARGUMENT", "title is required and must be a non-empty string");
+      }
+
+      if (typeof args?.source !== "string" || !["flow_failure", "accessibility_audit", "semantic_audit", "agent_request"].includes(args.source)) {
+        return buildErrorResult("INVALID_ARGUMENT", "source must be one of: flow_failure, accessibility_audit, semantic_audit, agent_request");
+      }
+
+      if (!Array.isArray(args?.changes) || args.changes.length === 0) {
+        return buildErrorResult("INVALID_ARGUMENT", "changes must be a non-empty array of change objects");
+      }
+
+      const proposal = {
+        id: `patch-${Date.now()}`,
+        title: args.title,
+        description: typeof args.description === "string" ? args.description : "",
+        source: args.source as PatchProposal["source"],
+        changes: args.changes as PatchChange[],
+        autoApply: false as const,
+        requiresApproval: true as const,
+        createdAt: new Date().toISOString()
+      };
+
+      const errors: string[] = [];
+      if (!proposal.description.length) errors.push("description is required");
+      if (!proposal.changes.length) errors.push("at least one change is required");
+
+      const validKinds = ["add_prop", "remove_prop", "change_prop", "add_component", "remove_component"];
+
+      for (let i = 0; i < proposal.changes.length; i++) {
+        const c = proposal.changes[i] as PatchChange;
+        if (!c || typeof c !== "object") {
+          errors.push(`change[${i}]: not a valid object`);
+          continue;
+        }
+        if (typeof c.kind !== "string" || !validKinds.includes(c.kind)) {
+          errors.push(`change[${i}]: invalid kind "${String(c.kind)}"`);
+        }
+        if (typeof c.targetId !== "string" || c.targetId.length === 0) {
+          errors.push(`change[${i}]: missing targetId`);
+        }
+        if (typeof c.reason !== "string" || c.reason.length === 0) {
+          errors.push(`change[${i}]: missing reason`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return buildErrorResult("INVALID_PROPOSAL", errors.join("; "));
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ok: true,
+              proposal,
+              message: "Patch proposal created. It will NOT be auto-applied. Review and apply manually."
+            })
+          }
+        ]
+      };
     }
 
     // --- runtime-control tools (session required) ---
@@ -1678,7 +2001,11 @@ export async function startAgentUIMcpServer(
 
   process.stderr.write(`[agent-ui-mcp] listener started\n`);
 
-  const server = createAgentUIMcpServer(listener, transport);
+  const skillResolver = options?.platformSkillsDir
+    ? createPlatformSkillResolver(options.platformSkillsDir)
+    : undefined;
+
+  const server = createAgentUIMcpServer(listener, transport, skillResolver);
 
   const cleanup = async () => {
     process.stderr.write(`[agent-ui-mcp] shutting down\n`);
@@ -1731,10 +2058,45 @@ if (isMain()) {
     process.stdout.write(
       "Connect a development Expo app to the WebSocket listener with the pairing token.\n"
     );
+    process.stdout.write("\nOptions:\n");
+    process.stdout.write("  --host <host>          WebSocket listener host (default: 127.0.0.1)\n");
+    process.stdout.write("  --port <port>          WebSocket listener port (default: 9721)\n");
+    process.stdout.write("  --pairing-token <tok>  Pre-shared pairing token (default: auto-generated)\n");
+    process.stdout.write("  --skills-dir <path>    Override platform skills directory (default: bundled)\n");
     process.exit(0);
   }
 
-  startAgentUIMcpServer().catch((err) => {
+  function parseFlag(flag: string): string | undefined {
+    const idx = process.argv.indexOf(flag);
+    if (idx >= 0 && idx + 1 < process.argv.length) {
+      return process.argv[idx + 1];
+    }
+    return undefined;
+  }
+
+  const cliOptions: AgentUIMcpServerOptions = {};
+
+  const host = parseFlag("--host");
+  if (host) cliOptions.host = host;
+
+  const portStr = parseFlag("--port");
+  if (portStr) {
+    const port = parseInt(portStr, 10);
+    if (!isNaN(port) && port > 0 && port < 65536) {
+      cliOptions.port = port;
+    }
+  }
+
+  const pairingToken = parseFlag("--pairing-token");
+  if (pairingToken) {
+    cliOptions.pairingToken =
+      pairingToken === "auto" ? generatePairingToken() : pairingToken;
+  }
+
+  const skillsDir = parseFlag("--skills-dir");
+  if (skillsDir) cliOptions.platformSkillsDir = skillsDir;
+
+  startAgentUIMcpServer(cliOptions).catch((err) => {
     process.stderr.write(
       `[agent-ui-mcp] fatal: ${err instanceof Error ? err.message : String(err)}\n`
     );

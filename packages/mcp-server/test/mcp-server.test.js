@@ -57,11 +57,12 @@ describe("Agent UI MCP server", () => {
     const tools = response.result.tools;
 
     expect(Array.isArray(tools)).toBe(true);
-    expect(tools.length).toBe(13);
+    expect(tools.length).toBe(15);
 
     const names = tools.map((t) => t.name).sort();
 
     expect(names).toEqual([
+      "compareNativePreviews",
       "getPlatformSkill",
       "getState",
       "input",
@@ -69,6 +70,7 @@ describe("Agent UI MCP server", () => {
       "listPlatformSkills",
       "navigate",
       "observeEvents",
+      "proposePatch",
       "recommendPlatformSkills",
       "runFlow",
       "scroll",
@@ -1337,7 +1339,66 @@ describe("Agent UI MCP server", () => {
     await listener.close();
   });
 
-  it("listTools returns 13 tools (9 runtime-control + 4 skill-context)", async () => {
+  it("proposePatch creates a patch proposal without requiring a session", async () => {
+    const port = uniquePort();
+    const listener = createAgentUIMcpListener({
+      port,
+      expectedPairingToken: TEST_TOKEN
+    });
+
+    await listener.start();
+
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+
+    const server = createAgentUIMcpServer(listener, serverTransport);
+
+    clientTransport.send({
+      jsonrpc: "2.0",
+      id: "31b",
+      method: "tools/call",
+      params: {
+        name: "proposePatch",
+        arguments: {
+          title: "Add semantic IDs",
+          description: "Add stable IDs to checkout form",
+          source: "semantic_audit",
+          changes: [
+            {
+              kind: "add_prop",
+              targetId: "checkout.submit",
+              propName: "id",
+              reason: "Button needs stable id"
+            }
+          ]
+        }
+      }
+    });
+
+    const response = await new Promise((resolve) => {
+      clientTransport.onmessage = resolve;
+    });
+
+    expect(response.result).toBeDefined();
+    expect(response.result.isError).toBeUndefined();
+
+    const parsed = JSON.parse(response.result.content[0].text);
+
+    expect(parsed.ok).toBe(true);
+    expect(parsed.proposal).toBeDefined();
+    expect(parsed.proposal.id).toMatch(/^patch-/);
+    expect(parsed.proposal.title).toBe("Add semantic IDs");
+    expect(parsed.proposal.source).toBe("semantic_audit");
+    expect(parsed.proposal.autoApply).toBe(false);
+    expect(parsed.proposal.requiresApproval).toBe(true);
+    expect(parsed.proposal.changes).toHaveLength(1);
+    expect(parsed.message).toContain("NOT be auto-applied");
+
+    await server.close();
+    await listener.close();
+  });
+
+  it("listTools returns 14 tools (9 runtime-control + 1 proposal + 4 skill-context)", async () => {
     const port = uniquePort();
     const listener = createAgentUIMcpListener({
       port,
@@ -1367,11 +1428,12 @@ describe("Agent UI MCP server", () => {
     const tools = response.result.tools;
 
     expect(Array.isArray(tools)).toBe(true);
-    expect(tools.length).toBe(13);
+    expect(tools.length).toBe(15);
 
     const names = tools.map((t) => t.name).sort();
 
     expect(names).toEqual([
+      "compareNativePreviews",
       "getPlatformSkill",
       "getState",
       "input",
@@ -1379,6 +1441,7 @@ describe("Agent UI MCP server", () => {
       "listPlatformSkills",
       "navigate",
       "observeEvents",
+      "proposePatch",
       "recommendPlatformSkills",
       "runFlow",
       "scroll",
@@ -1391,7 +1454,7 @@ describe("Agent UI MCP server", () => {
     await listener.close();
   });
 
-  it("all 13 tools have valid inputSchemas with type: object", async () => {
+  it("all 15 tools have valid inputSchemas with type: object", async () => {
     const port = uniquePort();
     const listener = createAgentUIMcpListener({
       port,
@@ -1418,7 +1481,7 @@ describe("Agent UI MCP server", () => {
 
     const tools = response.result.tools;
 
-    expect(tools.length).toBe(13);
+    expect(tools.length).toBe(15);
 
     for (const tool of tools) {
       expect(tool.inputSchema).toBeDefined();
@@ -1432,7 +1495,7 @@ describe("Agent UI MCP server", () => {
     await listener.close();
   });
 
-  it("all 13 tools have non-empty descriptions", async () => {
+  it("all 15 tools have non-empty descriptions", async () => {
     const port = uniquePort();
     const listener = createAgentUIMcpListener({
       port,
@@ -1495,18 +1558,26 @@ describe("Agent UI MCP server", () => {
 
     expect(response.result).toBeDefined();
     expect(Array.isArray(response.result.resources)).toBe(true);
-    expect(response.result.resources.length).toBeGreaterThanOrEqual(13);
+    expect(response.result.resources.length).toBeGreaterThanOrEqual(14);
 
     const uris = response.result.resources.map((r) => r.uri).sort();
 
     expect(uris).toContain("agent-ui://sessions");
     expect(uris).toContain("agent-ui://diagnostics");
+    expect(uris).toContain("agent-ui://serve-sim/sessions");
 
     const sessionsRes = response.result.resources.find((r) => r.uri === "agent-ui://sessions");
 
     expect(sessionsRes).toBeDefined();
     expect(sessionsRes.name).toBe("Sessions");
     expect(sessionsRes.mimeType).toBe("application/json");
+
+    const serveSimRes = response.result.resources.find((r) => r.uri === "agent-ui://serve-sim/sessions");
+
+    expect(serveSimRes).toBeDefined();
+    expect(serveSimRes.name).toBe("Serve-Sim Sessions");
+    expect(serveSimRes.mimeType).toBe("application/json");
+    expect(serveSimRes.description).toContain("serve-sim");
 
     await server.close();
     await listener.close();
@@ -1593,6 +1664,55 @@ describe("Agent UI MCP server", () => {
     expect(parsed.server.version).toBe("0.0.0");
     expect(parsed.listener).toBeDefined();
     expect(parsed.listener.state).toBe("listening");
+
+    await server.close();
+    await listener.close();
+  });
+
+  it("ReadResource for serve-sim/sessions URI returns discovery result", async () => {
+    const port = uniquePort();
+    const listener = createAgentUIMcpListener({
+      port,
+      expectedPairingToken: TEST_TOKEN
+    });
+
+    await listener.start();
+
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+
+    const server = createAgentUIMcpServer(listener, serverTransport);
+
+    clientTransport.send({
+      jsonrpc: "2.0",
+      id: "38",
+      method: "resources/read",
+      params: {
+        uri: "agent-ui://serve-sim/sessions"
+      }
+    });
+
+    const response = await new Promise((resolve) => {
+      clientTransport.onmessage = resolve;
+    });
+
+    expect(response.result).toBeDefined();
+    expect(response.result.contents).toBeDefined();
+    expect(response.result.contents.length).toBe(1);
+    expect(response.result.contents[0].mimeType).toBe("application/json");
+
+    const parsed = JSON.parse(response.result.contents[0].text);
+
+    expect(parsed.ok).toBe(true);
+    expect(typeof parsed.platformSupported).toBe("boolean");
+    expect(typeof parsed.stateDirectoryExists).toBe("boolean");
+    expect(typeof parsed.sessionCount).toBe("number");
+    expect(Array.isArray(parsed.sessions)).toBe(true);
+
+    // On non-macOS (Windows CI), platformSupported is false and sessions is empty.
+    // On macOS without serve-sim running, sessions is empty.
+    // Both are valid — we verify the shape, not platform-specific behavior.
+    expect(parsed.sessionCount).toBe(parsed.sessions.length);
 
     await server.close();
     await listener.close();

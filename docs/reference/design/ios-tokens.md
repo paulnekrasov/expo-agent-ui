@@ -2,6 +2,7 @@
 
 Status: inspiration only
 Product stage: Stage 2 - Component Primitives, Stage 7 - Expo UI Adapter
+Counterpart: `design/android-tokens.md` (Material Design 3 tokens)
 
 The old parser project collected iOS visual guidance for touch targets, typography, and semantic
 colors. Expo Agent UI should keep the useful taste-level rules while implementing them through

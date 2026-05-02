@@ -1,3 +1,466 @@
+# REVIEW REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 8 - Agent Skill
+Product Stage: Stage 8 - Agent Skill (SKILL.md + references + examples + scripts)
+Task status: DONE
+
+## Platform Skill Distribution Fix (carried forward)
+
+Class: `ACTIVE_STAGE_GAP` | Priority: `High` | Cross-stage (5/8/10)
+- Bundled 125 skill files into `dist/skills/` via build script
+- Changed default resolver path from monorepo-relative to package-relative
+- Red/green: `platform-skills-dist.test.js` 7 tests, all pass
+
+## Stage 8 — Agent Skill
+
+Class: `ACTIVE_STAGE_GAP` | Priority: `High` | Stage 8
+
+Created full `skills/expo-agent-ui/` with:
+
+| File | Content |
+|---|---|
+| `SKILL.md` | YAML frontmatter + progressive disclosure body |
+| `references/components.md` | 19 components, full prop tables |
+| `references/semantics.md` | SemanticNode schema, roles, actions, ID conventions |
+| `references/tools.md` | 13 MCP tools with JSON schemas, error codes |
+| `references/flows.md` | Flow JSON schema, 7 step types, security gate |
+| `references/patching.md` | Patch proposal schema, 5 change kinds |
+| `examples/checkout-screen.tsx` | 7 fields, 2 sections, AgentUIProvider |
+| `examples/settings-screen.tsx` | Toggle/Picker/Slider/Section/Button |
+| `scripts/validate-semantic-ids.js` | Zero-dep validator, ERROR/WARN output, exit 1 on errors |
+
+### Red (subagent bugs caught during review)
+- Toggle used `checked` instead of `value` (caught vs `AgentUIToggleProps`)
+- `AgentUIProvider` used nonexistent `sessionId`/`pairingToken` props
+- Picker options missing required `id` field (caught vs `AgentUIPickerOption`)
+
+### Green
+- All 3 bugs fixed
+- Verification: typecheck 5/5, build 5/5, test 338 total, audit 0 vulns, git diff clean
+
+### Deferred
+- `examples/flow.json` not created by subagent
+- Skill not tested with real agent host
+- Progressive disclosure not validated with real tasks
+
+## Findings
+
+No blocking findings for the Stage 7 Slice 7.3 implementation.
+
+## Verified
+
+- `packages/core/src/swift-ui.ts`:
+  - `agentUISwiftUICapabilityDefaults` (immutable defaults) and `agentUISwiftUICapabilities` (mutable copy).
+  - `populateAgentUISwiftUICapabilities(available)` iterates all 14 capability keys and sets to `available`.
+  - `resetAgentUISwiftUICapabilities()` restores each key from defaults.
+  - `detectAgentUISwiftUINativeModule()` calls `populateAgentUISwiftUICapabilities(false)` on wrong platform or catch, `populateAgentUISwiftUICapabilities(true)` on success.
+  - `refreshAgentUISwiftUIAdapter()` calls `resetAgentUISwiftUICapabilities()` in addition to clearing detection cache.
+  - Adapter instance uses `capabilities: agentUISwiftUICapabilities` (direct reference, not spread copy).
+- `packages/core/src/jetpack-compose.ts`:
+  - Same pattern: `defaultComposeCapabilityDefaults`, `defaultComposeCapabilities` (mutable), `populateAgentUIComposeCapabilities`, `resetAgentUIComposeCapabilities`.
+  - Detection and refresh integrated with capability population/reset.
+  - Adapter instance uses `capabilities: defaultComposeCapabilities` (direct reference).
+- Tests (`packages/example-app/app/native-adapters.test.tsx`, 20 new tests, 66 total):
+  - Remaining SwiftUI render tests: TextField (2), SecureField (2), Slider (2), Picker (2) — all render + testID pass-through.
+  - Remaining Compose render tests: TextField (2), Slider (2) — all render + testID pass-through.
+  - Capability mapping SwiftUI: reference identity, all flags false before detection, false after failed detection, refresh resets to false (4 tests).
+  - Capability mapping Compose: same 4 tests.
+- No plan drift. Stage boundaries preserved. No `@expo/ui` imports in source.
+- No old parser, tree-sitter, WASM, VS Code, Canvas renderer imports.
+
+## TDD Red-Green Evidence
+
+- Red: Not applicable — capability mapping and render tests added to existing green test suite.
+- Green: All 374 tests pass on first post-implementation run (316 example-app + 58 mcp-server).
+- Typecheck, build, and audit all pass.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 374 total (316 example-app + 58 mcp-server)
+- audit: 0 vulnerabilities
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Capability flags are set uniformly (all true on detection success, all false otherwise). Individual per-control flag mapping from actual module API inspection deferred.
+- No `@expo/ui` installation — detection always returns false in test environments.
+- Console warns in dev mode for all adapter component renders (expected behavior).
+- EAS build docs are reference-only; no actual eas.json in workspace.
+- Native fixture testing deferred.
+- Stage 7 is now COMPLETE. Next: Stage 8 — Agent Skill.
+
+---
+# REVIEW REPORT
+
+## Platform Skill Distribution Fix — 2026-05-02
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `High`
+- Stage: Cross-stage (5/8/10 — MCP Server, Agent Skill, Publish Readiness)
+- Root cause: `createPlatformSkillResolver` default path resolved to `docs/reference/agent/` via a relative monorepo path (`../../../docs/reference/agent`). When `@agent-ui/mcp-server` is installed via npm, `__dirname` points to `node_modules/@agent-ui/mcp-server/dist/` and the relative path resolves nowhere. `getPlatformSkill` and platform skill MCP resources silently fail with `RESOURCE_READ_FAILED`.
+
+### Red evidence
+- Test: `platform-skills-dist.test.js` — resolver pointed at nonexistent directory returns `RESOURCE_READ_FAILED` for both `readUri` and `getSkillContent`.
+- Test: `platform-skills-dist.test.js` — path traversal is blocked (nonexistent URI returns `RESOURCE_NOT_FOUND`).
+
+### Fix
+- Created `packages/mcp-server/scripts/copy-skills.js`: copies `docs/reference/agent/platform-skills/` + `platform-skill-routing.md` + `platform-skill-mcp-surface.md` into `dist/skills/` during build (125 files).
+- Updated `packages/mcp-server/package.json`:
+  - `build` script: `tsc -p tsconfig.json && node scripts/copy-skills.js`
+  - `files` field: added `dist/skills`
+- Changed default resolver path in `packages/mcp-server/src/cli.ts` from `pathResolve(__dirname, "../../../docs/reference/agent")` to `pathResolve(__dirname, "skills")`.
+- `startAgentUIMcpServer` now passes `--skills-dir` CLi option through to `createAgentUIMcpServer` as a custom resolver.
+- `isMain()` parses `--skills-dir`, `--host`, `--port`, `--pairing-token` CLI flags.
+
+### Green evidence
+- `platform-skills-dist.test.js`: 7 new tests — 2 red (missing dir → error), 5 green (bundled dir → content found for index, routing, mcp-surface, systematic-debugging skill, path-traversal prevention).
+- Existing tests unchanged: all 51 mcp-server tests continue to pass with the new default resolver path.
+- `getPlatformSkill("systematic-debugging")` resolves through `dist/skills/platform-skills/systematic-debugging/SKILL.md`.
+
+### Broad verification
+- `npm run typecheck`: 5/5 packages pass.
+- `npm run build`: 5/5 packages pass (mcp-server build includes copy-skills, 125 files).
+- `npm test`: 338 total tests pass (58 mcp-server + 280 example-app).
+- `npm audit`: 0 vulnerabilities.
+- `git diff --check`: clean.
+
+### Design decision
+Skills ship inside the published npm package at `dist/skills/`. The default resolver finds them automatically. Users do not need `--skills-dir` unless they want to override with a custom path. The `--skills-dir` flag remains available for development overrides.
+
+### Residual risk
+- The copy script reads from `docs/reference/agent/` relative to the monorepo root. If that directory structure changes, the script needs updating. This is a build-time concern, not a runtime concern.
+
+Originally:
+
+
+## Findings
+
+No blocking findings for the Stage 7 Slice 7.2 implementation.
+
+## Verified
+
+- `packages/core/src/swift-ui.ts`:
+  - `Platform` import added to react-native named imports (line 2).
+  - `_agentUISwiftUIDetectionRun` and `_agentUISwiftUIDetectionResult` module-level cache state.
+  - `detectAgentUISwiftUINativeModule()`: checks `Platform.OS !== "ios"` (short-circuit), tries `require("@expo/ui/swift-ui")` in try/catch, returns boolean, lazy-cached.
+  - `refreshAgentUISwiftUIAdapter()`: resets detection state for test isolation.
+  - `agentUISwiftUIAdapter.isAvailable()` now calls `detectAgentUISwiftUINativeModule()` instead of returning `false`.
+  - Host sizing JSDoc block added above adapter instance documenting `matchContents`, `flex: 1`, and `useViewportSizeMeasurement` conventions.
+  - `requiresHost: true` JSDoc added.
+- `packages/core/src/jetpack-compose.ts`:
+  - `Platform` import added (line 2).
+  - `_agentUIComposeDetectionRun` and `_agentUIComposeDetectionResult` module-level cache state.
+  - `detectAgentUIComposeNativeModule()`: checks `Platform.OS !== "android"` (short-circuit), tries `require("@expo/ui/jetpack-compose")` in try/catch, lazy-cached.
+  - `refreshAgentUIComposeAdapter()`: resets detection state.
+  - `agentUIComposeAdapter.isAvailable()` now calls `detectAgentUIComposeNativeModule()`.
+  - Host sizing JSDoc block added with Compose-specific conventions.
+- `packages/core/src/index.ts`:
+  - 4 new value exports: `detectAgentUISwiftUINativeModule`, `refreshAgentUISwiftUIAdapter`, `detectAgentUIComposeNativeModule`, `refreshAgentUIComposeAdapter`.
+  - No duplicate type re-export issues.
+- `packages/mcp-server/src/cli.ts`:
+  - `nativeAdapters` diagnostics: enhanced `availability` descriptions (lazy caching behavior), `detectionMethod: "dynamic-require"` per adapter, `EAS_GRADLE_CACHE=1` note in Compose section.
+  - Summary `detectionMethod` field added.
+- `docs/reference/expo/eas-native-preview.md`:
+  - New "EAS Development Build Configuration" section with 4 sub-sections: iOS SwiftUI Development Build (eas.json profile + key points), Android Compose Development Build (eas.json profile + key points), Development Build Requirements (6-item checklist), Verifying Gradle Cache (cache verification instructions).
+  - JSON snippets valid, key points factually correct.
+- Tests (`packages/example-app/app/native-adapters.test.tsx`, 20 new tests, 46 total in file):
+  - `detectAgentUISwiftUINativeModule`: returns boolean, false in Jest, no-throw on repeat, cached result (4 tests).
+  - `detectAgentUIComposeNativeModule`: same 4 tests.
+  - `refreshAgentUISwiftUIAdapter`: exists as function, resets state, no-throw (3 tests).
+  - `refreshAgentUIComposeAdapter`: exists as function, resets state, no-throw (3 tests).
+  - `isAvailable() uses detection`: both adapters' isAvailable() matches raw detection result (2 tests).
+  - Existing `isAvailable()` tests refreshed to call refresh before assertion (2 tests updated).
+- No plan drift. Stage boundaries preserved. No `@expo/ui` imports in source.
+- No old parser, tree-sitter, WASM, VS Code, Canvas renderer imports.
+
+## TDD Red-Green Evidence
+
+- Red: Tests written first before detection implementation (agent 3 launched before agent 1).
+- Green: After agent 1 implemented detection functions and agent 3 added tests, all 347 tests pass (296 example-app + 51 mcp-server).
+- Typecheck, build, and audit all pass on first post-implementation run.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 347 total (296 example-app + 51 mcp-server)
+- audit: 0 vulnerabilities
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Capability flags remain all false (detection confirms module presence but individual flag mapping is deferred to Slice 7.3).
+- Component factories render React Native fallbacks only. Native renderer injection deferred.
+- Remaining component factory render tests (TextField, SecureField, Slider, Picker for SwiftUI; TextField, Slider for Compose) deferred.
+- No `@expo/ui` installation or native module compilation in this workspace.
+- EAS build docs are reference-only; no actual eas.json in workspace.
+- Console warns in dev mode for all adapter component renders (expected behavior).
+
+---
+# REVIEW REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 7 - Expo UI Adapter
+Product Stage: Stage 7 - Expo UI Adapter (Slice 7.1 — Native Adapter Contracts & Component Factories)
+Task status: DONE
+
+## Findings
+
+No blocking findings for the Stage 7 Slice 7.1 implementation.
+
+## Verified
+
+- `packages/core/src/swift-ui.ts`:
+  - `AgentUISwiftUIAdapter` interface: tier, platform, name, capabilities, isAvailable(), isExpoGo(), requiresHost.
+  - `AgentUISwiftUIAdapterCapabilities` interface: 14 capability flags (button, toggle, textField, secureField, slider, picker, host, rnHostView, list, form, section, bottomSheet, popover, menu).
+  - `agentUISwiftUIAdapter` instance: tier 2, platform "ios", all caps false, requiresHost true.
+  - 6 component factories: Button, Toggle, TextField, SecureField, Slider, Picker — each returns React.memo component that falls back to React Native View/Text with semantic registration.
+  - Semantic primitive builder `buildSemanticPrimitive` with valid `AgentUIPrimitiveRole` values.
+  - Safe runtime lookup via `useSafeRuntime()` — doesn't crash outside AgentUIProvider.
+  - All 6 components pass `noImplicitReturns` (explicit `return;` in useEffect callbacks).
+- `packages/core/src/jetpack-compose.ts`:
+  - `AgentUIComposeAdapter` interface: tier 3, platform "android", 29 capability flags covering all documented Compose controls.
+  - `agentUIComposeAdapter` instance: tier 3, platform "android", all caps false, requiresHost true.
+  - 4 component factories: Button (Pressable + Text), TextField (TextInput), Switch (Switch + Text), Slider (View + value text).
+  - Each component warns in development when native adapter unavailable.
+  - Clean removal of duplicate `agentUINativeAdapters` / `listAgentUINativeAdapters` exports (avoiding re-export collision with index.ts).
+- `packages/core/src/index.ts`:
+  - Exports 7 SwiftUI adapter values + 7 SwiftUI adapter types (+ shared tier/platform types).
+  - Exports 5 Compose adapter values + 7 Compose adapter types (column/row/box included).
+  - Native adapter registry: `AgentUINativeAdapter` union type, `agentUINativeAdapters` readonly array, `listAgentUINativeAdapters()`, `resolveAgentUINativeAdapter()`.
+  - `AgentUICapability` extended with `"expo-ui-adapter"`.
+  - `getAgentUIPackageManifest()` lists `"expo-ui-adapter"` in implementedCapabilities.
+  - Duplicate type re-exports resolved: `AgentUINativeAdapterTier`/`AgentUINativeAdapterPlatform` only from swift-ui.
+- `packages/mcp-server/src/cli.ts`:
+  - `nativeAdapters` diagnostics section: SwiftUI (tier 2, 7 components) + Jetpack Compose (tier 3, 10 components) adapter metadata, plus summary with availability notes.
+  - Hardcoded inline (no React Native import).
+- Tests (`packages/example-app/app/native-adapters.test.tsx`, 30 new tests):
+  - SwiftUI adapter: tier, platform, name, capabilities (14 keys), isAvailable(), requiresHost (6 tests).
+  - SwiftUI Button: component type, render, testID pass-through (3 tests).
+  - SwiftUI Toggle: render fallback (1 test).
+  - Compose adapter: tier, platform, name, capabilities (4 keys), isAvailable(), requiresHost (6 tests).
+  - Compose Button: component type, render, testID pass-through (3 tests).
+  - Compose Switch: render fallback (1 test).
+  - Registry: count, ordering, platform specificity, capability isolation (5 tests).
+  - listAgentUINativeAdapters: unfiltered, ios filter, android filter (3 tests).
+  - resolveAgentUINativeAdapter: ios resolution, android resolution (2 tests).
+- No plan drift. Stage boundaries preserved. No `@expo/ui` imports in source.
+- No old parser, tree-sitter, WASM, VS Code, Canvas renderer imports.
+
+## TDD Red-Green Evidence
+
+- Red: initial core typecheck failed on 6× TS2379 (exactOptionalPropertyTypes) + 6× TS7030 (noImplicitReturns in useEffect) + 5× duplicate type re-export collisions.
+- Fix: Changed buildSemanticPrimitive param types to `string | undefined` (not `string?`), added `return;` to all useEffect callbacks, removed duplicate `AgentUINativeAdapterTier`/`AgentUINativeAdapterPlatform` from swift-ui re-exports, removed duplicate registry exports from jetpack-compose.ts.
+- Red: example-app typecheck failed (TS2724/TS2305 missing exports) because core dist was stale.
+- Fix: rebuilt @agent-ui/core.
+- Red: 2 test failures — `typeof react.memo component` was `"object"`, not `"function"`.
+- Fix: changed test assertions to `expect(typeof Component).toBe("object")`.
+- Green: typecheck 5/5, build 5/5 (incl. Android export), 331 total tests (280 example-app + 51 mcp-server), 0 audit vulns, git diff --check clean.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 331 total (280 example-app + 51 mcp-server)
+- audit: 0 vulnerabilities
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Native adapters remain stubs: all capabilities false, isAvailable() returns false. Actual native module detection deferred.
+- Component factories render React Native fallbacks only. Native renderer injection (via `nativeRenderer` prop) deferred to consumer wiring.
+- No `@expo/ui` installation or native module compilation in this workspace.
+- Console warns in dev mode for every adapter component render (expected behavior, not errors).
+- EAS build profiles, Gradle cache, and native fixture testing deferred to later Stage 7 slices or Stage 9.
+
+---
+# REVIEW REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 6 - Motion Layer
+Product Stage: Stage 6 - Motion Layer (Slice 6.3 — Native Motion Mapping Documentation)
+Task status: DONE
+
+## Findings
+
+No blocking findings for the Stage 6 Slice 6.3 implementation.
+
+## Verified
+
+- `packages/core/src/motion.ts`:
+  - `AgentUIMotionPresetName` type: union of 11 preset identifiers covering all presets.
+  - `AgentUIMotionNativePresetMapping` interface: agentUIPreset, nativeAPI, capabilityRequired, tier, platform, notes.
+  - `agentUISwiftUIMotionPresets`: 11 entries covering every preset mapped to SwiftUI native APIs. All entries tier 2, platform ios.
+  - `agentUIComposeMotionPresets`: 11 entries covering every preset mapped to Compose native APIs. All entries tier 3, platform android.
+  - `agentUINativeMotionMatrix`: flat readonly array of 22 entries (11 SwiftUI + 11 Compose).
+  - All capabilityRequired values validated against AgentUIMotionAdapterCapabilities keys.
+  - No runtime Reanimated imports. Pure contract types and data.
+- `packages/core/src/index.ts`:
+  - Exports 3 new values: agentUISwiftUIMotionPresets, agentUIComposeMotionPresets, agentUINativeMotionMatrix.
+  - Exports 2 new types: AgentUIMotionPresetName, AgentUIMotionNativePresetMapping.
+- `packages/mcp-server/src/cli.ts`:
+  - Diagnostics resource includes `motion` section: adapter inventory (3 adapters with tier/platform/name/availability/capabilityCount), preset mapping counts (22 total), strategy metadata.
+  - No runtime core imports added (data hardcoded inline).
+  - CLI help probe still works.
+- Tests (`packages/example-app/app/motion.test.tsx`, 16 new tests):
+  - SwiftUI mapping: entry count, tier/platform consistency, nativeAPI, capabilityRequired validity, preset coverage, notes (6 tests).
+  - Compose mapping: entry count, tier/platform consistency, nativeAPI, capabilityRequired validity, preset coverage, notes (6 tests).
+  - Native matrix: count, first/second halves, equality with sum (4 tests).
+- No plan drift. Stage boundaries preserved.
+- reanimated-4.md already contains three-tier strategy (verified).
+- All 5 typecheck pass. All 5 build pass (incl. Android). 301 tests (250 example-app + 51 mcp-server). 0 audit vulns. git diff --check clean.
+
+## TDD Red-Green Evidence
+
+- Red: initial typecheck failed on missing core exports (3 TS2724/TS2305) and implicit any (2 TS7006). Core needed rebuild.
+- Fix: rebuilt @agent-ui/core; added parameter types to map callbacks.
+- Green: typecheck 5/5, tests 301/301.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 301 total (250 example-app + 51 mcp-server)
+- audit: 0 vulnerabilities
+- CLI help: 0
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Native mapping entries are documentation contracts. Stage 7 wires native module calls.
+- MCP diagnostics motion data is hardcoded inline to avoid React Native dependency.
+- Tier 2/3 adapters remain stubs (isAvailable() returns false). Implementation is Stage 7.
+- `createAgentUIMotionEvent` maps to `reducedMotion` capability (best-fit among base flags).
+
+---
+
+# REVIEW REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 6 - Motion Layer
+Product Stage: Stage 6 - Motion Layer (Slice 6.2 — Native Motion Adapter Contracts)
+Task status: DONE
+
+## Findings
+
+No blocking findings for the Stage 6 Slice 6.2 implementation.
+
+## Verified
+
+- packages/core/src/motion.ts (adapter section appended at end of file):
+  - AgentUIMotionAdapterTier type: 1 | 2 | 3.
+  - AgentUIMotionAdapterPlatform type: "cross" | "ios" | "android".
+  - AgentUIMotionAdapterCapabilities interface: 8 base flags (spring, timing, opacity, slide, scale, layout, gesture, reducedMotion), 5 iOS-specific optional flags, 4 Android-specific optional flags.
+  - AgentUIMotionAdapter interface: tier, platform, name, capabilities, isAvailable().
+  - gentUIReanimatedAdapter: tier 1, cross, always available, all base capabilities.
+  - gentUISwiftUIMotionAdapter: tier 2, ios, unavailable by default, 5 iOS-specific capabilities.
+  - gentUIComposeMotionAdapter: tier 3, android, unavailable by default, 4 Android-specific capabilities.
+  - gentUIMotionAdapters: readonly array of all 3 adapters in tier order.
+  - listAgentUIMotionAdapters({ platform? }): filters available adapters; respects platform match.
+  - esolveAgentUIMotionAdapter(platform?): resolves highest-tier available adapter; falls back to Tier 1.
+  - No runtime Reanimated imports. All adapters are pure contract objects.
+  - No imports of @expo/ui, Expo Router, React Navigation, tree-sitter, WASM, VS Code, or Canvas renderer code.
+- packages/core/src/index.ts:
+  - Exports 7 new values and 4 new types for adapters.
+  - Total motion exports: 22 values, 14 types.
+- Tests (packages/example-app/app/motion.test.tsx, 34 new adapter tests, 75 total motion tests):
+  - Reanimated adapter: shape, availability, capabilities (6 tests).
+  - SwiftUI adapter: shape, availability, iOS-specific capabilities (7 tests).
+  - Compose adapter: shape, availability, Android-specific capabilities (7 tests).
+  - Resolution: fallback, native availability, platform routing (7 tests).
+  - listAgentUIMotionAdapters: platform filter, availability switching (5 tests).
+  - agentUIMotionAdapters registry: shape and ordering (2 tests).
+- No plan drift. Stage boundaries preserved. No future-stage implementation introduced.
+- All 5 typecheck entries pass. All 5 build entries pass (including Android export). 234 total tests pass (183 example-app + 51 mcp-server). 0 audit vulns. git diff --check clean.
+
+## TDD Red-Green Evidence
+
+- Red: initial typecheck failed — core needed rebuild before example-app could see new exports (6 TS2305 errors).
+- Fix: built @agent-ui/core first, reran typecheck.
+- Red: typecheck failed on readonly array index access — TS2532 "Object is possibly 'undefined'" on 16 lines in adapter tests.
+- Fix: added ! non-null assertions to all readonly array accesses.
+- Green: typecheck 5/5, tests 234/234.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 234 total (183 example-app + 51 mcp-server)
+- audit: 0 vulnerabilities
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Native adapters (Tier 2 SwiftUI, Tier 3 Compose) are stub contracts only; isAvailable() returns false by default. Implementation is Stage 7.
+- Motion configs are pure data factories. No Reanimated runtime tests possible without installing Reanimated in the workspace.
+- Adapter capability flags cover the documented native motion surfaces; new capabilities may be added as native mapping research progresses (Slice 6.3).
+
+---
+# REVIEW REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 6 - Motion Layer
+Product Stage: Stage 6 - Motion Layer (Slice 6.1 — Reanimated Cross-Platform Base)
+Task status: DONE
+
+## Findings
+
+No blocking findings for the Stage 6 Slice 6.1 implementation.
+
+## Verified
+
+- `packages/core/src/motion.ts`:
+  - 3 spring presets: `agentUISpring()` (duration 420ms, dampingRatio 1), `agentUIBouncy()` (damping 12, stiffness 200), `agentUISnappy()` (damping 18, stiffness 400). All default `reduceMotion: "system"`, all accept overrides.
+  - 2 timing presets: `agentUIEaseInOut()` (300ms, easeInOut), `agentUIGentle()` (180ms, easeOut). Both default `reduceMotion: "system"`.
+  - Reduced motion: `AgentUIReducedMotion` type (`"system" | "reduce" | "never"`), `resolveAgentUIReducedMotion()` (async, wraps `AccessibilityInfo.isReduceMotionEnabled()` with error handling), `effectiveAgentUIReducedMotion()` (resolves policy), `resetAgentUIReducedMotionCache()` (test isolation).
+  - 3 transition presets: `agentUIOpacityTransition()` (200ms, easeOut), `agentUISlideTransition()` (250ms, easeInOut, default edge "bottom"), `agentUIScaleTransition()` (200ms, easeOut, fromScale 0.96). All default `reduceMotion: "system"`.
+  - 1 layout transition: `agentUILayoutTransitionSmooth()` (250ms, type "smooth").
+  - 1 gesture helper: `agentUIGestureConfig()` with 6 strategies (pressable, pan, drag, swipe, pinch, longPress) and strategy-specific defaults.
+  - 1 motion event factory: `createAgentUIMotionEvent()` with 5 event types (`animation_started`, `animation_completed`, `animation_interrupted`, `gesture_committed`, `transition_committed`), ISO-8601 timestamps, optional reason.
+  - 2 validators: `isValidAgentUIMotionSpringConfig()`, `isValidAgentUIMotionTimingConfig()`.
+  - No runtime Reanimated imports. All presets return plain config objects.
+  - No imports of `@expo/ui`, Expo Router, React Navigation, tree-sitter, WASM, VS Code, or Canvas renderer code.
+- `packages/core/src/index.ts`:
+  - Exports all motion types (10 types), all motion functions (16 functions).
+  - Manifest updated: `motion-layer` moved from `deferredCapabilities` to `implementedCapabilities`. `deferredCapabilities` is now empty.
+- Tests (`packages/example-app/app/motion.test.tsx`, 41 tests):
+  - Spring preset default shapes and override behavior (6 tests).
+  - Timing preset default shapes and override behavior (4 tests).
+  - Transition preset default shapes and override behavior (5 tests).
+  - Layout transition preset defaults and overrides (2 tests).
+  - Gesture config defaults and overrides for all 6 strategies (7 tests).
+  - Reduced motion effective policy (3 tests).
+  - Reduced motion resolver with mocked AccessibilityInfo (3 tests).
+  - Motion event creation for all 5 event types (7 tests).
+  - Validation functions for valid/invalid configs (12 tests).
+- Example app demo screen (`packages/example-app/app/motion-demo.tsx`):
+  - Renders all preset configs as JSON for visual inspection.
+  - Displays current manifest capabilities.
+- No plan drift. Stage boundaries preserved. No future-stage adapter work introduced.
+- All 5 typecheck entries pass. All 5 build entries pass (including Android export). 200 total tests pass. 0 audit vulns. CLI help exits 0. git diff --check clean.
+
+## TDD Red-Green Evidence
+
+- Red: initial typecheck failed on motion-demo.tsx — invalid `variant` values ("code", "subtitle") and direct `as Record<string, unknown>` casts failing overlap checks.
+- Fix: changed to `variant="headline"` and `as unknown as Record<string, unknown>` (established pattern in codebase).
+- Red: test failure — `resolveAgentUIReducedMotion` cached first result, second test got stale cached `false`.
+- Fix: added `resetAgentUIReducedMotionCache()` export, called in test `beforeEach`.
+- Green: typecheck 5/5, tests 200/200.
+
+## Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 200 total (149 example-app + 51 mcp-server)
+- audit: 0 vulnerabilities
+- CLI help: 0
+- git diff --check: 0
+
+## Limitations And Follow-Ups
+
+- Motion configs are pure data factories. No Reanimated runtime tests possible without installing Reanimated in the workspace.
+- Reduced motion resolver caches result asynchronously; cache reset function available for test isolation.
+- Native motion adapter contracts (Slice 6.2) — next task. Native adapter implementations (iOS SwiftUI, Android Compose) — Stage 7.
+- Native motion mapping documentation (Slice 6.3) — deferred.
+
 ---
 # DEEP DEBUGGING REPORT
 Reviewer session date: 2026-05-01
@@ -2460,3 +2923,274 @@ None.
 ## Remaining Concerns
 
 - Expo SDK 55.0.18 vs ~55.0.19 patch drift (expo-doctor 17/18).
+
+---
+
+# REVIEW REPORT — Stage 9 Completion
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 9 - Flow Runner, Patch Proposals, And Native Preview Comparison
+Product Stage: Stage 9 (all 4 slices)
+Task status: DONE
+
+## Scope
+
+- Packages reviewed: `packages/core`, `packages/mcp-server`, `packages/cli`, `packages/example-app`
+- Docs reviewed: PROJECT_BRIEF.md, INDEX.md, STAGE 9 reference set (maestro, security, testing, native-testing, cloud-flows, EAS-native-preview)
+- Skills loaded: systematic-debugging
+- Commands run: typecheck (5/5), build (5/5), test (473 total), audit (0 vulns), git diff --check (clean)
+- Runner limitations: none
+
+## Stage 9 Findings
+
+### BUG — Fixed: flows.test.tsx type errors (3 occurrences)
+- Class: `BUG`
+- Priority: `High`
+- Stage: Stage 9.1
+- File: `packages/example-app/app/flows.test.tsx:160, 432, 460`
+- Evidence: Typecheck failed with TS2322 (WaitCondition kind type mismatch) and TS2345 (Promise<unknown> not assignable to StepDispatcher return type)
+- Root cause: Inline object literals with string-typed kind; async dispatch functions without explicit return type
+- Fix: Added `as const` assertion to `kind: "nodeExists"` on line 160; added explicit `Promise<{ ok: boolean; error?: string }>` return type to dispatch functions on lines 421 and 449
+- Red/Green: Typecheck failed before fix (example-app only), passed after fix (all 5 packages). All 380 example-app tests pass.
+- Residual risk: None
+
+### ACTIVE_STAGE_GAP — None
+No active-stage gaps found. All 4 slices fully implemented against acceptance criteria.
+
+## Verified
+
+- `packages/core/src/flows.ts`: 6 types (WaitConditionKind, WaitCondition, SemanticFlowStepType, SemanticFlowStep, SemanticFlow, FlowRunnerResult), 5 functions (isValidFlowStepType, validateFlowStep, validateFlow, stepRequiresApproval, createFlowRunner). Step validation covers all 7 types with per-type required field checks. Flow runner supports stopOnFailure, per-step timeout, and structured error reporting.
+- `packages/core/src/patching.ts`: 4 types (PatchChangeKind, PatchChange, PatchProposal, PatchValidationResult), 5 functions (isValidPatchChangeKind, validatePatchChange, validatePatchProposal, createPatchProposal, mergePatchProposals). All validation returns string | null. createPatchProposal enforces autoApply: false.
+- `packages/core/src/bridge.ts`: Added "runFlow" to capability, command type, default capabilities, request/response interfaces, command unions, validation, response factory, dispatch case. No @expo/ui imports.
+- `packages/core/src/index.ts`: Exports all flow types (6) and values (5), patching types (4) and values (5). No duplicate exports.
+- `packages/cli/src/commands/export-maestro.ts`: generateMaestroYaml maps 7 step types to Maestro YAML (tapOn, inputText, swipe, assertVisible, assertNotVisible, launchApp). exportFlowToMastero reads JSON, validates, writes YAML. Fixture values ($CARD_FIXTURE) preserved with $FIXTURE: prefix.
+- `packages/cli/src/commands/maestro-run.ts`: runMaestroFlow returns MAESTRO_UNAVAILABLE when maestro CLI not installed. Correct fail-closed behavior.
+- `packages/cli/src/commands/maestro-heal.ts`: generateHealProposals returns HealProposal[] with helpful guidance for failed selectors.
+- `packages/cli/src/index.ts`: Imports and exports all 3 command modules + types. Manifest updated.
+- `packages/mcp-server/src/native-preview.ts`: 6 types (NativePreviewPlatform, NativePreviewCapabilityFlags, NativePreviewAdapterInfo, NativePreviewSessionDiagnostics, SemanticIdDiff, CapabilityDiff, DiagnosticDiff, SideBySideComparison), 4 functions (computeCapabilityDiff, computeSemanticIdDiff, computeDiagnosticDiff, createSideBySideComparison). All pure functions.
+- `packages/mcp-server/src/cli.ts`: Added proposePatch tool (schema + handler, 14th tool), compareNativePreviews tool (schema + handler, 15th tool), agent-ui://native-preview/comparison resource. All tools no-session or session-gated correctly. No React Native imports.
+- `packages/mcp-server/src/manifest.ts`: implementedTools updated to include proposePatch and compareNativePreviews.
+- Tests: 45 flows.test.tsx, 22 cli-maestro.test.js, 20 patching.test.tsx, 10 native-preview.test.js, 2 mcp-server.test.js tool additions = 99 new tests.
+- No plan drift. No @expo/ui imports in core. No old parser assets.
+- Stage boundaries preserved. Native preview comparison is development-only and semantic-first.
+
+## TDD Red-Green Evidence
+
+- **Red**: 3 type errors in flows.test.tsx (TS2322 x1, TS2345 x2) after Agent 1 implementation.
+- **Green**: All 3 fixed with minimal type annotations. Typecheck 5/5, 473 tests pass.
+- Broader evidence: All 4 agent implementations produced typecheck-clean code on first review. Pre-existing native-preview.ts exactOptionalPropertyTypes errors were fixed independently by 2 agents (convergent fix).
+
+## Final Verification
+
+- typecheck (5/5): 0
+- build (5/5, including Android export): 0
+- test: 473 total (380 example-app + 71 mcp-server + 22 cli)
+- audit: 0 vulnerabilities
+- git diff --check: 0
+
+## Remaining Concerns
+
+- No @expo/ui or native modules installed; adapter tests use stubs.
+- compareNativePreviews requires 2+ connected runtime sessions (placeholder return).
+- Bridge-level individual step dispatch (tap/input/scroll execution) deferred to later bridge enhancement.
+- Automatic source patching intentionally deferred per project brief.
+- example-app Jest "did not exit" warning is pre-existing.
+
+---
+
+# DEEP DEBUGGING REPORT
+Reviewer session date: 2026-05-02
+Roadmap Phase: Phase 10 - Publish Readiness (deep debugging audit)
+Product Stage Scope: All Stages 0-9 (cross-stage audit for Stage 10 readiness)
+Task status: DONE_WITH_CONCERNS
+
+## Scope
+
+- Packages reviewed: `packages/core`, `packages/mcp-server`, `packages/cli`, `packages/expo-plugin`, `packages/example-app`.
+- Docs reviewed: project brief, reference index, orchestration, phase state, handoff, roadmap checklist, task, review (full history), review checklist, runtime status, platform skill index, platform skill routing, systematic debugging, CLAUDE.md shim.
+- Platform skills loaded: repo-local `systematic-debugging` (implied).
+- Commands run: child-process preflight, workspace typecheck (5/5), workspace build (5/5, incl. Android export + copy-skills), workspace test (473 total: 71 mcp-server + 380 example-app + 22 cli), `npm audit --audit-level=moderate`, `npm ls --all --include-workspace-root`, `git diff --check`, `node skills/expo-agent-ui/scripts/validate-skill.js`.
+- Runner limitations: none. All Node, npm, TypeScript, Jest, and audit operations succeeded.
+
+## Findings By Priority
+
+### High
+
+**Finding 1 - High git diff --check trailing whitespace in TASK.md**
+
+- Class: `BUG`
+- Priority: `High`
+- Stage: Stage 10 - Publish Readiness
+- File: `docs/agents/TASK.md:56`
+- Evidence: `git diff --check` reported `docs/agents/TASK.md:56: trailing whitespace.` on the line `- [ ] Codex config snippet  ` (two trailing spaces after "snippet").
+- Impact: Failed the `git diff --check` automation gate, which is required by all agent loops and the review checklist. Blocks clean verification.
+- Governing rule: Automation check — "git diff --check clean" (deep debugging audit scope).
+- Red test/probe/command: `git diff --check` failed with trailing whitespace warning.
+- Fix direction: Remove trailing whitespace from the line.
+- Fix status: `fixed in this run`
+
+### Medium
+
+**Finding 2 - Medium Core manifest stage and capabilities stale after Stage 9**
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: Cross-stage (4/9) — `packages/core/src/index.ts`
+- File: `packages/core/src/index.ts:2,288-291,306`
+- Evidence: `agentUICoreStage = "agent-bridge"` (Stage 4), `AgentUICapability` type missing `"flow-runner"` and `"patch-proposals"` entries, `implementedCapabilities` array missing `"flow-runner"` and `"patch-proposals"`. Yet `core/src/flows.ts` (208 lines) and `core/src/patching.ts` exist and are exported. MCP diagnostics use this manifest.
+- Impact: Tools and diagnostics report core as "agent-bridge" stage with 5 capabilities when it actually contains Stage 6 motion, Stage 7 native adapters, and Stage 9 flow-runner and patch-proposals code. Misleads agents and tool consumers.
+- Governing rule: "package manifests should reflect current state" (review checklist precedent), "Do not expose MCP tools that are not backed by implemented runtime capabilities" inverse — implemented capabilities should be reflected.
+- Red test/probe/command: `getAgentUIPackageManifest().implementedCapabilities` does not include `"flow-runner"` or `"patch-proposals"`. `agentUICoreStage` equals `"agent-bridge"` but core contains `flows.ts` and `patching.ts`.
+- Fix direction: Update `agentUICoreStage` to `"flow-runner"`, add `"flow-runner"` and `"patch-proposals"` to the `AgentUICapability` type, and add both to `implementedCapabilities` array.
+- Fix status: `fixed in this run`
+
+**Finding 3 - Medium CLI manifest stage stale after Stage 9**
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: Stage 5/9 — `packages/cli/src/index.ts`
+- File: `packages/cli/src/index.ts:5,13`
+- Evidence: CLI `getAgentUICliManifest()` reports `stage: "mcp-server"` but CLI implements 3 Stage 9 commands: `export-maestro`, `maestro-run`, `maestro-heal`. The stage string lags the actual implementation by 4 stages.
+- Impact: Low functional impact (no runtime consumers of stage field found), but documentation hygiene issue. Misleads about what stage the CLI is at.
+- Governing rule: "No fake capabilities" (PROJECT_BRIEF.md), manifests should reflect current state.
+- Red test/probe/command: `getAgentUICliManifest().stage !== "flow-runner"` while `implementedCommands` includes Stage 9 flow/maestro commands.
+- Fix direction: Update both the interface type and return value to `"flow-runner"`.
+- Fix status: `fixed in this run`
+
+**Finding 4 - Medium State file inconsistency: PHASE_STATE.md, TASK.md, ROADMAP_CHECKLIST.md disagree on active phase**
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: Stage 9/10 boundary
+- Files: `docs/agents/PHASE_STATE.md:3`, `docs/agents/TASK.md:4,117`, `docs/agents/ROADMAP_CHECKLIST.md:234`
+- Evidence: PHASE_STATE.md says "Active Phase: Phase 9 - Flow Runner... (DONE)". TASK.md says "Roadmap Phase: Phase 10 - Publish Readiness" and status "IN PROGRESS — Launching 4 parallel agents". ROADMAP_CHECKLIST.md says Phase 10 "Status: Not started". Three files disagree on what to do next.
+- Impact: The next agent reading these files will see conflicting signals. One says Stage 9 is still active, another says Stage 10 is in progress, a third says it hasn't started.
+- Governing rule: "Choose the next bounded task" from ROADMAP_CHECKLIST.md; "Active Phase" must match the current work.
+- Red test/probe/command: Static read — PHASE_STATE.md:3 says "Phase 9", TASK.md:4 says "Phase 10". These contradict.
+- Fix direction: Update PHASE_STATE.md to reflect Phase 10 as active, update ROADMAP_CHECKLIST.md Phase 10 to "In Progress".
+- Fix status: `fixed in this run` (via state file updates at end of this run)
+
+### Low
+
+**Finding 5 - Low example-app Jest "did not exit" warning persists**
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Low`
+- Stage: Cross-stage (example-app automation)
+- File: `packages/example-app` (test runner output)
+- Evidence: After all 380 example-app tests pass, Jest prints: "Jest did not exit one second after the test run has completed. This usually means that there are asynchronous operations that weren't stopped in your tests."
+- Impact: `--forceExit` may be needed in CI. The warning makes test output noisy but does not cause test failures. Known concern since at least Stage 4.
+- Governing rule: Automation should be clean without force flags.
+- Red test/probe/command: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand` — passes tests then prints "did not exit" warning.
+- Fix direction: Run `--detectOpenHandles` to identify the leaking async resource. The HANDOFF.md suggests `example-app/app/script.tsx` may be the culprit.
+- Fix status: `deferred` (pre-existing, documented in HANDOFF.md)
+
+**Finding 6 - Low PHASE_STATE.md verification claims "git diff --check clean" but command actually failed**
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Low`
+- Stage: Stage 9/10
+- File: `docs/agents/PHASE_STATE.md:22`
+- Evidence: PHASE_STATE.md claims "git diff --check (clean)" but the TASK.md file introduced trailing whitespace (now fixed) that caused git diff --check to fail. The previous agent's verification claim was inaccurate.
+- Impact: Historical verification evidence in PHASE_STATE.md was false-green. The claim was written before TASK.md was created and the check wasn't re-run after.
+- Governing rule: "Treat passing commands as useful evidence, not as proof by themselves" (deep debugging loop prompt).
+- Red test/probe/command: `git diff --check` was failing at the time the claim was written (TASK.md had trailing whitespace).
+- Fix direction: Updated verification evidence now reflects actual results; TRAILING_WHITESPACE finding documents the gap.
+- Fix status: `fixed in this run` (TASK.md fixed, verification evidence will be current)
+
+**Finding 7 - Low Expo SDK version drift (55.0.18 vs ~55.0.19)**
+
+- Class: `TOOLING_GAP`
+- Priority: `Low`
+- Stage: Stage 1 - Package Foundation
+- Evidence: Known and documented in multiple prior review reports. Blocked by react 19.2.5 peer conflict in expo@55.0.19.
+- Impact: Minor patch drift; no functional impact. 0 vulnerabilities, all tests pass.
+- Fix status: `deferred` (requires dedicated dependency pass)
+
+**Finding 8 - Low Placeholder test scripts in expo-plugin and core packages**
+
+- Class: `FUTURE_STAGE_GAP`
+- Priority: `Low`
+- Stage: Stage 1 - Package Foundation
+- Evidence: `@agent-ui/core` test is `tsc --noEmit` only (no behavioral tests). `@agent-ui/expo-plugin` test is a placeholder. Documented as deferred since Stage 1.
+- Impact: Core behavioral correctness is tested indirectly via example-app tests. No direct unit tests for core primitives outside example-app harness.
+- Fix status: `deferred` (documented, example-app tests provide adequate coverage for current stages)
+
+## Fixed This Run
+
+### Fix 1 — git diff --check trailing whitespace in TASK.md
+
+- Finding: Finding 1 (High)
+- Red: `git diff --check` reported trailing whitespace at `docs/agents/TASK.md:56`
+- Root cause: Line 56 (`- [ ] Codex config snippet  `) had two trailing space characters after "snippet".
+- Fix: Removed trailing whitespace from `docs/agents/TASK.md:56`.
+- Green: `git diff --check` exits 0 with no output.
+- Broader verification: All remaining gate commands pass (typecheck 5/5, build 5/5, test 473, audit 0).
+- Residual risk: None.
+
+### Fix 2 — Core package manifest stage and capability list
+
+- Finding: Finding 2 (Medium)
+- Red: `agentUICoreStage` equaled `"agent-bridge"`; `getAgentUIPackageManifest().implementedCapabilities` lacked `"flow-runner"` and `"patch-proposals"`.
+- Root cause: Manifest was not updated when Stage 6 (motion), Stage 7 (native adapters), and Stage 9 (flow runner, patch proposals) code was added to core.
+- Fix: Updated `agentUICoreStage` from `"agent-bridge"` to `"flow-runner"`. Extended `AgentUICapability` type with `"flow-runner"` and `"patch-proposals"`. Added both to `implementedCapabilities` array.
+- Green: `getAgentUIPackageManifest()` now returns `stage: "flow-runner"` with 7 capabilities including flow-runner and patch-proposals.
+- Broader verification: Typecheck 5/5, build 5/5, no external consumers of manifest type found in workspace.
+- Residual risk: `AgentUICapability` union type was expanded, which could break exhaustive switches in consumers. No such consumers found in workspace packages.
+
+### Fix 3 — CLI package manifest stage
+
+- Finding: Finding 3 (Medium)
+- Red: `getAgentUICliManifest().stage` equaled `"mcp-server"` while `implementedCommands` included Stage 9 flow/maestro commands.
+- Root cause: CLI stage string was last updated when CLI gained its Stage 5 MCP server scaffolding, and was not updated when Stage 9 commands were added.
+- Fix: Changed `stage` from `"mcp-server"` to `"flow-runner"` in both the interface type and the function return value.
+- Green: Typecheck 5/5, build 5/5, CLI tests 22/22 pass.
+- Broader verification: No consumers of CLI manifest stage string found in workspace.
+- Residual risk: None. The stage field is informational.
+
+## Deferred Fix Queue
+
+- Finding: example-app Jest "did not exit" warning (Finding 5).
+- Why deferred: Pre-existing since at least Stage 4; documented in HANDOFF.md. Requires `--detectOpenHandles` investigation.
+- Required red test/probe: `cmd /c npm.cmd test --workspace @agent-ui/example-app -- --runInBand --detectOpenHandles`
+- Suggested owner/stage: Any future automation hygiene pass.
+
+- Finding: Expo SDK version drift (Finding 7).
+- Why deferred: Requires coordinated react/react-native upgrade; previous fix attempt caused cascading conflicts.
+- Required red test/probe: `npx expo-doctor` in packages/example-app.
+- Suggested owner/stage: Dedicated dependency-management pass.
+
+- Finding: Placeholder test scripts (Finding 8).
+- Why deferred: Example-app tests provide coverage for core behavior.
+- Suggested owner/stage: Stage 10 or later test infrastructure pass.
+
+## Double-Check Results
+
+- Plan alignment: Stages 0-9 remain complete. Stage 10 TASK.md is populated with 6 deliverable docs and an acceptance criteria checklist. No old SwiftUI parser, tree-sitter, WASM, VS Code, Canvas renderer assets were revived.
+- Stage-boundary check: No `@expo/ui`, Expo Router, React Navigation, or old parser imports found in packages/core, packages/mcp-server, packages/cli source. MCP server uses type-only core imports. CLI has no React Native dependencies.
+- Security/privacy check: Pairing token uses `constantTimeEqual` with `timingSafeEqual` (Buffer-based, zero-padded). Listener binds to 127.0.0.1 by default. MCP server stdout is protocol-clean; logs go to stderr. Runtime-control tools fail-closed with `SESSION_NOT_CONNECTED` without active session. Skill-context tools require no session. No prompt injection paths found in package source.
+- Dependency check: `npm audit --audit-level=moderate` reports 0 vulnerabilities. `npm ls --all --include-workspace-root` exits 0. No unused dependencies found (zod removed in prior pass). `@modelcontextprotocol/sdk@1.29.0` used through subpath exports. `ws@8.20.0` is the only runtime bridge dependency in mcp-server.
+- Automation check: Typecheck 5/5, build 5/5 (incl. copy-skills 125 files + Android export), test 473/473 (all pass), audit 0 vulns, `git diff --check` clean (after fix), `validate-skill.js` 0 errors 0 warnings. Example-app Jest "did not exit" warning is pre-existing and documented.
+- Pattern search: No prohibited imports in any package. No old parser/tree-sitter/WASM/Canvas renderer references. Core remains JS-only with no native modules.
+
+## Final Verification
+
+- Commands:
+  - child-process preflight: `exit 0`
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present`: `exit 0` (5/5 packages)
+  - `cmd /c npm.cmd run build --workspaces --if-present`: `exit 0` (5/5, incl. copy-skills 125 files + Android export)
+  - `cmd /c npm.cmd test --workspaces --if-present`: `exit 0`, 473 total (71 mcp-server + 380 example-app + 22 cli)
+  - `cmd /c npm.cmd audit --audit-level=moderate`: `exit 0`, 0 vulnerabilities
+  - `cmd /c npm.cmd ls --all --include-workspace-root`: `exit 0`
+  - `git diff --check`: `exit 0` (clean after trailing whitespace fix)
+  - `node skills/expo-agent-ui/scripts/validate-skill.js`: 0 errors, 0 warnings
+- Results: All exited 0. 473 total tests pass. 0 audit vulnerabilities. 0 skill validation errors.
+
+## Remaining Concerns
+
+- Stage 10 deliverables (README, COMPATIBILITY.md, INSTALL.md, MCP_CONFIG.md, TROUBLESHOOTING.md, RELEASE_CHECKLIST.md) are not yet created. This is expected — Stage 10 is IN PROGRESS.
+- `example-app` Jest "did not exit" warning persists (pre-existing, documented).
+- Expo SDK 55.0.18 vs ~55.0.19 patch drift (deferred, documented).
+- Core and expo-plugin have placeholder test scripts (deferred, documented).
+- `inspectTree` `includeBounds` accepted but not fulfilled by bridge (deferred, documented).
+- Bridge-level individual step dispatch for flow runner deferred (documented).
+- PHASE_STATE.md verification claims were stale (git diff --check was false-green) — corrected in this run.

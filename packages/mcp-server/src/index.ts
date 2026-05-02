@@ -32,3 +32,10 @@ export {
   type PlatformSkillRecommendation,
   type PlatformSkillRecommendOptions
 } from "./platform-skills.js";
+
+export {
+  discoverServeSimSessions,
+  type ServeSimHelperState,
+  type ServeSimSession,
+  type ServeSimDiscoveryResult
+} from "./serve-sim-discovery.js";

@@ -59,7 +59,7 @@ describe("Agent UI bridge gate", () => {
         { isDevelopment: true }
       )
     ).toMatchObject({
-      capabilities: ["inspectTree", "getState", "tap", "input", "observeEvents", "waitFor"],
+      capabilities: ["inspectTree", "getState", "tap", "input", "observeEvents", "waitFor", "runFlow"],
       code: "BRIDGE_ENABLED",
       enabled: true,
       protocolVersion: 1,

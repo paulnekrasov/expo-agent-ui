@@ -1,82 +1,56 @@
 # PHASE STATE
-Updated: 2026-05-01
-Active Phase: Phase 5 - MCP Server
-Active Stage: Stage 5 - MCP Server (COMPLETE; deep-debug audit passed)
+Updated: 2026-05-02
+Active Phase: Phase 10 - Publish Readiness (COMPLETE)
+Active Stage: Stage 10 - Publish Readiness (COMPLETE)
 Active File: docs/agents/TASK.md
 
-## Latest Audit
+## Completed This Session (2026-05-02)
 
-- Deep debugging autonomous loop completed on 2026-05-01.
-- Scope: full Stage 5 MCP server surface + package boundaries.
-- Result: DONE_WITH_CONCERNS. No High/Medium findings. Two Low deferred findings documented in REVIEW.md.
-
-## Completed This Session
-
-- [x] Registered scroll, navigate, runFlow as MCP runtime-control tools with full schemas, session-gating, and structured error codes.
-- [x] Added read-only MCP resources for sessions (`agent-ui://sessions`) and diagnostics (`agent-ui://diagnostics`).
-- [x] Updated manifest: all 9 runtime-control tools and 4 skill-context tools now implemented; deferredTools is empty.
-- [x] Added 9 new MCP server tests (scroll/navigate/runFlow SESSION_NOT_CONNECTED, listTools 13 tools, schema validation, descriptions check, ListResource sessions/diagnostics, ReadResource sessions/diagnostics).
-- [x] Updated roadmap checklist: Stage 5 marked COMPLETE.
-- [x] All verification passes: 201 total tests, typecheck (5/5), build (5/5), audit (0 vulns), CLI help, git diff --check.
+- [x] Stage 8 — Agent Skill FULLY COMPLETE (all 3 deferred items resolved)
+- [x] Stage 9 — ALL 4 SLICES COMPLETE (4-agent parallel, 473 tests)
+- [x] Stage 10 — Publish Readiness COMPLETE (4-agent parallel):
+  - README.md rewrite: 1405 lines, 21 sections, complete walkthrough guide
+  - docs/COMPATIBILITY.md: 75 lines, runtime stack + package interop + platform support
+  - docs/INSTALL.md: 194 lines, 7-step guided install + per-package + managed/bare + monorepo
+  - docs/MCP_CONFIG.md: 480 lines, config snippets (Claude/Codex/generic) + 15 tools + session lifecycle
+  - docs/TROUBLESHOOTING.md: 434 lines, 12 categories, 18 error codes, workflow-specific
+  - docs/RELEASE_CHECKLIST.md: 369 lines, 7 verification gates + publish order + post-release
+- [x] Deep Debugging Audit: 8 findings (1 High, 3 Medium fixed, 4 Low deferred), 473 tests pass
 
 ## Baseline Repo Status
 
-- [x] Stage 0-5 complete.
-- [x] Stage 5: 9 of 9 runtime-control tools implemented (inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow).
-- [x] Stage 5: 4 of 4 skill-context tools implemented (listPlatformSkills, getPlatformSkill, searchPlatformSkills, recommendPlatformSkills).
-- [x] Stage 5: 6 MCP prompts live.
-- [x] Stage 5: 13 MCP resources live (11 platform-skill + 2 runtime diagnostics).
-- [x] Stage 5: MCP schema tests live.
-- [x] All automation passes: typecheck (5/5), build (5/5), test (201 total), audit (0 vulns), git diff --check (clean).
+- [x] Stages 0-10 COMPLETE.
+- [x] All automation passes: typecheck (5/5), build (5/5), test (473 total), audit (0 vulns), git diff --check (clean).
+- [x] All publish-readiness docs created and verified.
 
-## MCP Tool Surface (Complete)
+## MCP Tool Surface (Final — 15 total)
 
 | Category | Tools |
 |---|---|
-| Runtime-control (9) | inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow |
+| Runtime-control (10) | inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow, proposePatch |
 | Skill-context (4) | listPlatformSkills, getPlatformSkill, searchPlatformSkills, recommendPlatformSkills |
-
-## MCP Prompts (6)
-
-choose_platform_skills, plan_native_scaffold, review_accessibility_semantics, prepare_visual_editor_notes, write_agent_task_notes, debug_stage_failure
-
-## MCP Resources (13)
-
-Platform-skill (11): index, routing, android-ecosystem-skill, apple-ecosystem-app-building, context-prompt-engineering, expo-skill, native-accessibility-engineering, native-app-design-engineering, systematic-debugging, vercel-react-native-skills, vercel-composition-patterns
-
-Runtime (2): agent-ui://sessions, agent-ui://diagnostics
-
-## Current Task Status
-
-- [x] `docs/agents/TASK.md` is DONE (sixth Stage 5 slice complete).
+| Diagnostic (1) | compareNativePreviews |
 
 ## Verification Evidence
 
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0`.
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` exited `0`; 50 tests (13 listener + 37 server).
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 201 total tests (151 example-app + 50 mcp-server).
+- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0` (all 5 packages).
+- `cmd /c npm.cmd run build --workspaces --if-present` exited `0` (all 5 packages, incl. copy-skills 125 files + Android export).
+- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 473 total tests (380 example-app + 71 mcp-server + 22 cli).
 - `cmd /c npm.cmd audit --audit-level=moderate` exited `0`; 0 vulnerabilities.
-- CLI standalone `--help` exited `0`.
 - `git diff --check` exited `0`.
+- `node skills/expo-agent-ui/scripts/validate-skill.js` — 0 errors, 0 warnings.
 
 ## Known Deferred Concerns
 
-- inspectTree includeBounds/rootId accepted but not processed by bridge dispatcher.
-- Platform skill resources/recommendations hardcoded; dynamic INDEX.md parsing deferred.
-- Dynamic sub-file template URIs (`agent-ui://platform-skills/{name}/references/{ref}`) deferred.
-- Bridge-level scroll/navigate/runFlow implementation deferred to core/bridge dispatcher (MCP server delegates via sendCommand).
-- Expo SDK at 55.0.18 vs ~55.0.19 (minor patch drift, deferred).
+- No `@expo/ui` or native modules installed — native adapter tests use stubs/contracts.
+- `compareNativePreviews` returns placeholder until 2+ active native runtime sessions are connected.
+- `runMaestroFlow` returns MAESTRO_UNAVAILABLE — Maestro CLI not installed in workspace.
+- Flow runner `StepDispatcher` is a contract type; bridge-level dispatch for individual step types (tap/input/scroll) is deferred.
+- Automatic source patching intentionally deferred.
 
 ## Next Agent Must Start With
 
 1. Read `docs/PROJECT_BRIEF.md`.
 2. Read `docs/reference/INDEX.md`.
 3. Read `docs/agents/ORCHESTRATION.md`.
-4. Read `docs/agents/TASK.md`.
-5. Read `docs/agents/REVIEW.md` (latest review at the top).
-6. Stage 5 is complete. Create the next bounded Stage 6 task: motion layer (Reanimated presets, reduced motion, layout transitions, gesture helpers, motion tests).
-
-## Suggested Next Target
-
-Stage 6 - Motion Layer: Add Reanimated preset mapping, reduced motion policy, layout transition helpers, gesture helper strategy, and motion tests.
+4. All product stages (0-10) are complete. Next work: post-v0 enhancements, native module verification, or user-requested tasks.

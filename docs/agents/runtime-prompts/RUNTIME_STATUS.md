@@ -1,49 +1,49 @@
 # Runtime Prompt Status
 
-Updated: 2026-05-01
+Updated: 2026-05-02
 
-## Deep Debugging Audit (2026-05-01)
+## Stage 10 — Publish Readiness (DONE — 2026-05-02)
 
-A full deep debugging autonomous loop ran across the recently completed Stage 5 MCP server surface. Result: DONE_WITH_CONCERNS. No High/Medium findings. Two Low deferred findings (includeBounds passthrough, session expiresAt). All 201 tests pass, 0 audit vulns, CLI help works without React Native import.
+All Stage 10 deliverables implemented via 4 parallel sub-agents:
+- Agent 1: README.md (1405 lines, 21 sections)
+- Agent 2: COMPATIBILITY.md + INSTALL.md + MCP_CONFIG.md (749 lines total)
+- Agent 3: TROUBLESHOOTING.md + RELEASE_CHECKLIST.md (803 lines total)
+- Agent 4: Deep debugging audit (8 findings, 4 fixed, 4 Low deferred)
 
 ## Status
 
-Runtime prompts are in status-only mode after the sixth (final) Stage 5 implementation slice completed. Stage 5 is now COMPLETE:
-
-- 9 of 9 runtime-control tools (inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow)
-- 4 of 4 skill-context tools (listPlatformSkills, getPlatformSkill, searchPlatformSkills, recommendPlatformSkills)
-- 6 MCP prompts (choose_platform_skills, plan_native_scaffold, review_accessibility_semantics, prepare_visual_editor_notes, write_agent_task_notes, debug_stage_failure)
-- 13 MCP resources (11 platform-skill + 2 runtime diagnostics: sessions, diagnostics)
-
-## Completed Task
-
-- Roadmap Phase: Phase 5 - MCP Server
-- Product Stage: Stage 5 - MCP Server (sixth slice - final)
-- Task file: `docs/agents/TASK.md`
-- Status: `DONE`
+Runtime prompts are in status-only mode. Stages 0-10 are COMPLETE.
 
 ## Active Runtime Prompts
 
 None.
 
-No `ACTIVE_*.md` files are present. Generate new runtime prompts only after the next bounded Stage 6 task is created.
-
 ## Prompt Rotation Action
 
 - No active prompt files needed deletion.
-- `RUNTIME_STATUS.md` was refreshed because the sixth (final) Stage 5 slice completed.
-- Stage 5 is complete. The next run should create the next bounded Stage 6 task: motion layer (Reanimated presets, reduced motion policy, layout transition helpers, gesture helpers, motion tests).
+- `RUNTIME_STATUS.md` refreshed to reflect Stage 10 completion.
+- All product stages complete. Next rotation when post-v0 work begins.
 
 ## Verification Evidence
 
 - Direct Node child-process probe exited `0`.
-- Preflight `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0`.
-- Full workspace: 201 total tests (151 example-app + 50 mcp-server).
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0` (5/5 including Android export).
-- `cmd /c npm.cmd audit --audit-level=moderate` exited `0`; 0 vulnerabilities.
-- `git diff --check` exited `0`.
-- CLI standalone `--help` exited `0`.
-- `cmd /c npm.cmd ci --dry-run` exited `0`.
+- Typecheck: 5/5 packages pass.
+- Build: 5/5 packages pass (including Android export, copy-skills 125 files).
+- Test: 473 total (380 example-app + 71 mcp-server + 22 cli).
+- `cmd /c npm.cmd audit --audit-level=moderate` — 0 vulnerabilities.
+- `git diff --check` — clean.
+- `node skills/expo-agent-ui/scripts/validate-skill.js` — 0 errors, 0 warnings.
+
+## Stage 10 Deliverable Summary
+
+| File | Lines | Content |
+|---|---|---|
+| README.md | 1405 | Full walkthrough: install, 19 primitives, MCP, flows, adapters, security |
+| docs/COMPATIBILITY.md | 75 | Version matrix, package interop, platform support |
+| docs/INSTALL.md | 194 | 7-step install, per-package, managed/bare, monorepo |
+| docs/MCP_CONFIG.md | 480 | Claude/Codex/generic config, 15 tools, session lifecycle, example invocations |
+| docs/TROUBLESHOOTING.md | 434 | 12 categories, 18 error codes, workflow specifics |
+| docs/RELEASE_CHECKLIST.md | 369 | 7 verification gates, publish order, post-release |
 
 ## Next Prompt Generation Inputs
 
@@ -53,18 +53,14 @@ No `ACTIVE_*.md` files are present. Generate new runtime prompts only after the 
 4. `docs/agents/PHASE_STATE.md`
 5. `docs/agents/HANDOFF.md`
 6. `docs/agents/ROADMAP_CHECKLIST.md`
-7. `docs/agents/TASK.md`
-8. `docs/agents/REVIEW.md`
-9. `docs/agents/REVIEW_CHECKLIST.md`
-10. `docs/reference/motion/reanimated-4.md`
-11. `docs/reference/motion/swiftui-motion-mapping.md`
-12. `docs/reference/agent/platform-skills/systematic-debugging/SKILL.md` when the run encounters a bug, failing command, blocked verification, or runner environment failure.
+7. `docs/agents/TASK.md` (Stage 10 DONE)
 
 ## Notes
 
-- Stages 0-5 complete.
-- Stage 5 MCP server complete: 9 runtime-control + 4 skill-context tools + 6 prompts + 13 resources + schema tests.
-- 201 total tests pass across 6 test suites (4 example-app + 2 mcp-server).
-- inspectTree's includeBounds/rootId accepted but not processed (documented concern).
-- Expo SDK at 55.0.18 vs ~55.0.19 (minor patch drift, deferred to dedicated dep pass).
-- Next target: Stage 6 - Motion Layer.
+- All product stages (0-10) are now COMPLETE.
+- MCP server has 15 tools: 10 runtime-control + 4 skill-context + 1 diagnostic.
+- CLI has 6 commands: init, doctor, validate, export maestro, maestro run, maestro heal.
+- Flow runner supports 7 step types: tap, input, scroll, navigate, waitFor, assert, observeEvents.
+- Patch proposals use 5 change kinds: add/remove/change_prop, add/remove_component.
+- Native preview comparison supports 3 diff dimensions: semantic IDs, capabilities, diagnostics.
+- 5 new publish-readiness docs created.

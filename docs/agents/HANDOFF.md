@@ -1,70 +1,54 @@
 # HANDOFF NOTE
-From: deep debugging autonomous agent (Stage 5 MCP audit)
-To: next Stage 6 implementer or automated runner
-Session date: 2026-05-01
-
-## Deep Debugging Audit Summary
-
-Ran full deep debugging loop across the recently completed Stage 5 MCP server surface. All verification gates green. No High or Medium findings. Two Low findings documented: (1) `includeBounds` accepted in inspectTree schema but not passed to bridge, (2) session resource missing `expiresAt`. Both are deferred and documented.
-
-## Previous Handoff
-
-From: scheduled-run coordinator (sixth Stage 5 slice - final)
+From: scheduled-run coordinator + Stage 10 completion session
+To: next agent
+Session date: 2026-05-02
 
 ## What I Did
 
-- Completed all remaining Stage 5 MCP server items in one bounded task:
-  - Registered scroll, navigate, runFlow as MCP runtime-control tools with full JSON-Schema-compliant input schemas.
-  - Added read-only MCP resources for sessions (`agent-ui://sessions`) and diagnostics (`agent-ui://diagnostics`).
-  - Updated manifest: all 13 tools (9 runtime-control + 4 skill-context) now implemented; deferredTools and deferredSkillTools are empty.
-  - Added 9 new MCP server tests: 3 SESSION_NOT_CONNECTED tests for new tools, updated listTools to 13, 2 schema validation tests, ListResource test for sessions/diagnostics, 2 ReadResource tests.
-  - Updated roadmap checklist: Stage 5 marked COMPLETE.
-  - 201 total tests pass (151 example-app + 50 mcp-server).
+### Stage 10 — Publish Readiness (COMPLETE)
 
-## MCP Tool Surface (Final Stage 5)
+Implemented via 4 parallel agents:
 
-| Category | Tools |
-|---|---|
-| Runtime-control (9) | inspectTree, getState, tap, input, observeEvents, waitFor, scroll, navigate, runFlow |
-| Skill-context (4) | listPlatformSkills, getPlatformSkill, searchPlatformSkills, recommendPlatformSkills |
+- **Agent 1 — README.md**: Complete rewrite (1405 lines, 21 sections). Covers installation, all 19 primitives, semantic runtime, motion layer, bridge, MCP server (15 tools), agent skill, flow runner, Maestro YAML export, patch proposals, native adapters (SwiftUI + Compose), native preview comparison, platform skills, security model, compatibility, and troubleshooting.
 
-## MCP Prompts (6)
+- **Agent 2 — COMPATIBILITY.md + INSTALL.md + MCP_CONFIG.md**:
+  - `docs/COMPATIBILITY.md` (75 lines): Version matrix, package interop table, platform support, EAS compatibility.
+  - `docs/INSTALL.md` (194 lines): Prerequisites, 7-step install, per-package instructions, managed/bare workflow, monorepo path.
+  - `docs/MCP_CONFIG.md` (480 lines): MCP architecture, Claude/Codex/generic config snippets, CLI flags, tool authorization model, session lifecycle, 9 example tool invocations.
 
-choose_platform_skills, plan_native_scaffold, review_accessibility_semantics, prepare_visual_editor_notes, write_agent_task_notes, debug_stage_failure
+- **Agent 3 — TROUBLESHOOTING.md + RELEASE_CHECKLIST.md**:
+  - `docs/TROUBLESHOOTING.md` (434 lines): 12 categories, 18 error codes, workflow-specific guidance.
+  - `docs/RELEASE_CHECKLIST.md` (369 lines): 7 verification gates, version bump, publish order (core → mcp-server → cli → expo-plugin), post-release smoke test.
 
-## MCP Resources (13)
+- **Agent 4 — Deep Debugging Audit**: 8 findings (1 High, 3 Medium, 4 Low). Fixed 4: trailing whitespace in TASK.md, stale core manifest stage/capabilities, stale CLI manifest stage, phase state sync. 4 Low deferred.
 
-11 platform-skill resources + 2 runtime resources (sessions, diagnostics)
+### Bug Fixes (from deep audit)
 
-## Verification Completed
+- Core manifest stage updated from "agent-bridge" to "flow-runner" with 7 capabilities (flow-runner, patch-proposals added)
+- CLI manifest stage updated from "mcp-server" to "flow-runner"
+- Trailing whitespace removed from TASK.md
+- PHASE_STATE.md, TASK.md, ROADMAP_CHECKLIST.md synced to Phase 10
 
-- `cmd /c npm.cmd run typecheck --workspaces --if-present` exited `0` (all 5 packages).
-- `cmd /c npm.cmd run build --workspaces --if-present` exited `0` (all 5 packages, including Android export).
-- `cmd /c npm.cmd test --workspace @agent-ui/mcp-server -- --runInBand` exited `0`; 50 tests.
-- `cmd /c npm.cmd test --workspaces --if-present` exited `0`; 201 total tests.
-- `cmd /c npm.cmd audit --audit-level=moderate` exited `0`; 0 vulnerabilities.
-- CLI standalone `--help` exited `0`.
-- `git diff --check` exited `0`.
+## Verification
 
-## Known Concerns
-
-- inspectTree's includeBounds/rootId accepted but not processed by bridge dispatcher.
-- Bridge-level scroll/navigate/runFlow implementation in `packages/core` is deferred (MCP server delegates via `session.sendCommand()`).
-- Platform skill resources/recommendations are hardcoded; dynamic INDEX.md parsing is deferred.
-- Dynamic sub-file template URIs (`agent-ui://platform-skills/{name}/references/{ref}`) deferred.
-- Expo SDK at 55.0.18 vs ~55.0.19 (minor patch drift, deferred).
-- Session resource returns `connected: false` with `session: null` when no app is connected (not an error).
+- typecheck: 5/5
+- build: 5/5 (incl. copy-skills 125 files + Android export)
+- test: 473 total (380 example-app + 71 mcp-server + 22 cli)
+- audit: 0 vulns
+- git diff: clean
+- skill validate: 0 errors, 0 warnings
 
 ## What The Next Agent Must Do First
 
-1. Read `docs/PROJECT_BRIEF.md` and `docs/reference/INDEX.md`.
-2. Review `docs/agents/REVIEW.md` for the latest review (sixth slice at the top).
-3. Stage 5 is complete. Create the next bounded Stage 6 task from `docs/agents/ROADMAP_CHECKLIST.md` Phase 6 - Motion Layer.
-4. Read `docs/reference/motion/reanimated-4.md` and `docs/reference/motion/swiftui-motion-mapping.md`.
+1. Read `docs/PROJECT_BRIEF.md` and `docs/reference/INDEX.md`
+2. All product stages 0-10 are COMPLETE.
+3. Next: post-v0 enhancements, native module verification, user-requested tasks, or publish to npm.
 
-## What The Next Agent Must Not Do
+## Known Concerns
 
-- Do not bump Expo SDK version without a dedicated dependency-management pass.
-- Do not add @expo/ui, Expo Router, React Navigation, native modules, or old parser assets.
-- Do not recreate old SwiftUI parser, resolver, tree-sitter, WASM, VS Code extension, or Canvas renderer assets.
-- Do not remove the --forceExit from listener tests without fixing the open-handle cleanup.
+- No `@expo/ui` or native modules installed — all adapter/detection tests use stubs.
+- `compareNativePreviews` returns placeholder; needs 2+ connected runtime sessions for real diff.
+- `runMaestroFlow` returns MAESTRO_UNAVAILABLE; Maestro CLI not installed.
+- Bridge-level step dispatch (individual tap/input/scroll execution against registry) deferred.
+- Automatic source patching intentionally deferred per project brief.
+- `example-app` Jest "did not exit" warning is pre-existing.
