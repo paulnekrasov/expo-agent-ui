@@ -62,17 +62,26 @@ Produce every publish-readiness asset: a comprehensive README walkthrough, compa
 - `docs/agents/ROADMAP_CHECKLIST.md` (updated)
 - `docs/agents/runtime-prompts/RUNTIME_STATUS.md` (updated)
 - `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` (updated)
+- `package.json` (follow-up Expo/React baseline alignment)
+- `package-lock.json` (follow-up dependency graph repair)
+- `packages/example-app/package.json` (Expo SDK 55 baseline alignment)
+- `packages/expo-plugin/package.json` (replace placeholder test with smoke-test gate)
+- `packages/expo-plugin/test/plugin.test.cjs` (plugin smoke test)
 
 ## Verification Commands
 
 ```powershell
+cmd /c npm.cmd ci --dry-run
 cmd /c npm.cmd run typecheck --workspaces --if-present
 cmd /c npm.cmd run build --workspaces --if-present
 cmd /c npm.cmd test --workspaces --if-present
 cmd /c npm.cmd audit --audit-level=moderate
+cmd /c npx.cmd expo-doctor --verbose
 git diff --check
 ```
 
 ## Status
 
-DONE — All Stage 10 deliverables created via 4 parallel agents. Deep debugging audit found 8 findings (1 High, 3 Medium fixed, 4 Low deferred). Version reporting fix applied: MCP server reads version from package.json, CLI has --version/-v flags. All verification gates green.
+DONE — All Stage 10 deliverables are implemented and the follow-up deep-debugging gaps are now
+closed. Workspace verification is clean, `expo-doctor` passes 18/18, and `packages/expo-plugin`
+has a real smoke-test gate.

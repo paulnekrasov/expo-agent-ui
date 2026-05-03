@@ -858,7 +858,7 @@ Or configure in your MCP client configuration file.
   "mcpServers": {
     "agent-ui": {
       "command": "npx",
-      "args": ["@expo-agent-ui/mcp-server"],
+      "args": ["-y", "@expo-agent-ui/mcp-server"],
       "env": {
         "AGENT_UI_PAIRING_TOKEN": "agentui_your_token_here"
       }
@@ -873,7 +873,7 @@ Or configure in your MCP client configuration file.
 mcp_servers:
   agent-ui:
     command: npx
-    args: ["@expo-agent-ui/mcp-server"]
+    args: ["-y", "@expo-agent-ui/mcp-server"]
     env:
       AGENT_UI_PAIRING_TOKEN: "agentui_your_token_here"
 ```
