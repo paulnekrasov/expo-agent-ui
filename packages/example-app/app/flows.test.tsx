@@ -415,6 +415,45 @@ describe("Flow runner types", () => {
       expect(result.error).toBe("step[0] tap failed");
     });
 
+    it("clears pending timeout handles after a successful step", async () => {
+      jest.useFakeTimers();
+
+      const runFlow = createFlowRunner();
+      const dispatch = async (_step: SemanticFlowStep) => ({ ok: true });
+      const flow: SemanticFlow = {
+        name: "cleanup.success",
+        stopOnFailure: true,
+        steps: [{ type: "tap", targetId: "btn1" }]
+      };
+
+      const result = await runFlow(flow, dispatch, { timeoutMs: 200 });
+
+      expect(result.completed).toBe(true);
+      expect(jest.getTimerCount()).toBe(0);
+
+      jest.useRealTimers();
+    });
+
+    it("clears pending timeout handles after a failed step", async () => {
+      jest.useFakeTimers();
+
+      const runFlow = createFlowRunner();
+      const dispatch = async (_step: SemanticFlowStep) => ({ ok: false, error: "node not found" });
+      const flow: SemanticFlow = {
+        name: "cleanup.failure",
+        stopOnFailure: true,
+        steps: [{ type: "tap", targetId: "btn1" }]
+      };
+
+      const result = await runFlow(flow, dispatch, { timeoutMs: 200 });
+
+      expect(result.completed).toBe(false);
+      expect(result.error).toBe("node not found");
+      expect(jest.getTimerCount()).toBe(0);
+
+      jest.useRealTimers();
+    });
+
     it("times out a step that exceeds per-step timeout", async () => {
       jest.useFakeTimers();
 

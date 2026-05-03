@@ -3561,3 +3561,302 @@ Task status: DONE_WITH_CONCERNS
 - `inspectTree` `includeBounds` accepted but not fulfilled by bridge (deferred, documented).
 - Bridge-level individual step dispatch for flow runner deferred (documented).
 - PHASE_STATE.md verification claims were stale (git diff --check was false-green) — corrected in this run.
+
+---
+
+# DEEP DEBUGGING REPORT
+Reviewer session date: 2026-05-03
+Roadmap Phase: Phase 10 - Publish Readiness
+Product Stage Scope: Cross-stage audit with Stage 9 flow runner and Stage 10 publish-readiness focus
+Task status: DONE_WITH_CONCERNS
+
+## Scope
+
+- Packages reviewed: `packages/core`, `packages/mcp-server`, `packages/cli`, `packages/expo-plugin`, `packages/example-app`
+- Docs reviewed: startup docs, phase state, handoff, task, review history, runtime status
+- Platform skills loaded: repo-local `context-prompt-engineering`, repo-local `systematic-debugging`
+- Commands run:
+  - child-process preflight
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present`
+  - `cmd /c npm.cmd ci --dry-run`
+  - `cmd /c npm.cmd run build --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --detectOpenHandles`
+  - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate`
+  - `cmd /c npm.cmd audit --audit-level=moderate`
+  - `cmd /c npm.cmd audit signatures`
+  - `cmd /c npm.cmd ls --all --include-workspace-root`
+  - `cmd /c npx.cmd expo-doctor`
+  - `git diff --check`
+- Runner limitations: none
+
+## Findings By Priority
+
+### High
+
+None
+
+### Medium
+
+## Finding 1 - Medium flow runner leaves pending timeout handles
+
+- Class: `BUG`
+- Priority: `Medium`
+- Stage: `Stage 9 - Flow Runner`
+- File: `packages/core/src/flows.ts:187`
+- Evidence: `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --detectOpenHandles` reported 8 open `Timeout` handles from `setTimeout(... perStepTimeout)` in `createFlowRunner()`. Focused red tests in `packages/example-app/app/flows.test.tsx` failed with `jest.getTimerCount()` returning `1` after both success and early failure paths.
+- Impact: Workspace tests looked green while leaving open async handles behind. That is false-clean automation and a real async hygiene bug in the flow runner.
+- Governing rule: Deep debugging loop automation section requires deterministic tests; repo-local systematic debugging requires a red-green fix for flaky async behavior.
+- Red test/probe/command: `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand flows.test.tsx`
+- Fix direction: Clear the per-step timeout handle after `Promise.race(...)` resolves or rejects for non-timeout reasons.
+- Fix status: `fixed in this run`
+
+## Finding 2 - Medium Expo Doctor patch drift blocks a fully clean publish-readiness baseline
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: `Stage 10 - Publish Readiness`
+- File: `packages/example-app/package.json:14`
+- Evidence: `cmd /c npx.cmd expo-doctor` failed 1/18 checks: `expo expected ~55.0.19, found 55.0.18`.
+- Impact: Publish-readiness state is not fully clean. Any agent claiming a fully green Expo app baseline would be overstating the current dependency health.
+- Governing rule: Platform-specific rules require Expo SDK/package versions to match the current SDK baseline and Expo Doctor expectations.
+- Red test/probe/command: `cmd /c npx.cmd expo-doctor`
+- Fix direction: Coordinate an `expo` patch upgrade to `~55.0.19` or explicitly document/exclude the drift if intentionally deferred.
+- Fix status: `deferred`
+
+### Low
+
+## Finding 3 - Low durable state files had stale test totals
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Low`
+- Stage: `Cross-stage`
+- File: `docs/agents/PHASE_STATE.md:18`, `docs/agents/runtime-prompts/RUNTIME_STATUS.md:33`, `docs/agents/HANDOFF.md:29`
+- Evidence: durable state still reported `473` or `476` tests from older runs, while the current workspace run after the fix reports `478` total tests.
+- Impact: Future agents could rely on stale verification evidence even though the code and tests moved.
+- Governing rule: Handoff and state notes must include exact verification evidence, not vague or outdated claims.
+- Red test/probe/command: Static read against current `cmd /c npm.cmd test --workspaces --if-present` output
+- Fix direction: Refresh state files during closeout.
+- Fix status: `fixed in this run`
+
+## Finding 4 - Low expo-plugin still uses a placeholder test script
+
+- Class: `FUTURE_STAGE_GAP`
+- Priority: `Low`
+- Stage: `Stage 1 - Package Foundation`
+- File: `packages/expo-plugin/package.json:16`
+- Evidence: package test script prints `@expo-agent-ui/expo-plugin tests deferred until native mutations exist`.
+- Impact: The workspace test gate remains honest only because this script is clearly marked deferred, but the package still lacks direct behavioral coverage.
+- Governing rule: Placeholder scripts must not be treated as real coverage.
+- Red test/probe/command: Static read of `packages/expo-plugin/package.json`
+- Fix direction: Add real tests when the plugin begins mutating native config.
+- Fix status: `deferred`
+
+## Fixed This Run
+
+- Finding: Flow runner leaves pending timeout handles
+- Red:
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand flows.test.tsx`
+  - Failed with two new assertions where `jest.getTimerCount()` returned `1`
+  - Broad probe also reported 8 open `Timeout` handles via `--detectOpenHandles`
+- Root cause: `createFlowRunner()` created a new `setTimeout()` per step but never cleared that timer when the step completed before the timeout fired.
+- Fix:
+  - Added cleanup tests in `packages/example-app/app/flows.test.tsx`
+  - Updated `packages/core/src/flows.ts` to retain the timeout handle and clear it after both success and early failure
+- Green:
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --runInBand flows.test.tsx` passes
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --detectOpenHandles` passes with no open-handle report
+- Broader verification:
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present` passes
+  - `cmd /c npm.cmd run build --workspaces --if-present` passes
+  - `cmd /c npm.cmd test --workspaces --if-present` passes with 478 total tests
+  - `cmd /c npm.cmd audit --audit-level=moderate` passes
+  - `git diff --check` passes
+- Residual risk: None for the timer leak itself. The flow runner still has broader future-stage gaps already documented elsewhere.
+
+## Deferred Fix Queue
+
+- Finding: Expo Doctor patch drift (`expo` `55.0.18` vs expected `~55.0.19`)
+- Why deferred: `packages/example-app/package.json` already has unrelated local edits, and the dependency bump should be coordinated instead of overwritten during this debugging run
+- Required red test/probe/command: `cmd /c npx.cmd expo-doctor`
+- Suggested owner/stage: `Stage 10 - Publish Readiness`
+
+- Finding: Placeholder expo-plugin tests
+- Why deferred: Current package still has no native mutations; a placeholder is acceptable only as a clearly documented gap
+- Required red test/probe/command: Static review of `packages/expo-plugin/package.json`
+- Suggested owner/stage: `Stage 10 or later plugin-specific test pass`
+
+## Double-Check Results
+
+- Plan alignment: Active work stayed within deep-debugging scope and did not broaden into feature work.
+- Stage-boundary check: The fix stayed inside Stage 9 flow runner behavior plus state-file updates.
+- Security/privacy check: No bridge, MCP, session, or redaction behavior changed.
+- Dependency check: `npm audit` and `npm audit signatures` remain clean; `expo-doctor` still reports one patch mismatch.
+- Automation check: Workspace typecheck/build/test are green; the old example-app Jest non-exit warning is gone.
+- Pattern search: Adjacent scans did not show another `Promise.race` timeout pattern needing the same cleanup.
+
+## Final Verification
+
+- Commands:
+  - `node -e "const r=require('child_process').spawnSync(process.execPath,['-e','process.exit(0)'],{encoding:'utf8'}); if(r.error){console.error(r.error.message); process.exit(2)} process.exit(r.status ?? 0)"`
+  - `cmd /c npm.cmd ci --dry-run`
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present`
+  - `cmd /c npm.cmd run build --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/example-app -- --detectOpenHandles`
+  - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate`
+  - `cmd /c npm.cmd audit --audit-level=moderate`
+  - `cmd /c npm.cmd audit signatures`
+  - `cmd /c npm.cmd ls --all --include-workspace-root`
+  - `cmd /c npx.cmd expo-doctor`
+  - `git diff --check`
+- Results:
+  - All commands above exited `0` except `expo-doctor`, which exited `1` for the single Expo patch mismatch
+  - Workspace tests: `478` total (`382` example-app + `71` mcp-server + `25` cli)
+  - `--detectOpenHandles`: clean
+  - Audits: clean
+
+## Remaining Concerns
+
+- `expo-doctor` still reports `expo` patch drift (`~55.0.19` expected, `55.0.18` found)
+- `packages/expo-plugin` still has a placeholder test script
+
+---
+
+# DEEP DEBUGGING REPORT
+Reviewer session date: 2026-05-03
+Roadmap Phase: Phase 10 - Publish Readiness
+Product Stage Scope: Stage 10 dependency health and package-gate follow-up
+Task status: DONE
+
+## Scope
+
+- Packages reviewed: workspace root manifests, `packages/example-app`, `packages/expo-plugin`
+- Docs reviewed: `docs/PROJECT_BRIEF.md`, `docs/reference/INDEX.md`, `docs/agents/PHASE_STATE.md`, `docs/agents/HANDOFF.md`, `docs/agents/TASK.md`
+- Platform skills loaded: repo-local `systematic-debugging`, repo-local `expo-skill`
+- Commands run:
+  - child-process preflight
+  - `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin`
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all`
+  - `cmd /c npx.cmd expo-doctor --verbose`
+  - `cmd /c npm.cmd install --package-lock-only --force`
+  - `cmd /c npm.cmd install`
+  - `cmd /c npm.cmd ci --dry-run`
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present`
+  - `cmd /c npm.cmd run build --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspaces --if-present`
+  - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate`
+  - `cmd /c npm.cmd audit --audit-level=moderate`
+  - `cmd /c npm.cmd audit signatures`
+  - `cmd /c npm.cmd ls --all --include-workspace-root`
+  - `git diff --check`
+- Runner limitations: none
+
+## Findings By Priority
+
+### High
+
+None
+
+### Medium
+
+## Finding 1 - Medium Expo SDK baseline drift and React peer skew
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Medium`
+- Stage: `Stage 10 - Publish Readiness`
+- File: `package.json:31`, `packages/example-app/package.json:17-25`, `package-lock.json:12023`
+- Evidence:
+  - `cmd /c npx.cmd expo-doctor --verbose` initially failed 17/18 checks because SDK 55 expected `expo ~55.0.19`
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all` exited `1` with `ELSPROBLEMS` while `packages/example-app/node_modules/react-test-renderer@19.2.5` still required `react ^19.2.5`
+- Impact: Publish-readiness was not actually clean, and the partially upgraded dependency tree could resolve duplicate React copies in app tests.
+- Governing rule: Expo SDK/package versions must match the SDK baseline and automation must not claim a clean state without dependency proof.
+- Red test/probe/command:
+  - `cmd /c npx.cmd expo-doctor --verbose`
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all`
+- Fix direction: Normalize the workspace root, example app, and lockfile to the Expo SDK 55 baseline before reinstalling.
+- Fix status: `fixed in this run`
+
+### Low
+
+## Finding 2 - Low expo-plugin test gate was still a placeholder
+
+- Class: `ACTIVE_STAGE_GAP`
+- Priority: `Low`
+- Stage: `Stage 1 - Package Foundation`
+- File: `packages/expo-plugin/package.json:9`
+- Evidence: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin` only printed `tests deferred until native mutations exist`.
+- Impact: The workspace test gate stayed honest, but the package still had no direct behavioral probe at all.
+- Governing rule: Placeholder scripts must not be treated as real coverage.
+- Red test/probe/command: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin`
+- Fix direction: Replace the placeholder with a small smoke test that verifies the current no-op plugin surface.
+- Fix status: `fixed in this run`
+
+## Fixed This Run
+
+- Finding: Expo SDK baseline drift and React peer skew
+- Red:
+  - `cmd /c npx.cmd expo-doctor --verbose` failed before the fix
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all` failed with `ELSPROBLEMS`
+- Root cause: The workspace root, the example app manifest, and the lockfile no longer agreed on the Expo SDK 55 patch baseline or the React 19.2.0 renderer pairing.
+- Fix:
+  - Pinned the workspace root to `react 19.2.0` alongside `expo ~55.0.19`
+  - Kept the `@expo/metro-config@55.0.18` `postcss 8.5.12` override aligned with the upgraded Expo dependency tree
+  - Set `packages/example-app` to `react-test-renderer 19.2.0`
+  - Repaired the stale `packages/example-app/node_modules/react-test-renderer` lockfile entry and reran install from the workspace root
+- Green:
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all` exits `0`
+  - `cmd /c npx.cmd expo-doctor --verbose` passes 18/18
+- Broader verification:
+  - `cmd /c npm.cmd ci --dry-run` passes
+  - workspace typecheck/build/test all pass
+  - both audits pass with `0` vulnerabilities
+  - `cmd /c npm.cmd audit signatures` verifies 898 package signatures and 73 attestations
+- Residual risk: None for the Stage 10 dependency baseline.
+
+- Finding: expo-plugin placeholder test gate
+- Red: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin` only printed a deferred placeholder message.
+- Root cause: The package had no direct check for its current no-op config-plugin behavior.
+- Fix:
+  - Replaced the placeholder `test` script with a build-plus-smoke-test command
+  - Added `packages/expo-plugin/test/plugin.test.cjs` to assert that `withAgentUI` preserves config identity, the default export matches the named export, and `app.plugin.js` forwards correctly
+- Green: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin` exits `0` and prints `expo-plugin smoke tests passed`.
+- Broader verification: Included in the clean workspace `cmd /c npm.cmd test --workspaces --if-present` rerun.
+- Residual risk: The plugin still has no native mutation surface, so smoke coverage remains intentionally narrow.
+
+## Deferred Fix Queue
+
+None
+
+## Double-Check Results
+
+- Plan alignment: The work stayed inside the prior deep-debugging fix queue and did not broaden into new feature work.
+- Stage-boundary check: Changes were limited to Stage 10 dependency/package-gate maintenance plus durable state updates.
+- Security/privacy check: No bridge, MCP, pairing, or redaction behavior changed.
+- Dependency check: `expo-doctor`, `npm ls`, `npm audit`, and `npm audit signatures` are now all clean.
+- Automation check: `npm ci --dry-run`, workspace typecheck/build/test, and `git diff --check` all pass.
+- Pattern search: No other placeholder test scripts remain in currently implemented runtime packages beyond the intentional `packages/core` TypeScript smoke gate.
+
+## Final Verification
+
+- Commands:
+  - `node -e "const r=require('child_process').spawnSync(process.execPath,['-e','process.exit(0)'],{encoding:'utf8'}); if(r.error){console.error(r.error.message); process.exit(2)} process.exit(r.status ?? 0)"`
+  - `cmd /c npm.cmd ci --dry-run`
+  - `cmd /c npm.cmd run typecheck --workspaces --if-present`
+  - `cmd /c npm.cmd run build --workspaces --if-present`
+  - `cmd /c npm.cmd test --workspaces --if-present`
+  - `cmd /c npm.cmd audit --omit=dev --audit-level=moderate`
+  - `cmd /c npm.cmd audit --audit-level=moderate`
+  - `cmd /c npm.cmd audit signatures`
+  - `cmd /c npm.cmd ls --all --include-workspace-root`
+  - `cmd /c npx.cmd expo-doctor --verbose`
+  - `git diff --check`
+- Results:
+  - All commands above exited `0`
+  - Workspace tests: `478` total (`382` example-app + `71` mcp-server + `25` cli) plus the expo-plugin smoke test
+  - `expo-doctor`: 18/18 checks passed
+  - Audits: clean
+
+## Remaining Concerns
+
+None

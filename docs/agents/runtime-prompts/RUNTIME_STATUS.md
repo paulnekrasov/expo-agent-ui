@@ -1,19 +1,22 @@
 # Runtime Prompt Status
 
-Updated: 2026-05-02
+Updated: 2026-05-03
 
-## Stage 10 — Publish Readiness (DONE — 2026-05-02)
+## Stage 10 — Publish Readiness (DONE — 2026-05-03)
 
-All Stage 10 deliverables implemented. Two deep debugging security audits completed:
+All Stage 10 deliverables remain implemented. Four deep debugging passes have now completed:
 - Audit 1: 10 findings (3 High + 2 Medium + 5 Low) — all resolved
 - Audit 2 (follow-up): 1 Medium fixed (--quiet flag), 5 Low documented
+- Audit 3: 1 Medium fixed (flow-runner timeout handle leak), 1 Medium deferred (Expo Doctor patch drift)
+- Audit 4: remaining dependency drift fixed; expo-plugin placeholder test replaced with smoke coverage
 
-### Latest Fix: --quiet flag for MCP server
+### Latest Fix: dependency baseline cleanup + expo-plugin smoke coverage
 
-Added `--quiet` flag to `packages/mcp-server/src/cli.ts` that suppresses the auto-generated
-pairing token from stderr output. When `--quiet` is passed, the server prints `pairing token
-generated (hidden: --quiet)` instead of the full token. Default behavior unchanged for
-developer convenience. CI/CD pipelines should use `--quiet`.
+The remaining Stage 10 follow-up concerns are now closed:
+- Expo SDK baseline is aligned on `expo ~55.0.19`
+- Workspace and app React baseline is aligned on `19.2.0`
+- `expo-doctor` now passes 18/18
+- `packages/expo-plugin` now runs a real smoke test instead of a placeholder script
 
 All Stage 10 deliverables implemented via 4 parallel sub-agents:
 - Agent 1: README.md (1405 lines, 21 sections)
@@ -38,10 +41,14 @@ None.
 ## Verification Evidence
 
 - Direct Node child-process probe exited `0`.
+- `npm ci --dry-run` exited `0`.
 - Typecheck: 5/5 packages pass.
 - Build: 5/5 packages pass (including Android export, copy-skills 125 files).
-- Test: 473 total (380 example-app + 71 mcp-server + 22 cli).
+- Test: 478 total (382 example-app + 71 mcp-server + 25 cli) plus expo-plugin smoke test.
 - `cmd /c npm.cmd audit --audit-level=moderate` — 0 vulnerabilities.
+- `cmd /c npm.cmd audit signatures` — 898 verified registry signatures, 73 attestations.
+- `cmd /c npm.cmd ls --all --include-workspace-root` — clean.
+- `cmd /c npx.cmd expo-doctor --verbose` — 18/18 checks passed.
 - `git diff --check` — clean.
 - `node skills/expo-agent-ui/scripts/validate-skill.js` — 0 errors, 0 warnings.
 
@@ -69,6 +76,7 @@ None.
 ## Notes
 
 - All product stages (0-10) are now COMPLETE.
+- No current publish-readiness concerns remain from the deep-debugging queue.
 - MCP server has 15 tools: 10 runtime-control + 4 skill-context + 1 diagnostic.
 - CLI has 6 commands: init, doctor, validate, export maestro, maestro run, maestro heal.
 - Flow runner supports 7 step types: tap, input, scroll, navigate, waitFor, assert, observeEvents.

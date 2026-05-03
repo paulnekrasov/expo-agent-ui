@@ -1,52 +1,75 @@
 # HANDOFF NOTE
-From: deep debugging autonomous agent (security audit follow-up)
+From: deep debugging autonomous agent
 To: next agent
-Session date: 2026-05-02
+Session date: 2026-05-03
 
 ## What I Did
 
-### Deep Debugging Security Audit (Follow-up)
+Closed the remaining follow-up findings from the prior deep debugging report:
 
-Performed a full independent security audit following the deep debugging autonomous agent loop. 
-Previous run (same day) fixed 10 findings (3 High, 2 Medium, 5 Low). This run independently verified 
-all prior fixes and audited the full source tree for any remaining issues.
+- normalized the Stage 10 Expo/React dependency baseline so the workspace now matches Expo SDK 55 expectations
+- replaced the `packages/expo-plugin` placeholder test script with a real smoke-test gate
+- refreshed the durable audit/state files to remove the old deferred-concern notes
 
-### Finding And Fix
+## Red/Green Evidence
 
-**1 Medium finding found: Pairing token printed to stderr**
-- Added `--quiet` flag to `packages/mcp-server/src/cli.ts`
-- When `--quiet` is passed, pairing token line reads "hidden" instead of full token
-- Default behavior preserved for developer convenience
-- CI/CD pipelines should use `--quiet`
+### 1. Expo dependency baseline repair
 
-**5 Low findings deferred:**
-- Math.random() inconsistency in 3 non-security call sites
-- SwiftUI SecureField adapter missing privacy flag (future-stage gap)
-- Compose TextField lacks semantic registration (future-stage gap)
-- Session enforcement race (theoretical only)
+- Red:
+  - `cmd /c npx.cmd expo-doctor --verbose` failed before the fix
+  - `cmd /c npm.cmd ls expo react react-native babel-preset-expo react-test-renderer --all` failed with `ELSPROBLEMS`
+- Fix:
+  - pinned workspace root `react` to `19.2.0`
+  - kept root `expo` on `~55.0.19`
+  - aligned `packages/example-app` to `react-test-renderer 19.2.0`
+  - repaired the stale lockfile entry and reran a clean root install
+- Green:
+  - `expo-doctor` now passes 18/18
+  - `npm ls` now exits `0` with a deduped React tree
 
-All prior fixes confirmed in place and working (Origin validation, timing-safe comparison, 
-dev gates fail-closed, semantic redaction, crypto IDs, wss:// enforcement).
+### 2. expo-plugin placeholder test removal
 
-### Files Changed
+- Red: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin` only printed a deferred placeholder message.
+- Fix:
+  - updated `packages/expo-plugin/package.json` test script
+  - added `packages/expo-plugin/test/plugin.test.cjs`
+- Green: `cmd /c npm.cmd test --workspace @expo-agent-ui/expo-plugin` exits `0` and prints `expo-plugin smoke tests passed`.
 
-- `packages/mcp-server/src/cli.ts` — Added `quiet` option to `AgentUIMcpServerOptions`, conditional token logging, `--quiet` flag parsing and help text
-- `docs/agents/REVIEW.md` — appended deep debugging report
-- `docs/agents/HANDOFF.md` — this file
-- `docs/agents/PHASE_STATE.md` — updated
-- `docs/agents/runtime-prompts/RUNTIME_STATUS.md` — updated
-- `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md` — updated
+## Dirty Tree Notes
+
+- Preserved the existing unrelated edit in `README.md`
+
+## Files Changed
+
+- `package.json`
+- `package-lock.json`
+- `packages/example-app/package.json`
+- `packages/expo-plugin/package.json`
+- `packages/expo-plugin/test/plugin.test.cjs`
+- `packages/core/src/flows.ts`
+- `packages/example-app/app/flows.test.tsx`
+- `docs/agents/REVIEW.md`
+- `docs/agents/HANDOFF.md`
+- `docs/agents/PHASE_STATE.md`
+- `docs/agents/runtime-prompts/RUNTIME_STATUS.md`
+- `docs/agents/TASK.md`
+- `C:\Users\Asus\.codex\automations\swiftui-automous-agent-loop\memory.md`
 
 ## Verification
 
+- child-process preflight: `0`
+- `npm ci --dry-run`: `0`
 - typecheck: 5/5
-- build: 5/5 (incl. copy-skills 125 files + Android export)
-- test: 476 total (380 example-app + 71 mcp-server + 25 cli)
+- build: 5/5
+- test: 478 total (382 example-app + 71 mcp-server + 25 cli) plus expo-plugin smoke test
 - audit: 0 vulns
-- git diff: clean
+- audit signatures: verified
+- npm ls: `0`
+- expo-doctor: 18/18 checks passed
+- git diff --check: clean
 
 ## What The Next Agent Must Do First
 
 1. Read `docs/PROJECT_BRIEF.md` and `docs/reference/INDEX.md`
-2. All product stages 0-10 complete. 1 Medium security fix applied (--quiet flag). 5 Low findings documented.
-3. Ready for npm publish. Consider updating MCP_CONFIG.md and INSTALL.md to mention `--quiet` flag.
+2. Treat the prior deep-debugging publish-readiness findings as resolved
+3. Continue only with new user-directed work or a fresh audit scope

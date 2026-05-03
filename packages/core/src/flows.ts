@@ -184,12 +184,20 @@ function createFlowRunner(): (
         };
       }
 
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
       try {
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("TIMEOUT")), perStepTimeout)
-        );
+        let rejectStep: (error: Error) => void = () => {};
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          rejectStep = reject;
+        });
+        timeoutHandle = setTimeout(() => {
+          // Reject the raced promise when a step never settles.
+          rejectStep(new Error("TIMEOUT"));
+        }, perStepTimeout);
 
         const result = await Promise.race([dispatch(step), timeoutPromise]);
+        clearTimeout(timeoutHandle);
 
         if (!result.ok) {
           return {
@@ -206,6 +214,9 @@ function createFlowRunner(): (
 
         completedSteps = i + 1;
       } catch (err: unknown) {
+        if (timeoutHandle !== undefined) {
+          clearTimeout(timeoutHandle);
+        }
         const msg = err instanceof Error ? err.message : String(err);
         const isTimeout = msg === "TIMEOUT";
 
