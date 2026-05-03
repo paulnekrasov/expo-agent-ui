@@ -10,7 +10,7 @@
     "test": "jest --runInBand"
   },
   "dependencies": {
-    "@expo-agent-ui/core": "0.1.1",
+    "@expo-agent-ui/core": "1.0.0",
     "expo": "~55.0.19",
     "expo-asset": "~55.0.16",
     "react": "19.2.0",

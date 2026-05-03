@@ -1,6 +1,6 @@
 {
   "name": "@expo-agent-ui/expo-plugin",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Optional Expo config plugin shell for Expo Agent UI.",
   "license": "MIT",
   "main": "dist/index.js",

@@ -1,5 +1,16 @@
 # @expo-agent-ui/cli
 
+## 1.0.0
+
+### Major Changes
+
+- Fixing major react version and packages bugs
+
+### Patch Changes
+
+- Updated dependencies
+  - @expo-agent-ui/mcp-server@1.0.0
+
 ## 0.1.0
 
 ### Minor Changes

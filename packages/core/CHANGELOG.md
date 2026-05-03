@@ -1,5 +1,11 @@
 # @expo-agent-ui/core
 
+## 1.0.0
+
+### Major Changes
+
+- Fixing major react version and packages bugs
+
 ## 0.1.0
 
 ### Minor Changes
